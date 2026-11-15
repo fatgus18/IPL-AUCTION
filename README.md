@@ -46,7 +46,7 @@ Visible controls and supporting text use readable sizing and improved contrast. 
 
 ## Local setup
 
-Requires Node.js **22.18 or newer** and npm. Run commands from this project directory:
+Requires Node.js **24 LTS** and npm. Run commands from this project directory:
 
 ```sh
 npm install
@@ -131,14 +131,16 @@ Browser credentials belong to their origin. Use the same URL consistently: `loca
 - **Synchronization:** Active live-auction views check shared state every 750 ms; other room views, including My Squad, every 2.5 seconds; background room tabs every 15 seconds. The lobby checks the catalog every 10 seconds on Home, 2.5 seconds in Player Pool, and 30 seconds in the background. Focus and tab notifications trigger immediate updates. Stable polls query version numbers and return a tiny unchanged response. Submitted actions return authoritative state immediately.
 - **Runtime:** Standard Next.js development and production servers on Node.js. The application is independent of the previous Sites and Cloudflare Worker hosting setup.
 
-## Later deployment to Vercel
+## Vercel and Turso deployment
 
-The current setup runs locally; no Vercel deployment is required or performed for it. When ready to deploy:
+The production setup uses Vercel with a dedicated Turso database. Functions and the database run in Mumbai (`bom1`). Local development continues to use the local SQLite database unless cloud variables are explicitly supplied.
 
-1. Configure a persistent remote libSQL database, such as Turso. Local SQLite files are unsuitable for Vercel's ephemeral runtime; the app rejects a file database when running on Vercel.
+1. Connect a dedicated Turso database to the Production environment using Vercel Marketplace. Local SQLite files are unsuitable for Vercel's ephemeral runtime; the app rejects a file database when running on Vercel.
 2. Use the Next.js framework preset. In the GitHub repository, the application is at the repository root; select `.` as the project root directory.
-3. Set `DATABASE_URL` to the remote database URL and `DATABASE_AUTH_TOKEN` to its access token in the project's environment variables. Keep the token server-side and out of source control.
-4. Deploy, then create rooms on the new origin. Local rooms and browser credentials do not transfer automatically.
+3. The integration supplies `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`. Explicit `DATABASE_URL` and `DATABASE_AUTH_TOKEN` overrides remain supported. Keep credentials server-side and out of source control; Preview and Development should use separate databases.
+4. Build on Vercel with Node.js 24 and `npm ci`; do not upload a Windows prebuilt output. Create rooms on the deployed origin. Local room credentials remain tied to localhost.
+
+The production database was initialized with the current 253-player common catalog. Local auction histories and browser credentials remain local. To check a deployment, run `BASE_URL=https://your-site.vercel.app EXPECTED_CATALOG_COUNT=253 node tests/deployment-smoke.mjs` (or set those environment variables in PowerShell). This suite creates and deletes its own test room and never edits the shared player catalog.
 
 The same environment variables can be supplied in a local `.env.local` file to test remote storage before deployment. Leave them unset to keep using the local database. Review the first-version limits below before opening the app to the public.
 

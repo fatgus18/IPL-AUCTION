@@ -14,11 +14,12 @@ const databaseGlobal = globalThis as typeof globalThis & {
 };
 
 async function createDatabaseConnection(writer = false): Promise<{ client: Client; local: boolean }> {
-  let url = process.env.DATABASE_URL?.trim() || "file:./.data/pavilion.db";
+  const configuredUrl = process.env.DATABASE_URL?.trim() || process.env.TURSO_DATABASE_URL?.trim();
+  let url = configuredUrl || "file:./.data/pavilion.db";
   const local = url.startsWith("file:");
-  if (process.env.VERCEL === "1" && (!process.env.DATABASE_URL?.trim() || local)) {
+  if (process.env.VERCEL === "1" && (!configuredUrl || local)) {
     throw new Error(
-      "Vercel requires a persistent hosted DATABASE_URL, such as libSQL/Turso. A local SQLite file cannot persist auction rooms across serverless requests."
+      "Vercel requires a persistent hosted DATABASE_URL or TURSO_DATABASE_URL. A local SQLite file cannot persist auction rooms across serverless requests."
     );
   }
 
@@ -32,7 +33,7 @@ async function createDatabaseConnection(writer = false): Promise<{ client: Clien
 
   const client = createClient({
     url,
-    authToken: local ? undefined : process.env.DATABASE_AUTH_TOKEN,
+    authToken: local ? undefined : (process.env.DATABASE_AUTH_TOKEN?.trim() || process.env.TURSO_AUTH_TOKEN?.trim()),
     // Applied to every pooled connection. Keep native waits short so async
     // retries can yield the event loop when another process owns the file lock.
     timeout: local ? 100 : undefined,

@@ -10,18 +10,19 @@ export const CREATE_ROOMS_SQL = `CREATE TABLE IF NOT EXISTS auction_rooms (
   created_at INTEGER NOT NULL
 )`;
 
-export function databaseConfig() {
-  let url = process.env.DATABASE_URL?.trim() || "file:./.data/pavilion.db";
+export function databaseConfig(env = process.env) {
+  const configuredUrl = env.DATABASE_URL?.trim() || env.TURSO_DATABASE_URL?.trim();
+  let url = configuredUrl || "file:./.data/pavilion.db";
   const local = url.startsWith("file:");
-  if (process.env.VERCEL === "1" && (!process.env.DATABASE_URL?.trim() || local)) {
-    throw new Error("Vercel requires a persistent hosted DATABASE_URL, such as libSQL/Turso.");
+  if (env.VERCEL === "1" && (!configuredUrl || local)) {
+    throw new Error("Vercel requires a persistent hosted DATABASE_URL or TURSO_DATABASE_URL.");
   }
   let filePath;
   if (local) {
     filePath = url.startsWith("file:/") ? fileURLToPath(url) : resolve(url.slice("file:".length));
     url = pathToFileURL(filePath).href;
   }
-  return { url, filePath, authToken: local ? undefined : process.env.DATABASE_AUTH_TOKEN };
+  return { url, filePath, authToken: local ? undefined : (env.DATABASE_AUTH_TOKEN?.trim() || env.TURSO_AUTH_TOKEN?.trim()) };
 }
 
 export async function initializeDatabase() {
@@ -50,7 +51,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     client.close();
     console.log("Auction database is ready.");
   } catch {
-    console.error("Database initialization failed. Check DATABASE_URL, its directory permissions, and hosted database credentials.");
+    console.error("Database initialization failed. Check DATABASE_URL or TURSO_DATABASE_URL, directory permissions, and hosted database credentials.");
     process.exitCode = 1;
   }
 }

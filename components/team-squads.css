@@ -1,0 +1,67 @@
+.team-squads-heading { margin-bottom: 24px; }
+.team-squads-heading h2 { font: 700 40px/1.1 var(--font-display), sans-serif; color: #f2eee6; }
+.team-squads-heading p { color: #aeb9c9; font-size: 15px; margin-top: 10px; }
+.team-squad-overview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.team-squad-summary { display: block; min-width: 0; width: 100%; padding: 24px; text-align: left; border: 1px solid color-mix(in srgb, var(--summary-team-color) 30%, #ffffff15); border-radius: 10px; color: #f1ede6; background: linear-gradient(125deg, color-mix(in srgb, var(--summary-team-color) 7%, transparent), transparent 70%), var(--franchise-surface, #101720); transition: border-color .18s, background-color .18s; }
+.team-squad-summary:hover { background-color: var(--franchise-raised, #18222e); border-color: var(--summary-team-color); }
+.team-squad-summary:focus-visible { outline: 2px solid var(--summary-team-color); outline-offset: 3px; }
+.team-squad-summary-identity { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.team-squad-summary-crest { display: grid; place-items: center; flex: 0 0 62px; height: 62px; }
+.team-squad-summary-crest img { width: 60px; height: 60px; object-fit: contain; }
+.team-squad-summary-name { min-width: 0; }
+.team-squad-summary-name > strong { display: block; font-size: 19px; line-height: 1.35; }
+.team-squad-summary-identity > svg { margin-left: auto; color: var(--summary-team-color); flex-shrink: 0; }
+.team-squad-summary-manager { display: block; margin-top: 7px; color: #b0bdcb; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.team-squad-summary-manager strong { color: #eee7dc; font-weight: 600; }
+.team-squad-summary-stats { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr); gap: 16px; margin-top: 23px; padding-top: 20px; border-top: 1px solid #ffffff14; }
+.team-squad-summary-stats > span { display: flex; flex-direction: column; gap: 7px; color: #b0bdcb; font-size: 14px; }
+.team-squad-summary-stats strong { font-size: 28px; font-weight: 650; color: #f4efe5; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.team-squad-summary-stats small { font-size: 17px; font-weight: 400; color: #93a0af; }
+.squad-detail-dialog { position: fixed; inset: 0; margin: auto; width: min(1000px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); overflow: auto; padding: 0; border: 1px solid color-mix(in srgb, var(--detail-accent) 45%, #ffffff15); border-radius: 12px; color: #f1eee7; background: var(--franchise-bg, #090f17); box-shadow: 0 25px 90px #0008; font-family: var(--font-body), sans-serif; scrollbar-width: thin; scrollbar-color: var(--detail-accent) transparent; }
+.squad-detail-dialog::backdrop { background: #02060cdb; }
+.squad-detail-header { position: sticky; z-index: 2; top: 0; display: flex; gap: 18px; align-items: center; padding: 22px 26px; background: var(--franchise-surface, #121a25); border-bottom: 1px solid #ffffff15; }
+.squad-detail-crest { flex: 0 0 70px; height: 70px; display: grid; place-items: center; }
+.squad-detail-crest img { width: 68px; height: 68px; object-fit: contain; }
+.squad-detail-header > div { min-width: 0; }
+.squad-detail-header h2 { font: 700 30px/1.1 var(--font-display), sans-serif; }
+.squad-detail-header p { color: #aebacc; margin-top: 8px; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.squad-detail-header p strong { color: #eee7dc; font-weight: 600; }
+.squad-detail-header > button { margin-left: auto; display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border: 1px solid #ffffff24; border-radius: 6px; }
+.squad-detail-content { padding: 26px; }
+.squad-detail-totals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 0 0 28px; }
+.squad-detail-totals dt { color: #acb8ca; font-size: 13px; }
+.squad-detail-totals dd { font-size: 24px; font-weight: 600; margin: 8px 0 0; color: #eee7dc; }
+.squad-detail-roles { display: flex; flex-wrap: wrap; gap: 9px; margin: 0 0 24px; }
+.squad-detail-roles > div { display: flex; align-items: center; gap: 13px; padding: 10px 13px; background: var(--franchise-surface, #121b27); border: 1px solid #ffffff1c; border-radius: 6px; }
+.squad-detail-roles dt { font-size: 14px; color: #b6c1d0; }
+.squad-detail-roles dd { margin: 0; font-size: 15px; font-weight: 650; color: #f2e9da; font-variant-numeric: tabular-nums; }
+.squad-detail-roster { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; padding: 0; margin: 0; list-style: none; align-items: start; }
+.squad-detail-player { min-width: 0; overflow: hidden; background: var(--franchise-surface, #121b27); border: 1px solid #ffffff18; border-radius: 8px; }
+.squad-detail-portrait { height: 175px; display: flex; justify-content: center; align-items: flex-end; position: relative; background: radial-gradient(ellipse at 50% 90%, color-mix(in srgb, var(--detail-accent) 15%, transparent), transparent 75%); }
+.squad-detail-portrait .player-portrait { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
+.squad-detail-portrait .portrait-fallback { display: grid; place-items: center; width: 100%; height: 100%; color: #adbbc9; }
+.squad-detail-portrait .portrait-fallback svg { width: 50px; height: 50px; }
+.squad-detail-selection { position: absolute; bottom: 0; left: 10px; padding: 4px 7px; border-radius: 4px; background: #090e16ed; color: var(--detail-accent); font-size: 12px; border: 1px solid #ffffff25; }
+.squad-detail-player-copy { padding: 15px 13px; }
+.squad-detail-player-copy h3 { font-size: 16px; line-height: 1.35; }
+.squad-detail-player-copy > p { color: #a7b4c6; font-size: 13px; line-height: 1.7; margin-top: 7px; }
+.squad-detail-player-copy > p svg { display: inline; margin-left: 6px; }
+.squad-detail-price { display: flex; justify-content: space-between; align-items: center; gap: 7px; padding-top: 12px; margin-top: 12px; border-top: 1px solid #ffffff14; }
+.squad-detail-price span { color: #a8b6c7; font-size: 13px; }
+.squad-detail-price strong { font-size: 16px; color: var(--detail-accent); white-space: nowrap; }
+.squad-player-stats { margin-top: 14px; font-size: 13px; color: #b6c1cf; }
+.squad-player-stats summary { cursor: pointer; }
+.squad-player-stats dl { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin: 14px 0; }
+.squad-player-stats dd { margin: 4px 0 0; color: #f0e9dc; }
+.squad-player-stats a { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; color: var(--detail-accent); }
+.squad-detail-empty { padding: 45px 20px; text-align: center; color: #acbacb; }
+.squad-detail-empty svg { margin: 0 auto 16px; }
+.squad-detail-empty h3 { color: #eee8df; font-size: 22px; }
+.squad-detail-empty p { margin-top: 10px; }
+@media(prefers-reduced-motion: reduce) { .team-squad-summary { transition: none; } }
+@media(max-width: 850px) { .squad-detail-roster { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media(min-width: 651px) and (max-width: 850px) { .team-squad-summary-stats strong { font-size: 22px; } }
+@media(max-width: 650px) { .team-squad-overview { grid-template-columns: 1fr; } .team-squad-summary { padding: 20px; } .team-squad-summary-name > strong { font-size: 17px; } .squad-detail-header { padding: 17px; gap: 12px; } .squad-detail-header h2 { font-size: 25px; } .squad-detail-crest { flex-basis: 48px; height: 48px; } .squad-detail-crest img { width: 46px; height: 46px; } .squad-detail-content { padding: 18px; } .squad-detail-totals { grid-template-columns: 1fr 1fr; } .squad-detail-roster { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .squad-detail-price { align-items: flex-start; flex-direction: column; } .squad-detail-portrait { height: 135px; } }
+@media(max-width: 650px) {
+  .team-squad-summary-stats strong { font-size: clamp(22px, 6.5vw, 28px); }
+}

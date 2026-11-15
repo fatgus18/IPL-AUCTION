@@ -1,0 +1,76 @@
+/* Each browser's own team selects these colours; they are never room settings. */
+[data-franchise="rcb"] { --franchise-accent: #f46b75; --franchise-secondary: #dfc18c; --franchise-bg: #100a0e; --franchise-surface: #1d1118; --franchise-raised: #2b1922; --franchise-text-on-accent: #25070c; }
+[data-franchise="csk"] { --franchise-accent: #f3ce57; --franchise-secondary: #80c3ec; --franchise-bg: #100f08; --franchise-surface: #1d1a0e; --franchise-raised: #2b2614; --franchise-text-on-accent: #201903; }
+[data-franchise="mi"] { --franchise-accent: #72acff; --franchise-secondary: #dfc18c; --franchise-bg: #080f1b; --franchise-surface: #102038; --franchise-raised: #182e4a; --franchise-text-on-accent: #07182f; }
+[data-franchise="kkr"] { --franchise-accent: #baa1ef; --franchise-secondary: #dfc17b; --franchise-bg: #100b19; --franchise-surface: #1d142c; --franchise-raised: #2c2040; --franchise-text-on-accent: #1d0d32; }
+[data-franchise="srh"] { --franchise-accent: #ffad72; --franchise-secondary: #e5c896; --franchise-bg: #150d09; --franchise-surface: #26190f; --franchise-raised: #352319; --franchise-text-on-accent: #2a1204; }
+[data-franchise="rr"] { --franchise-accent: #f496c5; --franchise-secondary: #8db9f3; --franchise-bg: #150c16; --franchise-surface: #29162b; --franchise-raised: #39223b; --franchise-text-on-accent: #2a0b21; }
+[data-franchise="dc"] { --franchise-accent: #78baf1; --franchise-secondary: #f17b87; --franchise-bg: #09121d; --franchise-surface: #112339; --franchise-raised: #1b334b; --franchise-text-on-accent: #081b2d; }
+[data-franchise="pbks"] { --franchise-accent: #f4868d; --franchise-secondary: #c3cfdd; --franchise-bg: #170c10; --franchise-surface: #2a161d; --franchise-raised: #3a2029; --franchise-text-on-accent: #2c0b13; }
+[data-franchise="dch"] { --franchise-accent: #b4cee1; --franchise-secondary: #d1b36d; --franchise-bg: #0b141c; --franchise-surface: #162731; --franchise-raised: #233a47; --franchise-text-on-accent: #0b2535; }
+[data-franchise="pwi"] { --franchise-accent: #7ad0d7; --franchise-secondary: #e5b978; --franchise-bg: #081517; --franchise-surface: #12292c; --franchise-raised: #1c3a3e; --franchise-text-on-accent: #08282b; }
+[data-franchise="gt"] { --franchise-accent: #d8bd7c; --franchise-secondary: #94bbd6; --franchise-bg: #080f1c; --franchise-surface: #111e32; --franchise-raised: #1c2d45; --franchise-text-on-accent: #151a25; }
+[data-franchise="lsg"] { --franchise-accent: #80b9ff; --franchise-secondary: #ffac70; --franchise-bg: #081125; --franchise-surface: #102246; --franchise-raised: #1c335b; --franchise-text-on-accent: #071d3a; }
+
+.franchise-room {
+  --franchise-line: color-mix(in srgb, var(--franchise-accent) 25%, transparent);
+  --bg: var(--franchise-bg); --paper: var(--franchise-surface);
+  --orange: var(--franchise-accent); --gold: var(--franchise-secondary);
+  --orange-soft: color-mix(in srgb, var(--franchise-accent) 8%, transparent);
+  --studio-gold: var(--franchise-accent); --studio-line: var(--franchise-line);
+  background: radial-gradient(ellipse at 95% 2%, color-mix(in srgb, var(--franchise-accent) 10%, transparent), transparent 46%), var(--franchise-bg);
+}
+.franchise-room ::selection { background: var(--franchise-accent); color: var(--franchise-text-on-accent); }
+.franchise-room :is(button, a, input, select, textarea):focus-visible { outline-color: var(--franchise-accent); }
+.franchise-room :is(.sidebar, .room-dock) { background: var(--franchise-bg); border-color: var(--franchise-line); }
+.franchise-room .brand-mark { background: var(--franchise-accent); color: var(--franchise-text-on-accent); }
+.franchise-room :is(.brand-dot, .sidebar .nav-item.active, .metric-icon, .metric-link, .eyebrow, .manage-eyebrow) { color: var(--franchise-accent); }
+.franchise-room .sidebar nav .nav-item.active:after { background: var(--franchise-accent); }
+.franchise-room :is(.nav-count, .season-tag, .manage-count, .manage-soft-pill) { background: var(--orange-soft); color: var(--franchise-accent); border-color: var(--franchise-line); }
+.franchise-room .avatar.coral { background: var(--franchise-raised); color: var(--franchise-accent); border: 1px solid var(--franchise-line); }
+.franchise-room :is(.button.primary, .lock-button, .manage-button.manage-primary) {
+  background: var(--franchise-accent); border-color: var(--franchise-accent); color: var(--franchise-text-on-accent);
+  box-shadow: inset 0 1px #ffffff30;
+}
+.franchise-room :is(.button.primary, .lock-button, .manage-button.manage-primary):hover:not(:disabled) { background: color-mix(in srgb, var(--franchise-accent) 85%, white); box-shadow: 0 5px 22px var(--orange-soft); }
+.franchise-room :is(.button.secondary, .dock-button, .manage-button:not(.manage-primary):not(.manage-danger)) { background: var(--franchise-surface); border-color: var(--franchise-line); color: #eeeaf0; }
+.franchise-room :is(.button.secondary, .dock-button, .manage-button:not(.manage-primary):not(.manage-danger)):hover:not(:disabled) { background: var(--franchise-raised); border-color: var(--franchise-accent); }
+.franchise-room :is(.player-card, .bid-card) { background: radial-gradient(ellipse at 90% 15%, color-mix(in srgb, var(--franchise-accent) 12%, transparent), transparent 65%), var(--franchise-surface); border-color: var(--franchise-line); }
+.franchise-room .player-halo { background: radial-gradient(circle, var(--orange-soft), transparent 65%); }
+.franchise-room .player-orbit { border-color: var(--franchise-line); }
+.franchise-room .player-ghost { -webkit-text-stroke-color: var(--franchise-line); }
+.franchise-room .portrait-floor { background: linear-gradient(0deg, var(--franchise-surface), transparent); }
+.franchise-room :is(.player-stats, .player-data-note, .bid-history, .table-floor) { background: color-mix(in srgb, var(--franchise-bg) 85%, transparent); border-color: var(--franchise-line); }
+.franchise-room :is(.base-price strong, .player-data-note a, .bid-price > strong, .history-row.latest strong, .next-base, .player-tags > span:nth-child(2)) { color: var(--franchise-secondary); }
+.franchise-room :is(.bid-card-heading, .bid-controls, .bid-history, .activity-tabs, .chat-form, .page-footer, .up-next-player) { border-color: var(--franchise-line); }
+.franchise-room :is(.status-pill.live, .activity-tabs > button.selected) { color: var(--franchise-accent); border-color: var(--franchise-accent); }
+.franchise-room :is(.activity-card, .up-next, .app-dialog, .manage-dialog, .sound-panel) { background: var(--franchise-surface); border-color: var(--franchise-line); }
+.franchise-room :is(.chat-form input, .dialog-inner input, .dialog-inner select, .manage-field input, .manage-field select, .manage-search, .manage-status-filter) { background: var(--franchise-bg); border-color: var(--franchise-line); }
+.franchise-room :is(.chat-form button, .up-next-heading button, .sound-enabled, .sound-heading > svg, .sound-volume output, .sound-preview, .dialog-symbol, .dock-icon) { color: var(--franchise-accent); }
+.franchise-room .sound-volume input, .franchise-room .manage-check input { accent-color: var(--franchise-accent); }
+.franchise-room .sound-switch[aria-checked="true"] i { background: var(--franchise-accent); }
+.franchise-room .team-table { background: linear-gradient(150deg, color-mix(in srgb, var(--team-color) 10%, var(--franchise-surface)), var(--franchise-surface)); border-color: var(--franchise-line); }
+.franchise-room .team-table.your-table { border-color: var(--franchise-accent); box-shadow: inset 0 2px var(--franchise-accent); }
+.franchise-room .team-table.leading { border-color: var(--team-color); box-shadow: 0 0 0 1px color-mix(in srgb, var(--team-color) 25%, transparent); }
+.franchise-room .team-table.leading:before { background: var(--team-color); }
+.franchise-room .team-identity h4 > span { color: var(--franchise-accent); background: var(--orange-soft); }
+.franchise-room .manage-panel { --manage-bg: var(--franchise-surface); --manage-elevated: var(--franchise-raised); --manage-line: var(--franchise-line); --manage-lime: var(--franchise-accent); }
+.franchise-room :is(.manage-player-table-wrap, .manage-settings-form, .manage-squad-card, .personal-squad-totals, .personal-squad-player, .personal-squad-empty, .personal-squad-unassigned) { background: var(--franchise-surface); border-color: var(--franchise-line); }
+.franchise-room :is(.manage-player-table th, .manage-settings-actions, .manage-info-note, .manage-check) { background: var(--franchise-raised); border-color: var(--franchise-line); }
+.franchise-room :is(.manage-player-table td, .manage-pool-summary, .manage-settings-section, .manage-roster, .personal-squad-totals > div + div) { border-color: var(--franchise-line); }
+.franchise-room .manage-role-tabs .manage-role-active { background: var(--orange-soft); color: var(--franchise-accent); border-color: var(--franchise-accent); }
+.franchise-room .manage-player-table tbody tr:hover { background: var(--orange-soft); }
+.franchise-room .personal-squad-header { background: radial-gradient(ellipse at 100% 50%, var(--orange-soft), transparent 65%), var(--franchise-surface); border-color: var(--franchise-line); }
+.franchise-room :is(.personal-squad-eyebrow, .personal-squad-totals > div:first-child dd, .personal-squad-purchase > strong) { color: var(--franchise-accent); }
+html[data-franchise] .auction-scrollbar__thumb { color: var(--franchise-accent); background: var(--franchise-bg); }
+html[data-franchise] .auction-scrollbar::before { background: color-mix(in srgb, var(--franchise-accent) 20%, transparent); }
+html[data-franchise] .auction-scrollbar__thumb:focus-visible { outline-color: var(--franchise-accent); }
+
+.franchise-hero { display: flex; align-items: center; gap: 20px; padding: 22px 26px; margin-bottom: 24px; border: 1px solid var(--franchise-line); border-radius: 10px; background: var(--franchise-surface); }
+.franchise-hero-crest { display: grid; place-items: center; flex: 0 0 65px; height: 65px; }
+.franchise-hero-crest img { width: 62px; height: 62px; object-fit: contain; }
+.franchise-hero-copy { min-width: 0; }
+.franchise-hero h1 { color: #f7f2eb; font: 700 clamp(28px, 3vw, 38px)/1.1 var(--font-display), sans-serif; overflow-wrap: anywhere; }
+.franchise-hero-owner { margin-top: 7px; color: #c9c5ce; font-size: 15px; line-height: 1.5; }
+@media(max-width: 1050px) { .franchise-room .sidebar nav { background: var(--franchise-surface); } }
+@media(max-width: 600px) { .franchise-hero { padding: 18px; gap: 14px; } .franchise-hero-crest { flex-basis: 48px; height: 48px; } .franchise-hero-crest img { width: 46px; height: 46px; } .franchise-hero h1 { font-size: 30px; } .franchise-hero-owner { font-size: 14px; } }

@@ -1,0 +1,27 @@
+.live-lot-status { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 11px; min-width: 0; }
+.live-lot-badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid #ff586661; border-radius: 4px; background: #a4152619; color: #ff6872; font-size: 14px; font-weight: 750; line-height: 1; letter-spacing: 1px; }
+.live-lot-badge > i { display: inline-block; width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; background: #ff3f50; box-shadow: 0 0 0 4px #ff40501a, 0 0 13px 3px #ff40505c; }
+.live-lot-bidding .live-lot-badge > i { animation: live-lot-glow 2.6s ease-in-out infinite; }
+.live-lot-phase { color: #b8c1cf; font-size: 13px; font-weight: 450; letter-spacing: 0; }
+@keyframes live-lot-glow { 50% { box-shadow: 0 0 0 5px #ff405014, 0 0 19px 4px #ff405078; } }
+.new-lot-notice { position: fixed; z-index: 58; right: 22px; bottom: 96px; display: flex; align-items: center; gap: 14px; width: min(378px, calc(100vw - 32px)); padding: 17px 42px 17px 16px; border: 1px solid #ff586645; border-radius: 10px; background: var(--franchise-surface, #141c27); color: #f7f2e9; box-shadow: 0 12px 36px #0005; }
+.new-lot-photo { display: flex; justify-content: center; align-items: flex-end; flex: 0 0 58px; height: 76px; overflow: hidden; border-radius: 6px; background: #ffffff05; }
+.new-lot-photo .player-portrait { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
+.new-lot-photo .portrait-fallback { display: grid; place-items: center; color: #adbac8; font-size: 14px; }
+.new-lot-photo .portrait-fallback svg { width: 28px; height: 28px; }
+.new-lot-photo .portrait-fallback > span { display: none; }
+.new-lot-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; align-items: flex-start; gap: 5px; }
+.new-lot-copy > span:first-child { color: #b2bdce; font-size: 13px; }
+.new-lot-copy > strong { font-size: 17px; line-height: 1.3; font-weight: 650; overflow-wrap: anywhere; }
+.new-lot-phase { display: flex; align-items: center; gap: 6px; color: #c9b2b5; font-size: 13px; }
+.new-lot-phase > i { width: 5px; height: 5px; border-radius: 50%; background: #ff5866; }
+.new-lot-view { display: inline-flex; align-items: center; gap: 7px; min-height: 35px; margin-top: 2px; padding: 4px 0; color: var(--franchise-accent, #e6c48a); font-size: 14px; font-weight: 600; }
+.new-lot-view:hover { text-decoration: underline; }
+.new-lot-dismiss { position: absolute; top: 8px; right: 7px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 5px; color: #bac3d0; }
+.new-lot-dismiss:hover { background: #ffffff0b; color: #fff; }
+.app-shell:has(dialog[open]) .new-lot-notice, .app-shell:has(.sidebar.is-open) .new-lot-notice { visibility: hidden; }
+@media(max-width: 940px) {
+  .app-shell.tab-build-xi:has(.lineup-inspector.lineup-controls-open .lineup-inspector-player) .new-lot-notice { visibility: hidden; }
+}
+@media(max-width: 650px) { .new-lot-notice { right: 16px; bottom: 86px; } .app-shell:has(.new-lot-notice) > .toast { bottom: 265px; } .live-lot-status { gap: 8px; } }
+@media(prefers-reduced-motion: reduce) { .live-lot-bidding .live-lot-badge > i { animation: none; } }

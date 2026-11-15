@@ -1,0 +1,59 @@
+{
+  "updatedAt": "2026-11-14T08:04:26.962Z",
+  "profiles": {
+    "andre-russell": {
+      "id": "cricbuzz-7736",
+      "name": "Andre Russell",
+      "country": "West Indies",
+      "role": "All-rounder",
+      "image": "https://static.cricbuzz.com/a/img/v1/i1/c170821/andre-russell.jpg?d=high&p=det",
+      "dateOfBirth": "April 29, 1988 (38 years)",
+      "battingStyle": "Right Handed Bat",
+      "bowlingStyle": "Right-arm fast",
+      "profileUrl": "https://www.cricbuzz.com/profiles/7736/andre-russell",
+      "provider": "Cricbuzz",
+      "stats": {
+        "matches": 139,
+        "runs": 2651,
+        "wickets": 123,
+        "strikeRate": 174.18
+      },
+      "statsFormat": "IPL",
+      "statsScope": "career",
+      "fetchedAt": "2026-11-14T08:04:23.260Z",
+      "sourceUrls": [
+        "https://www.cricbuzz.com/profiles/7736/andre-russell"
+      ],
+      "missingFields": [],
+      "warnings": [],
+      "basePriceSuggested": 30
+    },
+    "glenn-maxwell": {
+      "id": "cricbuzz-7662",
+      "name": "Glenn Maxwell",
+      "country": "Australia",
+      "role": "All-rounder",
+      "image": "https://static.cricbuzz.com/a/img/v1/i1/c845944/glenn-maxwell.jpg?d=high&p=det",
+      "dateOfBirth": "October 14, 1988 (38 years)",
+      "battingStyle": "Right Handed Bat",
+      "bowlingStyle": "Right-arm offbreak",
+      "profileUrl": "https://www.cricbuzz.com/profiles/7662/glenn-maxwell",
+      "provider": "Cricbuzz",
+      "stats": {
+        "matches": 141,
+        "runs": 2819,
+        "wickets": 41,
+        "strikeRate": 155.15
+      },
+      "statsFormat": "IPL",
+      "statsScope": "career",
+      "fetchedAt": "2026-11-14T08:04:26.960Z",
+      "sourceUrls": [
+        "https://www.cricbuzz.com/profiles/7662/glenn-maxwell"
+      ],
+      "missingFields": [],
+      "warnings": [],
+      "basePriceSuggested": 30
+    }
+  }
+}

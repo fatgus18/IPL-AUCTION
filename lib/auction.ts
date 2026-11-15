@@ -1,63 +1,88 @@
+import { CATALOG_VERSION, CATALOG_DATA_REVISION, buildCatalogPool, legacyPlayerDetails } from "./player-catalog.ts";
+import { PLAYER_ROLES, formatMoney, getNextBid } from "./auction-display.ts";
+import { TEAM_SEEDS, TEAM_CATALOG_VERSION, PRACTICE_MANAGER_NAMES } from "./team-catalog.ts";
+export { PLAYER_ROLES, formatMoney, getNextBid } from "./auction-display.ts";
+export { TEAM_SEEDS } from "./team-catalog.ts";
+
 /** All monetary values are integer lakhs: 100 lakhs = 1 crore. */
-export const PLAYER_ROLES = ["Marquee", "Batter", "Bowler", "All-rounder", "Wicketkeeper"] as const;
 export type PlayerRole = (typeof PLAYER_ROLES)[number];
 export type Phase = "waiting" | "live" | "paused" | "locked" | "sold" | "unsold";
+export type PlayerStats = { matches: number | null; runs: number | null; wickets: number | null; strikeRate: number | null };
+export type PlayerDataSource = { label: string; url: string };
 export type Player = {
   id: string; name: string; country: string; role: PlayerRole; basePrice: number;
   isOverseas: boolean; status: "available" | "sold" | "unsold";
   soldTo?: string; soldFor?: number; image?: string;
-  stats: { matches: number; runs: number; wickets: number; strikeRate: number };
+  stats: PlayerStats;
+  statsFormat?: "IPL" | "T20" | "T20I" | "ODI" | "Test" | "Unknown";
+  dataStatus?: "verified" | "partial" | "manual" | "illustrative";
+  profileUrl?: string;
+  dataSources?: PlayerDataSource[];
+  dataUpdatedAt?: string;
+  playingRole?: string;
+  battingStyle?: string;
+  bowlingStyle?: string;
+  birthDate?: string;
+  eligibilityVerified?: boolean;
+  catalogSheets?: string[];
+  catalogArchived?: boolean;
 };
+export type TeamLineupInput = {
+  /** Array indices are positions; null keeps an unassigned position in place. */
+  playingXI: (string | null)[]; substitutes: (string | null)[];
+  captainId: string | null; viceCaptainId: string | null;
+};
+export type TeamLineup = TeamLineupInput & { revision: number };
 export type Team = {
   id: string; name: string; shortName: string; color: string; purse: number;
   squad: { playerId: string; amount: number }[];
+  lineup?: TeamLineup;
 };
 export type Member = {
   id: string; name: string; role: "auctioneer" | "bidder" | "spectator";
   teamId: string | null; joinedAt: number; lastSeenAt: number; flagRaisedAt: number | null;
 };
 export type Bid = { id: string; playerId: string; teamId: string; memberId: string; amount: number; at: number };
-export type Activity = { id: string; type: string; text: string; at: number; memberId?: string };
+export type Activity = {
+  id: string; type: string; text: string; at: number; memberId?: string;
+  senderName?: string; senderTeamId?: string | null;
+};
 export type RoomSettings = {
   purse: number; maxSquadSize: number; maxOverseas: number;
   bidCooldownMs: number; bidIncrement: number; callUrl: string;
 };
 export type RoomState = {
   id: string; code: string; name: string; version: number; createdAt: number;
+  mode?: "practice";
   serverTime: number; hostId: string; members: Member[]; players: Player[]; teams: Team[];
   currentPlayerId: string | null; currentBid: number; leadingTeamId: string | null;
   phase: Phase; lastBidAt: number | null; bidHistory: Bid[]; activity: Activity[];
   settings: RoomSettings;
+  catalogVersion?: string;
+  catalogDataRevision?: string;
+  sharedCatalogVersion?: number;
+  catalogCount?: number;
+  teamCatalogVersion?: number;
 };
 export type PlayerInput = Omit<Player, "id" | "status" | "soldTo" | "soldFor"> & { id?: string };
 export type AuctionAction =
   | { type: "select_player"; playerId: string }
-  | { type: "start" | "pause" | "resume" | "lock" | "sell" | "unsold" | "raise_flag" | "leave" | "ping" }
-  | { type: "bid"; expectedAmount: number; expectedPlayerId: string }
+  | { type: "start" | "pause" | "resume" | "lock" | "sell" | "unsold" | "leave" | "ping" }
+  | { type: "bid"; expectedAmount: number; expectedPlayerId: string; customAmount?: number }
   | { type: "add_player"; player: PlayerInput }
   | { type: "update_player"; player: Player }
   | { type: "delete_player"; playerId: string }
   | { type: "update_settings"; settings: Partial<RoomSettings> }
   | { type: "chat"; text: string }
-  | { type: "claim_team"; teamId: string | null };
-
-export const TEAM_SEEDS = [
-  { id: "csk", name: "Chennai Super Kings", shortName: "CSK", color: "#edc447" },
-  { id: "mi", name: "Mumbai Indians", shortName: "MI", color: "#4d8dff" },
-  { id: "rcb", name: "Royal Challengers Bengaluru", shortName: "RCB", color: "#ef595e" },
-  { id: "kkr", name: "Kolkata Knight Riders", shortName: "KKR", color: "#a68ce5" },
-  { id: "srh", name: "Sunrisers Hyderabad", shortName: "SRH", color: "#f79651" },
-  { id: "rr", name: "Rajasthan Royals", shortName: "RR", color: "#ec79ae" },
-  { id: "dc", name: "Delhi Capitals", shortName: "DC", color: "#61bde9" },
-  { id: "pbks", name: "Punjab Kings", shortName: "PBKS", color: "#e87878" },
-] as const;
+  | { type: "set_lineup"; teamId: string; lineup: TeamLineupInput; expectedRevision: number }
+  | { type: "claim_team"; teamId: string | null; teamPassword?: string };
 
 export const DEFAULT_SETTINGS: RoomSettings = {
   purse: 10000, maxSquadSize: 25, maxOverseas: 8, bidCooldownMs: 1000,
   bidIncrement: 25, callUrl: "",
 };
 
-// Illustrative career figures for the starter pool; organizers can edit every field.
+// Original sample values identify untouched legacy entries during non-destructive migration.
 const seedData: [string, string, PlayerRole, number, number, number, number, number][] = [
   ["Rishabh Pant", "India", "Marquee", 200, 111, 3284, 0, 148.93],
   ["Virat Kohli", "India", "Marquee", 200, 252, 8004, 4, 131.97],
@@ -94,20 +119,74 @@ const seedData: [string, string, PlayerRole, number, number, number, number, num
 ];
 
 export function createPlayerPool(): Player[] {
-  return seedData.map(([name, country, role, basePrice, matches, runs, wickets, strikeRate]) => ({
-    id: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"), name, country, role, basePrice,
-    isOverseas: country !== "India", status: "available", stats: { matches, runs, wickets, strikeRate },
-  }));
+  const knownCountries = Object.fromEntries(seedData.map(([name, country]) => [name.toLowerCase().replace(/[^a-z0-9]+/g, "-"), country]));
+  return buildCatalogPool(knownCountries);
 }
 
-export function formatMoney(lakhs: number): string {
-  return lakhs >= 100 ? `₹${(lakhs / 100).toFixed(2)} Cr` : `₹${lakhs} L`;
+/** Append new catalog identities once; never reset sales, bids, purses, or manual edits. */
+export function upgradeRoomCatalog(source: RoomState, now = Date.now()): RoomState {
+  if (source.catalogVersion === CATALOG_VERSION && source.catalogDataRevision === CATALOG_DATA_REVISION) return source;
+  const state = structuredClone(source);
+  const canonical = createPlayerPool();
+  const normalize = (value: string) => value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
+  const present = new Set(state.players.map(player => normalize(player.name)));
+  const existingIds = new Set(state.players.map(player => player.id));
+  let added = 0;
+  for (const player of canonical) {
+    if (source.catalogVersion !== CATALOG_VERSION && !existingIds.has(player.id) && !present.has(normalize(player.name))) {
+      state.players.push(player); existingIds.add(player.id); present.add(normalize(player.name)); added += 1;
+    }
+  }
+  const catalogById = new Map(canonical.map(player => [player.id, player]));
+  state.players = state.players.map(player => {
+    const legacyDetails = legacyPlayerDetails(player.id);
+    const entry = catalogById.get(player.id) ?? (legacyDetails ? { ...player, ...legacyDetails } : undefined);
+    if (!entry) return player;
+    const legacy = seedData.find(([name]) => normalize(name) === normalize(player.name));
+    const untouchedSample = !player.dataStatus && legacy &&
+      player.stats.matches === legacy[4] && player.stats.runs === legacy[5] &&
+      player.stats.wickets === legacy[6] && player.stats.strikeRate === legacy[7];
+    const replaceFacts = untouchedSample || player.dataStatus === "illustrative" ||
+      (player.dataStatus === "partial" && !!player.catalogSheets?.length);
+    return {
+      ...player,
+      catalogSheets: entry.catalogSheets,
+      ...(replaceFacts ? {
+        stats: entry.stats, statsFormat: entry.statsFormat, dataStatus: entry.dataStatus,
+        dataSources: entry.dataSources, dataUpdatedAt: entry.dataUpdatedAt,
+        profileUrl: entry.profileUrl, playingRole: entry.playingRole,
+        battingStyle: entry.battingStyle, bowlingStyle: entry.bowlingStyle, birthDate: entry.birthDate,
+        image: player.image || entry.image,
+        ...(player.eligibilityVerified === false && entry.eligibilityVerified ? { country: entry.country, isOverseas: entry.isOverseas, eligibilityVerified: true } : {}),
+      } : {}),
+    };
+  });
+  state.catalogVersion = CATALOG_VERSION;
+  state.catalogDataRevision = CATALOG_DATA_REVISION;
+  state.version += 1; state.serverTime = now;
+  if (added) state.activity.push({ id: `catalog-${state.version}-${now}`, type: "pool", text: `${added} players from the imported workbook were added to the pool. Existing auction results were preserved.`, at: now });
+  state.activity = state.activity.slice(-150);
+  return state;
 }
 
-export function getNextBid(state: RoomState): number {
-  const player = state.players.find((entry) => entry.id === state.currentPlayerId);
-  if (!player) return 0;
-  return state.leadingTeamId ? state.currentBid + state.settings.bidIncrement : player.basePrice;
+/** Append franchise choices once without rewriting existing teams or auction records. */
+export function upgradeRoomTeams(source: RoomState, now = Date.now()): RoomState {
+  if (source.teamCatalogVersion === TEAM_CATALOG_VERSION) return source;
+  const existingIds = new Set(source.teams.map(team => team.id));
+  const added = TEAM_SEEDS.filter(team => !existingIds.has(team.id));
+  const teams: Team[] = [...source.teams, ...added.map(team => ({ ...team, purse: source.settings.purse, squad: [] }))];
+  const members = [...source.members];
+  if (source.mode === "practice") {
+    for (const team of added) {
+      if (!members.some(member => member.teamId === team.id || member.id === `demo-${team.id}`)) {
+        members.push({
+          id: `demo-${team.id}`, name: PRACTICE_MANAGER_NAMES[team.id], role: "bidder", teamId: team.id,
+          joinedAt: now, lastSeenAt: now, flagRaisedAt: null,
+        });
+      }
+    }
+  }
+  return { ...source, teams, members, teamCatalogVersion: TEAM_CATALOG_VERSION, version: source.version + 1, serverTime: now };
 }
 
 export function createRoomState(code: string, name: string, host: Member, now = Date.now()): RoomState {
@@ -117,7 +196,8 @@ export function createRoomState(code: string, name: string, host: Member, now = 
     teams: TEAM_SEEDS.map((team) => ({ ...team, purse: DEFAULT_SETTINGS.purse, squad: [] })),
     currentPlayerId: null, currentBid: 0, leadingTeamId: null, phase: "waiting", lastBidAt: null,
     bidHistory: [], activity: [{ id: `created-${now}`, type: "room", text: `${host.name} opened the auction room.`, at: now }],
-    settings: { ...DEFAULT_SETTINGS },
+    settings: { ...DEFAULT_SETTINGS }, catalogVersion: CATALOG_VERSION, catalogDataRevision: CATALOG_DATA_REVISION,
+    teamCatalogVersion: TEAM_CATALOG_VERSION,
   };
 }
 
@@ -125,9 +205,8 @@ export function createDemoState(options: { hostName?: string } = {}): RoomState 
   const now = Date.now();
   const host: Member = { id: "demo-host", name: options.hostName || "You", role: "auctioneer", teamId: null, joinedAt: now - 300000, lastSeenAt: now, flagRaisedAt: null };
   const state = createRoomState("DEMO26", "The Premier Auction", host, now - 300000);
-  const names = ["Aarav", "Priya", "Anmol", "Kabir", "Riya", "Arjun", "Neha", "Dev"];
-  state.members.push(...TEAM_SEEDS.map((team, index) => ({
-    id: `demo-${team.id}`, name: names[index], role: "bidder" as const, teamId: team.id,
+  state.members.push(...TEAM_SEEDS.map((team) => ({
+    id: `demo-${team.id}`, name: PRACTICE_MANAGER_NAMES[team.id], role: "bidder" as const, teamId: team.id,
     joinedAt: now - 240000, lastSeenAt: now, flagRaisedAt: null,
   })));
   state.currentPlayerId = "rishabh-pant";
@@ -183,23 +262,70 @@ function validatePlayer(input: PlayerInput | Player, id: string): Player {
   requireCondition(input && typeof input === "object", "Player details are required.");
   requireCondition(PLAYER_ROLES.includes(input.role), "Choose a valid player category.");
   requireCondition(typeof input.isOverseas === "boolean", "Choose whether this player is overseas.");
-  const stats = input.stats || { matches: 0, runs: 0, wickets: 0, strikeRate: 0 };
+  const stats = input.stats || { matches: null, runs: null, wickets: null, strikeRate: null };
+  const statistic = (value: unknown, label: string, maximum: number, integer = true) => value === null || value === undefined ? null : numberInRange(value, label, 0, maximum, integer);
+  const country = cleanText(input.country, "Country", 50);
+  requireCondition(!input.statsFormat || ["IPL", "T20", "T20I", "ODI", "Test", "Unknown"].includes(input.statsFormat), "Choose a valid statistics format.");
+  requireCondition(!input.dataStatus || ["verified", "partial", "manual", "illustrative"].includes(input.dataStatus), "Invalid player data status.");
+  requireCondition(input.dataSources === undefined || (Array.isArray(input.dataSources) && input.dataSources.length <= 5), "A player can have up to five data sources.");
+  requireCondition(input.eligibilityVerified === undefined || typeof input.eligibilityVerified === "boolean", "Invalid player eligibility status.");
   return {
-    id, name: cleanText(input.name, "Player name"), country: cleanText(input.country, "Country", 50),
+    id, name: cleanText(input.name, "Player name"), country,
     role: input.role, basePrice: numberInRange(input.basePrice, "Base price", 1, 100000),
     isOverseas: input.isOverseas, status: "available", image: safeUrl(input.image, "Player image"),
     stats: {
-      matches: numberInRange(stats.matches, "Matches", 0, 10000), runs: numberInRange(stats.runs, "Runs", 0, 1000000),
-      wickets: numberInRange(stats.wickets, "Wickets", 0, 10000), strikeRate: numberInRange(stats.strikeRate, "Strike rate", 0, 1000, false),
+      matches: statistic(stats.matches, "Matches", 10000), runs: statistic(stats.runs, "Runs", 1000000),
+      wickets: statistic(stats.wickets, "Wickets", 10000), strikeRate: statistic(stats.strikeRate, "Strike rate", 1000, false),
     },
+    statsFormat: input.statsFormat || "Unknown", dataStatus: input.dataStatus || "manual",
+    profileUrl: safeUrl(input.profileUrl, "Player profile"),
+    dataSources: input.dataSources?.map(source => ({ label: cleanText(source.label, "Source name", 50), url: safeUrl(source.url, "Source URL") })) || [],
+    dataUpdatedAt: input.dataUpdatedAt ? cleanText(input.dataUpdatedAt, "Data timestamp", 40) : undefined,
+    playingRole: input.playingRole ? cleanText(input.playingRole, "Playing role", 80) : undefined,
+    battingStyle: input.battingStyle ? cleanText(input.battingStyle, "Batting style", 80) : undefined,
+    bowlingStyle: input.bowlingStyle ? cleanText(input.bowlingStyle, "Bowling style", 80) : undefined,
+    birthDate: input.birthDate ? cleanText(input.birthDate, "Birth date", 40) : undefined,
+    eligibilityVerified: !["unverified", "unknown", "not supplied", "not available", "n/a"].includes(country.toLowerCase()) && input.eligibilityVerified !== false,
   };
 }
 
 function validateTeamBid(state: RoomState, team: Team, player: Player, amount: number) {
+  requireCondition(player.eligibilityVerified !== false, "The auctioneer must confirm this player's country and overseas status before bidding.", 409, "PLAYER_REVIEW_REQUIRED");
   requireCondition(team.purse >= amount, `${team.shortName} does not have enough purse remaining.`, 409, "INSUFFICIENT_PURSE");
   requireCondition(team.squad.length < state.settings.maxSquadSize, `${team.shortName}'s squad is full.`, 409, "SQUAD_FULL");
   const overseas = team.squad.filter((sale) => state.players.find((entry) => entry.id === sale.playerId)?.isOverseas).length;
   requireCondition(!player.isOverseas || overseas < state.settings.maxOverseas, `${team.shortName} has reached the overseas player limit.`, 409, "OVERSEAS_LIMIT");
+}
+
+function validateLineup(input: unknown, state: RoomState, team: Team): TeamLineupInput {
+  requireCondition(input && typeof input === "object" && !Array.isArray(input), "Lineup details are required.");
+  const value = input as Record<string, unknown>;
+  const owned = new Set(team.squad.map(sale => sale.playerId));
+  const purchased = new Set(state.players.filter(player => player.status === "sold" && player.soldTo === team.id).map(player => player.id));
+  const playerIds = (candidate: unknown, label: string, maximum: number): (string | null)[] => {
+    requireCondition(Array.isArray(candidate) && candidate.length <= maximum, `Choose up to ${maximum} players for ${label}.`);
+    for (const id of candidate) {
+      if (id === null) continue;
+      requireCondition(typeof id === "string" && id.length > 0 && id.length <= 100, "Choose valid player IDs for your lineup.");
+      requireCondition(owned.has(id) && purchased.has(id), "Your lineup can only include players purchased by your team.", 400, "LINEUP_PLAYER_NOT_OWNED");
+    }
+    const selected = candidate.filter(id => id !== null);
+    requireCondition(new Set(selected).size === selected.length, "A player can only appear once in your lineup.");
+    const positions = [...candidate] as (string | null)[];
+    while (positions.at(-1) === null) positions.pop();
+    return positions;
+  };
+  const playingXI = playerIds(value.playingXI, "the playing XI", 11);
+  const substitutes = playerIds(value.substitutes, "the substitutes", 5);
+  requireCondition(!substitutes.some(id => id !== null && playingXI.includes(id)), "A player cannot be in both the playing XI and substitutes.");
+  const captain = (id: unknown, label: string): string | null => {
+    requireCondition(id === null || (typeof id === "string" && playingXI.includes(id)), `${label} must be selected from your playing XI.`);
+    return id as string | null;
+  };
+  const captainId = captain(value.captainId, "The captain");
+  const viceCaptainId = captain(value.viceCaptainId, "The vice-captain");
+  requireCondition(captainId === null || captainId !== viceCaptainId, "Choose different players as captain and vice-captain.");
+  return { playingXI, substitutes, captainId, viceCaptainId };
 }
 
 /** Pure authoritative transition, shared with the interactive demo. Throws AuctionError on rejection. */
@@ -211,17 +337,21 @@ export function applyAction(source: RoomState, action: AuctionAction, memberId: 
   const hostActions = ["select_player", "start", "pause", "resume", "lock", "sell", "unsold", "add_player", "update_player", "delete_player", "update_settings"];
   if (hostActions.includes(action.type)) requireCondition(member.id === state.hostId && member.role === "auctioneer", "Only the auctioneer can do that.", 403, "FORBIDDEN");
   const player = state.players.find((entry) => entry.id === state.currentPlayerId);
-  const log = (type: string, text: string) => state.activity.push({ id: `${state.version + 1}-${now}-${state.activity.length}`, type, text, at: now, memberId });
+  const log = (type: string, text: string) => state.activity.push({
+    id: `${state.version + 1}-${now}-${state.activity.length}`, type, text, at: now, memberId,
+    ...(type === "chat" ? { senderName: member.name, senderTeamId: member.teamId } : {}),
+  });
   switch (action.type) {
     case "select_player": {
       requireCondition(["waiting", "sold", "unsold"].includes(state.phase), "Close the current auction before selecting another player.", 409);
       const next = state.players.find((entry) => entry.id === action.playerId);
-      requireCondition(next && next.status !== "sold", "Choose an available or unsold player.");
+      requireCondition(next && !next.catalogArchived && next.status !== "sold", "Choose an available or unsold player from the shared pool.");
       next.status = "available"; state.currentPlayerId = next.id; state.currentBid = 0; state.leadingTeamId = null;
       state.lastBidAt = null; state.phase = "waiting"; log("player", `${next.name} is on the auction floor.`); break;
     }
     case "start":
       requireCondition(player && state.phase === "waiting", "Select a player before opening bidding.", 409);
+      requireCondition(player.eligibilityVerified !== false, "Confirm this player's country and overseas status before opening bidding.", 409, "PLAYER_REVIEW_REQUIRED");
       state.phase = "live"; log("auction", `Bidding is open for ${player.name}.`); break;
     case "pause":
       requireCondition(state.phase === "live", "Bidding is not live.", 409);
@@ -252,24 +382,33 @@ export function applyAction(source: RoomState, action: AuctionAction, memberId: 
       requireCondition(team.id !== state.leadingTeamId, "Your team already holds the highest bid.", 409, "ALREADY_LEADING");
       const nextAmount = getNextBid(state);
       requireCondition(action.expectedAmount === nextAmount, "Another bid arrived first. Review the updated price and bid again.", 409, "STALE_BID");
+      const amount = action.customAmount === undefined ? nextAmount : action.customAmount;
+      requireCondition(typeof amount === "number" && Number.isSafeInteger(amount) && amount > 0, "Enter a whole number of lakhs for your bid.", 400, "INVALID_BID_AMOUNT");
+      requireCondition(amount >= nextAmount, `Your bid must be at least ${formatMoney(nextAmount)}.`, 400, "BID_TOO_LOW");
       requireCondition(state.lastBidAt === null || now - state.lastBidAt >= state.settings.bidCooldownMs, "The next bid opens in a moment.", 429, "BID_COOLDOWN");
-      validateTeamBid(state, team, player, nextAmount);
-      state.currentBid = nextAmount; state.leadingTeamId = team.id; state.lastBidAt = now; member.flagRaisedAt = now;
-      state.bidHistory.push({ id: `bid-${state.version + 1}-${now}`, playerId: player.id, teamId: team.id, memberId, amount: nextAmount, at: now });
-      log("bid", `${team.name} bid ${formatMoney(nextAmount)}.`); break;
+      validateTeamBid(state, team, player, amount);
+      state.currentBid = amount; state.leadingTeamId = team.id; state.lastBidAt = now;
+      state.bidHistory.push({ id: `bid-${state.version + 1}-${now}`, playerId: player.id, teamId: team.id, memberId, amount, at: now });
+      log("bid", `${team.name} bid ${formatMoney(amount)}.`); break;
     }
     case "add_player": {
       requireCondition(state.players.length < 500, "A room can contain up to 500 players.");
       const id = action.player?.id || `player-${now}-${state.version + 1}`;
       requireCondition(typeof id === "string" && /^[a-zA-Z0-9_-]{1,100}$/.test(id), "Invalid player ID.");
       requireCondition(!state.players.some((entry) => entry.id === id), "A player with this ID already exists.", 409);
-      const added = validatePlayer(action.player, id); state.players.push(added); log("pool", `${added.name} added to the player pool.`); break;
+      const added = validatePlayer(action.player, id);
+      const normalizeIdentity = (name: string) => name.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
+      requireCondition(!state.players.some(entry => !entry.catalogArchived && (
+        (added.profileUrl && entry.profileUrl === added.profileUrl) ||
+        (normalizeIdentity(entry.name) === normalizeIdentity(added.name) && entry.country.toLowerCase() === added.country.toLowerCase())
+      )), "This player is already in the pool. Update their existing profile instead.", 409, "PLAYER_EXISTS");
+      state.players.push(added); log("pool", `${added.name} added to the player pool.`); break;
     }
     case "update_player": {
       const index = state.players.findIndex((entry) => entry.id === action.player?.id);
       requireCondition(index >= 0, "Player not found.", 404);
-      requireCondition(state.players[index].status !== "sold" && action.player.id !== state.currentPlayerId, "Current and sold players cannot be edited.", 409);
-      state.players[index] = { ...validatePlayer(action.player, action.player.id), status: state.players[index].status };
+      requireCondition(state.players[index].status !== "sold" && (action.player.id !== state.currentPlayerId || (state.phase === "waiting" && !state.leadingTeamId)), "Players in active bidding and sold players cannot be edited.", 409);
+      state.players[index] = { ...validatePlayer(action.player, action.player.id), status: state.players[index].status, catalogSheets: state.players[index].catalogSheets };
       log("pool", `${state.players[index].name}'s details were updated.`); break;
     }
     case "delete_player": {
@@ -300,14 +439,22 @@ export function applyAction(source: RoomState, action: AuctionAction, memberId: 
       if (state.leadingTeamId && player && ["live", "paused", "locked"].includes(state.phase)) validateTeamBid({ ...state, settings }, state.teams.find((team) => team.id === state.leadingTeamId)!, player, state.currentBid);
       state.settings = settings; log("settings", "The auctioneer updated room settings."); break;
     }
-    case "raise_flag":
-      member.flagRaisedAt = member.flagRaisedAt && now - member.flagRaisedAt < 10000 ? null : now;
-      if (member.flagRaisedAt) log("flag", `${member.name} raised a paddle.`); break;
     case "chat": {
       const text = cleanText(action.text, "Message", 500);
       const recent = state.activity.filter((entry) => entry.type === "chat" && entry.memberId === memberId).at(-1);
       requireCondition(!recent || now - recent.at >= 1000, "Please wait a moment before sending another message.", 429);
       log("chat", text); break;
+    }
+    case "set_lineup": {
+      requireCondition(typeof action.teamId === "string" && action.teamId.length > 0, "Choose a valid team.");
+      requireCondition(member.role === "bidder" && member.id !== state.hostId && member.teamId === action.teamId, "Only this team's manager can edit its lineup.", 403, "FORBIDDEN");
+      const team = state.teams.find(entry => entry.id === action.teamId);
+      requireCondition(team, "Team not found.", 404);
+      requireCondition(Number.isSafeInteger(action.expectedRevision) && action.expectedRevision >= 0 && action.expectedRevision < Number.MAX_SAFE_INTEGER, "A valid lineup revision is required.");
+      const revision = team.lineup?.revision ?? 0;
+      requireCondition(action.expectedRevision === revision, "Your lineup changed in another tab. Review the latest lineup before saving again.", 409, "LINEUP_CONFLICT");
+      team.lineup = { ...validateLineup(action.lineup, state, team), revision: revision + 1 };
+      log("lineup", `${team.shortName} updated their playing XI and substitutes.`); break;
     }
     case "claim_team": {
       requireCondition(action.teamId === null || state.teams.some((team) => team.id === action.teamId), "Choose a valid team.");

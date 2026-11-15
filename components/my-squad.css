@@ -1,0 +1,105 @@
+.personal-squad {
+  --squad-color: #e6c48a;
+  --squad-highlight: var(--franchise-secondary, #e6c48a);
+  color: #f5f1e8;
+  min-width: 0;
+}
+
+.personal-squad-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 0 17px;
+  border-bottom: 1px solid var(--franchise-line, #ffffff1c);
+}
+
+.personal-squad-header h2 { margin: 0; font-family: var(--font-display), sans-serif; font-size: 36px; font-weight: 650; line-height: 1.1; text-transform: uppercase; }
+.franchise-room .personal-squad .personal-squad-header { background: none; }
+
+.personal-squad-totals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 20px 0 38px; border: 1px solid #e6c48a21; border-radius: 10px; background: #101721; }
+.personal-squad-totals > div { display: flex; align-items: flex-start; gap: 13px; padding: 24px; min-width: 0; }
+.personal-squad-totals > div + div { border-left: 1px solid #e6c48a21; }
+.personal-squad-totals svg { color: var(--squad-highlight); flex-shrink: 0; margin-top: 3px; }
+.personal-squad-totals dl { margin: 0; min-width: 0; }
+.personal-squad-totals dt { color: #b0bac8; font-size: 14px; line-height: 1.4; }
+.personal-squad-totals dd { margin: 8px 0 0; color: #f5f1e8; font-size: clamp(23px, 2.6vw, 31px); font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.personal-squad-totals dd span { font-size: 16px; color: #8997aa; font-weight: 400; }
+.personal-squad-totals > div:first-child dd { color: var(--squad-highlight); }
+
+.personal-squad-roster-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 22px; }
+.personal-squad-roster-heading h3 { font-family: var(--font-display), sans-serif; font-weight: 650; text-transform: uppercase; font-size: 32px; line-height: 1.1; margin: 0; }
+.personal-squad-roster-heading p { margin: 9px 0 0; color: #b0bac8; font-size: 15px; line-height: 1.5; }
+.personal-squad-roster-heading p span { margin: 0 5px; }
+.personal-squad-confirmed { display: inline-flex; align-items: center; gap: 8px; color: #a8c1a0; font-size: 14px; }
+.personal-squad-confirmed svg { flex-shrink: 0; }
+.personal-squad-categories { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 24px; }
+.personal-squad-categories > button { display: flex; align-items: center; gap: 16px; min-height: 44px; border: 1px solid #ffffff15; border-radius: 7px; padding: 10px 15px; background: var(--franchise-surface, #101721); font-size: 14px; transition: border-color .15s, background-color .15s; }
+.personal-squad-categories > button > span { color: #b6c0cd; }
+.personal-squad-categories > button > strong { color: var(--squad-highlight); font-weight: 650; font-variant-numeric: tabular-nums; }
+.personal-squad-categories > button:hover { border-color: color-mix(in srgb, var(--squad-color) 60%, transparent); }
+.personal-squad-categories > button[aria-pressed="true"] { background: color-mix(in srgb, var(--squad-color) 10%, var(--franchise-surface, #101721)); border-color: color-mix(in srgb, var(--squad-color) 60%, transparent); }
+.personal-squad-categories > button[aria-pressed="true"] > span { color: #f5f1e8; }
+.personal-squad-categories > button:focus-visible, .personal-squad-filter-empty > button:focus-visible { outline: 2px solid var(--squad-highlight); outline-offset: 3px; }
+.personal-squad-roster { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(225px, 1fr)); gap: 20px; padding: 0; margin: 0; }
+.personal-squad-player { overflow: hidden; min-width: 0; border: 1px solid #ffffff1c; border-radius: 11px; background: #101721; transition: border-color .18s ease, transform .18s ease; }
+.personal-squad-player-art { position: relative; display: flex; align-items: flex-end; justify-content: center; height: 242px; overflow: hidden; background: radial-gradient(ellipse at 50% 95%, color-mix(in srgb, var(--squad-color) 20%, transparent), transparent 75%), linear-gradient(140deg, #ffffff04, transparent 60%), var(--franchise-raised, #121c29); }
+.personal-squad-player-art::after { content: ""; position: absolute; inset: auto 0 0; height: 34px; background: linear-gradient(transparent, #101721); pointer-events: none; }
+.personal-squad-player-crest { position: absolute; top: 16px; left: 16px; opacity: .65; }
+.personal-squad-player-crest img { width: 34px; height: 34px; object-fit: contain; }
+.personal-squad-marquee { position: absolute; z-index: 1; top: 15px; right: 13px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #e6c48a35; border-radius: 4px; padding: 4px 6px; background: #10131bcc; color: #e6c48a; font-size: 11px; font-weight: 550; }
+.personal-squad-player-art .personal-squad-portrait { position: relative; width: 235px; max-width: 100%; height: 230px; object-fit: contain; object-position: center bottom; }
+.personal-squad-player-art .personal-squad-portrait.profile-headshot { width: 180px; height: 190px; object-fit: cover; object-position: center top; border-radius: 10px 10px 0 0; }
+.personal-squad-player-art .portrait-fallback { display: flex; justify-content: center; align-items: center; gap: 14px; color: #b9a88a; background: transparent; }
+.personal-squad-player-art .portrait-fallback svg { height: 62px; width: 62px; }
+.personal-squad-player-art .portrait-fallback > span { font-family: var(--font-display), sans-serif; font-size: 40px; }
+.personal-squad-missing-photo { color: #7c8a9d; margin: auto; }
+.personal-squad-player-info { padding: 17px 20px 20px; }
+.personal-squad-player-info h4 { font-size: 19px; line-height: 1.3; font-weight: 600; margin: 0; overflow-wrap: anywhere; }
+.personal-squad-player-info > p { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 14px; line-height: 1.5; color: #b0bac8; margin: 8px 0 0; }
+.personal-squad-player-info > p svg { color: #d4bb91; flex-shrink: 0; }
+.personal-squad-purchase { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; padding-top: 15px; border-top: 1px solid #ffffff14; }
+.personal-squad-purchase > span { color: #a9b4c2; font-size: 14px; }
+.personal-squad-purchase > strong { color: var(--squad-highlight); font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.personal-squad-filter-empty { padding: 45px 24px; text-align: center; border: 1px dashed #ffffff25; border-radius: 10px; color: #b6c0cd; }
+.personal-squad-filter-empty p { margin: 0 0 16px; }
+.personal-squad-filter-empty > button { min-height: 42px; padding: 9px 15px; border: 1px solid #ffffff30; border-radius: 6px; color: #f5f1e8; background: var(--franchise-surface, #101721); }
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .personal-squad-player:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--squad-color) 60%, #ffffff1c); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .personal-squad-player, .personal-squad-categories > button { transition: none; }
+}
+
+.personal-squad-empty, .personal-squad-unassigned { padding: 55px 24px; border: 1px solid #e6c48a21; border-radius: 12px; background: radial-gradient(ellipse at 50% 0%, #e6c48a08, transparent 65%), #101721; text-align: center; }
+.personal-squad-empty-icon { display: inline-grid; place-items: center; width: 72px; height: 72px; border: 1px solid #e6c48a36; border-radius: 50%; color: #e6c48a; background: #e6c48a09; margin-bottom: 22px; }
+.personal-squad-empty h3, .personal-squad-unassigned h3 { margin: 0; font-size: 24px; line-height: 1.35; font-weight: 550; }
+.personal-squad-empty p, .personal-squad-unassigned p { max-width: 530px; color: #b4bdca; font-size: 16px; line-height: 1.7; margin: 12px auto 0; }
+.personal-squad-unassigned h2 { margin: 0 0 15px; font-family: var(--font-display), sans-serif; font-size: 40px; line-height: 1.1; text-transform: uppercase; }
+
+@media (max-width: 1050px) {
+  .personal-squad-totals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .personal-squad-totals > div:nth-child(3) { border-left: 0; }
+  .personal-squad-totals > div:nth-child(n + 3) { border-top: 1px solid #e6c48a21; }
+}
+
+@media (max-width: 600px) {
+  .personal-squad-header { align-items: flex-start; flex-wrap: wrap; gap: 10px; }
+  .personal-squad-header h2 { font-size: 32px; }
+  .personal-squad-header .personal-squad-confirmed { align-self: center; }
+  .personal-squad-totals { margin-bottom: 28px; }
+  .personal-squad-totals > div { gap: 10px; padding: 19px 15px; }
+  .personal-squad-totals > div > svg { display: none; }
+  .personal-squad-totals dd { font-size: 25px; }
+  .personal-squad-roster-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .personal-squad-categories { gap: 7px; }
+  .personal-squad-categories > button { padding: 9px 11px; gap: 10px; }
+  .personal-squad-roster { grid-template-columns: repeat(auto-fill, minmax(min(225px, 100%), 1fr)); gap: 16px; }
+  .personal-squad-player-art { height: 240px; }
+  .personal-squad-player-art .personal-squad-portrait { height: 230px; width: 240px; }
+  .personal-squad-player-art .personal-squad-portrait.profile-headshot { height: 216px; width: 205px; }
+  .personal-squad-empty, .personal-squad-unassigned { padding: 38px 20px; }
+  .personal-squad-empty h3, .personal-squad-unassigned h3 { font-size: 23px; }
+}

@@ -103,7 +103,7 @@ test("first bids use the base price and later bids increment exactly once", () =
   assert.equal(first.currentBid, 200);
   assert.equal(first.leadingTeamId, "csk");
   assert.equal(first.bidHistory.length, 1);
-  assert.equal(first.members.find((member) => member.id === CSK)!.flagRaisedAt, NOW);
+  assert.equal(first.members.find((member) => member.id === CSK)!.flagRaisedAt, null);
   const second = bid(first, MI, NOW + 1000);
   assert.equal(second.currentBid, 225);
   assert.equal(second.bidHistory.length, 2);

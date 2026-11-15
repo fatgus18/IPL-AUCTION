@@ -1,0 +1,39 @@
+.room-access-panel { margin-top: 32px; border: 1px solid #e6c48a30; border-radius: 12px; background: #101721; overflow: hidden; }
+.room-access-heading { display: flex; align-items: center; gap: 16px; padding: 26px 28px; border-bottom: 1px solid #ffffff12; background: linear-gradient(110deg, #222a34, #101721); }
+.room-access-icon { display: grid; place-items: center; width: 46px; height: 46px; flex-shrink: 0; color: #e6c48a; background: #e6c48a0a; border: 1px solid #e6c48a33; border-radius: 9px; }
+.room-access-heading h2 { margin: 0; font: 650 30px/1.15 var(--font-display), sans-serif; text-transform: uppercase; color: #f4f0e9; }
+.room-access-heading p, .room-access-content p, .room-access-delete p { color: #a6b5c7; font-size: 15px; line-height: 1.7; margin: 8px 0 0; }
+.room-access-content { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 44px; padding: 30px 28px; }
+.room-access-content h3, .room-access-delete h3 { display: flex; align-items: center; gap: 9px; margin: 0; color: #eae6e0; font-size: 17px; line-height: 1.4; font-weight: 600; }
+.room-access-description h3 svg { color: #e6c48a; flex-shrink: 0; }
+.room-access-password-area { min-width: 0; }
+.room-access-password-label { display: block; color: #d4dce5; font-size: 14px; margin-bottom: 9px; font-weight: 600; }
+.room-access-password { display: flex; align-items: center; gap: 8px; border: 1px solid #e6c48a40; border-radius: 7px; background: #090f18; min-width: 0; }
+.room-access-password input { width: 100%; min-width: 0; height: 50px; padding: 0 15px; border: 0; border-radius: 7px; background: transparent; color: #efd5a5; font: 500 17px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: 1px; }
+.room-access-password input[type="password"] { letter-spacing: 3px; }
+.room-access-reveal { min-width: 46px; height: 46px; display: grid; place-items: center; margin-right: 2px; background: transparent; border: 0; border-radius: 5px; color: #aebed0; }
+.room-access-reveal:hover { color: #efd5a5; background: #e6c48a0b; }
+.room-access-password-actions { display: flex; align-items: center; gap: 16px; margin-top: 14px; flex-wrap: wrap; }
+.room-access-password-actions > span { flex: 1; min-width: 145px; font-size: 14px; line-height: 1.6; color: #a6b5c7; }
+.room-access-content .room-access-copy-status { margin-top: 10px; font-size: 14px; color: #d0b58c; }
+.room-access-copy-status:empty { display: none; }
+.room-access-content .manage-error { margin-top: 0; color: #f4a8ad; }
+.room-access-delete { display: flex; align-items: center; justify-content: space-between; gap: 28px; padding: 26px 28px; border-top: 1px solid #d987862b; background: #bc555605; }
+.room-access-delete > div { max-width: 670px; }
+.room-access-delete .room-access-delete-button { flex-shrink: 0; color: #efaaa6; border-color: #d9878660; background: #bc555609; }
+.room-access-delete .room-access-delete-button:hover:not(:disabled) { color: #ffd5d0; border-color: #d98786; background: #bc55561a; }
+.room-delete-dialog { width: min(580px, calc(100vw - 32px)); }
+.room-delete-dialog .manage-dialog-head p { font-size: 15px; line-height: 1.75; }
+.room-delete-confirmation { font-size: 15px; line-height: 1.6; }
+.room-delete-confirmation strong { color: #efd5a5; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: 1px; }
+.room-delete-confirmation input { min-height: 48px; font-size: 16px; letter-spacing: 1px; text-transform: uppercase; }
+.room-access-panel button:focus-visible, .room-access-panel input:focus-visible { outline: 2px solid #e6c48a; outline-offset: 4px; }
+@media (max-width: 760px) {
+  .room-access-heading { padding: 22px 20px; gap: 12px; }
+  .room-access-heading h2 { font-size: 27px; }
+  .room-access-content { grid-template-columns: 1fr; gap: 22px; padding: 24px 20px; }
+  .room-access-delete { align-items: stretch; flex-direction: column; gap: 20px; padding: 24px 20px; }
+  .room-access-delete .room-access-delete-button { align-self: flex-start; }
+  .room-delete-dialog .manage-dialog-actions { flex-wrap: wrap; }
+  .room-delete-dialog .manage-dialog-actions button { flex: 1; }
+}

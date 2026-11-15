@@ -1,0 +1,18 @@
+/* The participant's franchise is their identity: show the crest without a badge. */
+.sidebar-profile > .profile-franchise-crest,
+.topbar-right > .profile-franchise-crest {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.sidebar-profile > .profile-franchise-crest { display: grid; place-items: center; }
+.profile-franchise-crest > img { width: 100%; height: 100%; object-fit: contain; }
+.profile-franchise-crest > .crest-fallback { color: var(--franchise-accent, var(--gold)); font-weight: 700; }
+@media (max-width: 600px) {
+  .sidebar-profile > .profile-franchise-crest { width: 36px; height: 36px; flex-basis: 36px; }
+}

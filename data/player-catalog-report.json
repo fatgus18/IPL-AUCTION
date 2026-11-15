@@ -1,0 +1,590 @@
+{
+    "version":  1,
+    "source":  {
+                   "fileName":  "IPL MOCK AUCTION.xlsx",
+                   "sha256":  "b345ccc94303d5cd10e11a126e5090d265a0235b5fabd3a09e72266434e735cb"
+               },
+    "counts":  {
+                   "worksheets":  11,
+                   "playerSheets":  8,
+                   "sourcePlayerRows":  249,
+                   "uniquePlayers":  249,
+                   "duplicatesMerged":  0,
+                   "unresolvedRows":  0,
+                   "nameCorrections":  4,
+                   "countryMissing":  249,
+                   "statisticsMissing":  249,
+                   "photoMissing":  249,
+                   "externallyVerifiedProfileLinks":  25,
+                   "defaultsApplied":  0
+               },
+    "policy":  [
+                   "THE TEAMS and POINTS contents were not read.",
+                   "All player rows are included, including hidden rows and TO BE SOLD = 0.",
+                   "Historical SOLD PRICE, SOLD TO and TO BE SOLD fields are not imported into the new auction.",
+                   "No formulas, external links, macros or spreadsheet commands are executed.",
+                   "Country, image and statistics are absent in the source and left null.",
+                   "Only explicit workbook base prices are used; all values are integer lakhs.",
+                   "MARQUEE SET remains the auction role Marquee; playingRole preserves its explicit ROLE column.",
+                   "An explicit (WK) name suffix overrides a BATTERS sheet role, while the source row is preserved.",
+                   "Names are case/whitespace normalized; only the listed primary-source corrections alter spelling.",
+                   "Externally verified profile links resolve provider spelling variants and namesakes; they are audited separately from workbook fields.",
+                   "Rules are audited as non-player rows; they do not silently change app settings."
+               ],
+    "sheets":  [
+                   {
+                       "sheet":  "THE TEAMS",
+                       "state":  "visible",
+                       "status":  "excluded_by_request",
+                       "playerRows":  0,
+                       "reason":  "Excluded by user instruction; sheet contents not read."
+                   },
+                   {
+                       "sheet":  "POINTS",
+                       "state":  "visible",
+                       "status":  "excluded_by_request",
+                       "playerRows":  0,
+                       "reason":  "Excluded by user instruction; sheet contents not read."
+                   },
+                   {
+                       "sheet":  "MARQUEE SET",
+                       "state":  "visible",
+                       "status":  "imported",
+                       "headerRow":  1,
+                       "playerRows":  25,
+                       "nonPlayerRows":  0
+                   },
+                   {
+                       "sheet":  "BATTERS SET 1",
+                       "state":  "visible",
+                       "status":  "imported",
+                       "headerRow":  1,
+                       "playerRows":  26,
+                       "nonPlayerRows":  0
+                   },
+                   {
+                       "sheet":  "BOWLERS SET 1",
+                       "state":  "visible",
+                       "status":  "imported",
+                       "headerRow":  1,
+                       "playerRows":  48,
+                       "nonPlayerRows":  0
+                   },
+                   {
+                       "sheet":  "ALL ROUNDERS SET 1",
+                       "state":  "visible",
+                       "status":  "imported",
+                       "headerRow":  1,
+                       "playerRows":  28,
+                       "nonPlayerRows":  0
+                   },
+                   {
+                       "sheet":  "WICKET KEEPERS SET 1",
+                       "state":  "visible",
+                       "status":  "imported",
+                       "headerRow":  1,
+                       "playerRows":  15,
+                       "nonPlayerRows":  0
+                   },
+                   {
+                       "sheet":  "BATTERS SET 2",
+                       "state":  "visible",
+                       "status":  "imported",
+                       "headerRow":  1,
+                       "playerRows":  37,
+                       "nonPlayerRows":  0
+                   },
+                   {
+                       "sheet":  "BOWLERS SET 2",
+                       "state":  "visible",
+                       "status":  "imported",
+                       "headerRow":  1,
+                       "playerRows":  48,
+                       "nonPlayerRows":  0
+                   },
+                   {
+                       "sheet":  "ALL ROUNDERS SET 2",
+                       "state":  "visible",
+                       "status":  "imported",
+                       "headerRow":  1,
+                       "playerRows":  22,
+                       "nonPlayerRows":  0
+                   },
+                   {
+                       "sheet":  "RULES",
+                       "state":  "visible",
+                       "status":  "no_player_list",
+                       "headerRow":  null,
+                       "playerRows":  0,
+                       "nonPlayerRows":  17
+                   }
+               ],
+    "excludedRows":  [
+                         {
+                             "sheet":  "MARQUEE SET",
+                             "row":  1,
+                             "reason":  "player_list_header"
+                         },
+                         {
+                             "sheet":  "BATTERS SET 1",
+                             "row":  1,
+                             "reason":  "player_list_header"
+                         },
+                         {
+                             "sheet":  "BOWLERS SET 1",
+                             "row":  1,
+                             "reason":  "player_list_header"
+                         },
+                         {
+                             "sheet":  "ALL ROUNDERS SET 1",
+                             "row":  1,
+                             "reason":  "player_list_header"
+                         },
+                         {
+                             "sheet":  "WICKET KEEPERS SET 1",
+                             "row":  1,
+                             "reason":  "player_list_header"
+                         },
+                         {
+                             "sheet":  "BATTERS SET 2",
+                             "row":  1,
+                             "reason":  "player_list_header"
+                         },
+                         {
+                             "sheet":  "BOWLERS SET 2",
+                             "row":  1,
+                             "reason":  "player_list_header"
+                         },
+                         {
+                             "sheet":  "ALL ROUNDERS SET 2",
+                             "row":  1,
+                             "reason":  "player_list_header"
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  1,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "Rule Number",
+                                           "B":  "Rule"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  2,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "1.0",
+                                           "B":  "Maximum of 18 players allowed per side"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  3,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "2.0",
+                                           "B":  "Maximum of 6 overseas players allowed per side"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  4,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "3.0",
+                                           "B":  "Auction purse will be a total of 100 crores"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  5,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "4.0",
+                                           "B":  "Auction purse to be used for the entire 18 man squad, no extra purse will be given after first 11/12 players"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  6,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "5.0",
+                                           "B":  "Minimums enforced are, 3 batters, 3 bowlers, 1 all-rounder and 1 wicket-keeper"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  7,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "6.0",
+                                           "B":  "Players beyond the minimum criteria can be of any role, no further restriction is applied"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  8,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "7.0",
+                                           "B":  "Minimum squad size has to be at least 14 players"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  9,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "8.0",
+                                           "B":  "Base price for players will be 2cr, 1.5cr, 1cr, 50L and 20L"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  10,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "9.0",
+                                           "B":  "Auction flow rules"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  11,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "i",
+                                           "B":  "20L-50L, increments of 5L"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  12,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "ii",
+                                           "B":  "50L-1cr, increments of 10L"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  13,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "iii",
+                                           "B":  "1cr+,  increments of 25L"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  14,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "10.0",
+                                           "B":  "Points will be calculated from ESPN Cricinfo\u0027s MVP calculator (Take a look at  last year\u0027s MVP to understand how it works)"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  15,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "11.0",
+                                           "B":  "In case of any injury to a player, the replacement player will be the one picked by the team in the actual IPL itself"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  16,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "12.0",
+                                           "B":  "No replacement player will be allowed even if any of your players don\u0027t make it to their team\u0027s playing 11 consistently enough, this is to promote better strategic buys in the auction itself"
+                                       }
+                         },
+                         {
+                             "sheet":  "RULES",
+                             "row":  17,
+                             "reason":  "non_player_row",
+                             "cells":  {
+                                           "A":  "13.0",
+                                           "B":  "Points for captain will be 2x and for vice captain will be 1.5x"
+                                       }
+                         }
+                     ],
+    "aliases":  [
+                    {
+                        "sheet":  "MARQUEE SET",
+                        "row":  13,
+                        "originalName":  "YAHASVI JAISWAL",
+                        "name":  "Yashasvi Jaiswal",
+                        "sourceUrl":  "https://www.rajasthanroyals.com/rr-players/yashasvi-jaiswal-ipl-profile-69238",
+                        "reason":  "Unambiguous spelling correction verified against a primary cricket organization."
+                    },
+                    {
+                        "sheet":  "BOWLERS SET 1",
+                        "row":  42,
+                        "originalName":  "NUWAV THUSHARA",
+                        "name":  "Nuwan Thushara",
+                        "sourceUrl":  "https://www.royalchallengers.com/rcb-cricket-news/news/rcb-rope-in-richard-gleeson-as-nuwan-thusharas-replacement-for-ipl-2026",
+                        "reason":  "Unambiguous spelling correction verified against a primary cricket organization."
+                    },
+                    {
+                        "sheet":  "WICKET KEEPERS SET 1",
+                        "row":  3,
+                        "originalName":  "LHUAN-DRE PRETORIOUS ",
+                        "name":  "Lhuan-dre Pretorius",
+                        "sourceUrl":  "https://www.paarlroyals.com/squad/109249-lhuan-dre-pretorius",
+                        "reason":  "Unambiguous spelling correction verified against a primary cricket organization."
+                    },
+                    {
+                        "sheet":  "ALL ROUNDERS SET 2",
+                        "row":  9,
+                        "originalName":  "TRIPURNA VIJAY",
+                        "name":  "Tripurana Vijay",
+                        "sourceUrl":  "https://www.bcci.tv/players/8872b99d-3648-418f-884d-87f0bc01193a/tripurana-vijay/videos",
+                        "reason":  "Unambiguous spelling correction verified against a primary cricket organization."
+                    }
+                ],
+    "duplicates":  [
+
+                   ],
+    "unresolvedRows":  [
+
+                       ],
+    "formulaCells":  [
+
+                     ],
+    "identityReview":  [
+                           {
+                               "id":  "akshat-raghuvanshi",
+                               "name":  "Akshat Raghuvanshi",
+                               "notes":  [
+                                             "Preserved as supplied. A distinct player from Angkrish Raghuvanshi; confirmed in the official IPL 2026 auction list."
+                                         ],
+                               "sourceUrl":  "https://documents.iplt20.com/bcci/documents/1765284319912_TATA%20IPL%202026%20-%20Auction%20List%20-%209.12.25.pdf",
+                               "sourceRows":  [
+                                                  {
+                                                      "sheet":  "BATTERS SET 2",
+                                                      "row":  25,
+                                                      "originalName":  "AKSHAT RAGHUVANSHI",
+                                                      "originalRole":  null,
+                                                      "originalBasePrice":  "20 L"
+                                                  }
+                                              ]
+                           },
+                           {
+                               "id":  "mohammed-salahuddin-izhar",
+                               "name":  "Mohammed Salahuddin Izhar",
+                               "notes":  [
+                                             "Full name preserved as supplied and confirmed by the Cricbuzz profile."
+                                         ],
+                               "sourceUrl":  "https://www.cricbuzz.com/profiles/1465841/mohammed-salahuddin-izhar",
+                               "sourceRows":  [
+                                                  {
+                                                      "sheet":  "BOWLERS SET 2",
+                                                      "row":  42,
+                                                      "originalName":  "MOHAMMED SALAHUDDIN IZHAR",
+                                                      "originalRole":  null,
+                                                      "originalBasePrice":  "20 L"
+                                                  }
+                                              ]
+                           },
+                           {
+                               "id":  "ajay-jadav",
+                               "name":  "Ajay Jadav",
+                               "notes":  [
+                                             "Abbreviated name preserved as supplied. Cricbuzz lists the full name Ajay Jadav Mandal."
+                                         ],
+                               "sourceUrl":  "https://www.cricbuzz.com/profiles/11777/ajay-jadav-mandal",
+                               "sourceRows":  [
+                                                  {
+                                                      "sheet":  "ALL ROUNDERS SET 2",
+                                                      "row":  10,
+                                                      "originalName":  "AJAY JADAV",
+                                                      "originalRole":  null,
+                                                      "originalBasePrice":  "20 L"
+                                                  }
+                                              ]
+                           }
+                       ],
+    "verifiedProfileLinks":  [
+                                 {
+                                     "id":  "rashid-khan",
+                                     "name":  "Rashid Khan",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/10738/rashid-khan",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Afghanistan international and Gujarat Titans player; distinct from Pakistan and Nepal namesakes."
+                                 },
+                                 {
+                                     "id":  "abhishek-sharma",
+                                     "name":  "Abhishek Sharma",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/12086/abhishek-sharma",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Sunrisers Hyderabad all-rounder born 4 September 2000; distinct from the Railways batter."
+                                 },
+                                 {
+                                     "id":  "varun-chakravarthy",
+                                     "name":  "Varun Chakravarthy",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/12926/varun-chakaravarthy",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Provider spelling Chakaravarthy; KKR spinner born 29 August 1991, also verified on BCCI profile."
+                                 },
+                                 {
+                                     "id":  "rohit-sharma",
+                                     "name":  "Rohit Sharma",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/576/rohit-sharma",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "India and Mumbai Indians batter born 30 April 1987; distinct from other namesakes."
+                                 },
+                                 {
+                                     "id":  "mukesh-kumar",
+                                     "name":  "Mukesh Kumar",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/10754/mukesh-kumar",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Bengal and Delhi Capitals bowler born 12 October 1993."
+                                 },
+                                 {
+                                     "id":  "mayank-yadav",
+                                     "name":  "Mayank Yadav",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/22401/mayank-yadav",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Delhi and Lucknow Super Giants fast bowler born 17 June 2002."
+                                 },
+                                 {
+                                     "id":  "allah-ghazanfar",
+                                     "name":  "Allah Ghazanfar",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/36501/am-ghazanfar",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Provider abbreviation AM Ghazanfar; Afghanistan off-spinner born 20 March 2006, verified by ICC full-name biography."
+                                 },
+                                 {
+                                     "id":  "shubham-dubey",
+                                     "name":  "Shubham Dubey",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/19328/shubham-dubey",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Rajasthan Royals batter born 27 August 1994, with IPL batting appearances."
+                                 },
+                                 {
+                                     "id":  "abdul-samad",
+                                     "name":  "Abdul Samad",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/14628/abdul-samad",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Jammu and Kashmir, SRH and LSG batter born 28 October 2001; distinct from overseas namesakes."
+                                 },
+                                 {
+                                     "id":  "akshat-raghuvanshi",
+                                     "name":  "Akshat Raghuvanshi",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/24431/akshat-raghuwanshi",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Provider spelling Raghuwanshi; Madhya Pradesh and LSG batter born 15 September 2003 matches official auction list."
+                                 },
+                                 {
+                                     "id":  "abhishek-porel",
+                                     "name":  "Abhishek Porel",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/24326/abishek-porel",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Provider spelling Abishek; Bengal and Delhi Capitals wicketkeeper born 17 October 2002."
+                                 },
+                                 {
+                                     "id":  "shashank-singh",
+                                     "name":  "Shashank Singh",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/10919/shashank-singh",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Punjab Kings batter born 21 November 1991; distinct from younger namesake."
+                                 },
+                                 {
+                                     "id":  "vaibhav-suryavanshi",
+                                     "name":  "Vaibhav Suryavanshi",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/51791/vaibhav-sooryavanshi",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Provider spelling Sooryavanshi; Rajasthan Royals batter born 27 March 2011, also verified by Cricket Australia profile."
+                                 },
+                                 {
+                                     "id":  "rasikh-dar-salam",
+                                     "name":  "Rasikh Dar Salam",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/14274/rasikh-salam-dar",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Provider name order Salam Dar; Jammu and Kashmir and RCB bowler born 5 April 2000."
+                                 },
+                                 {
+                                     "id":  "prince-yadav",
+                                     "name":  "Prince Yadav",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/54735/prince-yadav",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Delhi and Lucknow Super Giants fast bowler, distinct from same-name older domestic player."
+                                 },
+                                 {
+                                     "id":  "mohsin-khan",
+                                     "name":  "Mohsin Khan",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/13534/mohsin-khan",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Uttar Pradesh and LSG left-arm bowler born 15 July 1998; distinct from Pakistan, Hong Kong and younger India namesakes."
+                                 },
+                                 {
+                                     "id":  "onkar-tukaram-tarmale",
+                                     "name":  "Onkar Tukaram Tarmale",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/1453784/onkar-tarmale",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Provider shorter name Onkar Tarmale; Mumbai and Sunrisers Hyderabad player."
+                                 },
+                                 {
+                                     "id":  "amit-kumar",
+                                     "name":  "Amit Kumar",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/1466014/amit-kumar",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Jharkhand and Sunrisers Hyderabad player born 2 November 2002; distinct from older India and Bangladesh namesakes."
+                                 },
+                                 {
+                                     "id":  "yash-raj-punia",
+                                     "name":  "Yash Raj Punia",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/1458811/yash-raj-punja",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Provider spelling Punja; Hubli Tigers and Rajasthan Royals leg-spinner born 26 June 2006."
+                                 },
+                                 {
+                                     "id":  "akash-singh",
+                                     "name":  "Akash Singh",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/14696/akash-maharaj-singh",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Expanded name Akash Maharaj Singh; Rajasthan, CSK and LSG bowler born 26 April 2002, distinct from the same-name batter born 20 December 1995."
+                                 },
+                                 {
+                                     "id":  "r-sai-kishore",
+                                     "name":  "R Sai Kishore",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/11595/ravisrinivasan-sai-kishore",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Expanded given name Ravisrinivasan; Tamil Nadu and Gujarat Titans left-arm spinner."
+                                 },
+                                 {
+                                     "id":  "sandeep-sharma",
+                                     "name":  "Sandeep Sharma",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/8356/sandeep-sharma",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Punjab and Rajasthan Royals bowler born 18 May 1993; distinct from domestic namesake."
+                                 },
+                                 {
+                                     "id":  "digvesh-rathi",
+                                     "name":  "Digvesh Rathi",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/1448289/digvesh-singh-rathi",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Provider full name Digvesh Singh Rathi; Delhi and Lucknow Super Giants spinner born 15 December 1999."
+                                 },
+                                 {
+                                     "id":  "arshad-khan",
+                                     "name":  "Arshad Khan",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/18637/arshad-khan",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Madhya Pradesh and Gujarat Titans all-rounder born 20 December 1997; distinct from retired Pakistan namesake."
+                                 },
+                                 {
+                                     "id":  "ajay-jadav",
+                                     "name":  "Ajay Jadav",
+                                     "profileUrl":  "https://www.cricbuzz.com/profiles/11777/ajay-jadav-mandal",
+                                     "source":  "externally_verified_identity",
+                                     "reason":  "Expanded surname Mandal; Chhattisgarh and Delhi Capitals all-rounder born 25 February 1996."
+                                 }
+                             ]
+}

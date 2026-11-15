@@ -1,6 +1,6 @@
 import AuctionApp from "@/components/auction-app";
-import { createDemoState } from "@/lib/auction";
+import { createBootstrapState } from "@/lib/bootstrap-state";
 
 export default function Home() {
-  return <AuctionApp initialState={createDemoState()} />;
+  return <AuctionApp initialState={createBootstrapState()} />;
 }

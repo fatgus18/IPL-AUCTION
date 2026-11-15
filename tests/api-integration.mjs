@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 
-// Run against a local built preview after applying its D1 migration:
-// BASE_URL=http://127.0.0.1:5173 node tests/api-integration.mjs
-const baseUrl = (process.env.BASE_URL || "http://127.0.0.1:5173").replace(/\/$/, "");
+// Run against the local Next.js development or production server:
+// BASE_URL=http://127.0.0.1:3000 node tests/api-integration.mjs
+const baseUrl = (process.env.BASE_URL || "http://127.0.0.1:3000").replace(/\/$/, "");
 
 async function request(path, { token, body, method = body ? "POST" : "GET" } = {}) {
   const response = await fetch(`${baseUrl}${path}`, {
@@ -14,6 +14,8 @@ async function request(path, { token, body, method = body ? "POST" : "GET" } = {
     ...(body ? { body: JSON.stringify(body) } : {}),
     signal: AbortSignal.timeout(15000),
   });
+  assert.match(response.headers.get("content-type") || "", /application\/json/i,
+    `${method} ${path} returned HTTP ${response.status} without JSON. The server may not have discovered this API route.`);
   const data = await response.json();
   return { status: response.status, data };
 }
@@ -29,19 +31,26 @@ const host = await request("/api/rooms", { body: { name: "API integration check"
 assert.equal(host.status, 201, `room creation failed: ${host.data.error || host.status}`);
 assert.match(host.data.token, /^[a-f0-9]{64}$/);
 const roomPath = `/api/rooms/${host.data.state.code}`;
+const access = await request(`${roomPath}/access`, { token: host.data.token, body: {} });
+assert.equal(access.status, 200, access.data.error);
+const { teamPassword } = access.data;
 assert.equal(host.data.state.phase, "waiting");
 assert.equal(host.data.state.members[0].role, "auctioneer");
+const common = await request("/api/players/catalog");
+assert.equal(host.data.state.players.length, common.data.players.length, "new rooms use the common player pool");
+assert.equal(host.data.state.catalogCount, common.data.players.length);
+assert.ok(host.data.state.players.filter(player => player.catalogSheets?.length).every(player => player.eligibilityVerified), "workbook players preserve provenance and verified eligibility");
 
 const joinResults = await Promise.all([
-  request(`${roomPath}/join`, { body: { name: "Test Chennai", teamId: "csk" } }),
-  request(`${roomPath}/join`, { body: { name: "Test Mumbai", teamId: "mi" } }),
+  request(`${roomPath}/join`, { body: { name: "Test Chennai", teamId: "csk", teamPassword } }),
+  request(`${roomPath}/join`, { body: { name: "Test Mumbai", teamId: "mi", teamPassword } }),
 ]);
 joinResults.forEach((result) => assert.equal(result.status, 201));
 const [chennai, mumbai] = joinResults.map((result) => result.data);
 const tokens = [host.data.token, chennai.token, mumbai.token];
 for (const response of [host.data, chennai, mumbai]) checkPublicState(response.state, tokens);
 
-const duplicateSeat = await request(`${roomPath}/join`, { body: { name: "Duplicate seat", teamId: "csk" } });
+const duplicateSeat = await request(`${roomPath}/join`, { body: { name: "Duplicate seat", teamId: "csk", teamPassword } });
 assert.equal(duplicateSeat.status, 409);
 assert.equal(duplicateSeat.data.code, "TEAM_TAKEN");
 assert.equal((await request(roomPath)).status, 401);
@@ -92,5 +101,10 @@ assert.equal(readBack.data.state.version, state.version);
 assert.equal(readBack.data.state.teams.find((team) => team.id === winningTeam.id).purse, winningTeam.purse);
 assert.equal(readBack.data.state.members.length, 3, "concurrent joins must both persist");
 checkPublicState(readBack.data.state, tokens);
+
+const noChanges = await request(`${roomPath}?since=${readBack.data.state.version}`, { token: chennai.token });
+assert.equal(noChanges.status, 200);
+assert.equal(noChanges.data.unchanged, true, "unchanged room polls use a small version response");
+assert.equal(noChanges.data.state, undefined, "unchanged polls must not resend all 249 players");
 
 console.log("PASS: persisted room creation, concurrent joins and bids, private tokens, auctioneer permissions, locked bidding, and one-time sale accounting.");

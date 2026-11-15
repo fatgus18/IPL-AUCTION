@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AuctionScrollbar } from "@/components/auction-scrollbar";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body id="pavilion-page" className="antialiased">{children}<AuctionScrollbar /></body>
     </html>
   );
 }

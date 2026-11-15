@@ -1,0 +1,11 @@
+.custom-bid { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--franchise-line, #e6c48a25); }
+.custom-bid > label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 14px; font-weight: 600; color: #e8e6e3; }
+.custom-bid > label > span { color: #a7afb9; font-size: 13px; font-weight: 400; }
+.custom-bid-fields { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.custom-bid-fields input { width: 100%; min-width: 0; padding: 11px 10px; background: var(--franchise-bg, #090f17); color: #f4f0e8; border: 1px solid var(--franchise-line, #e6c48a35); border-radius: 5px; font-size: 16px; font-variant-numeric: tabular-nums; }
+.custom-bid-fields .button { padding-inline: 11px; font-size: 14px; white-space: nowrap; }
+.custom-bid > p { margin-top: 10px; font-size: 13px; line-height: 1.6; text-align: left; }
+.custom-bid-hint { color: #a7afb9; }
+.custom-bid-error { color: #f2b09e; }
+.activity-entry .chat-author { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin-bottom: 5px; color: var(--franchise-accent, #e6c48a); font-size: 14px; font-weight: 650; }
+.chat-author > span { color: #b6c0ce; font-size: 12px; font-weight: 500; border: 1px solid #ffffff22; border-radius: 3px; padding: 1px 5px; }

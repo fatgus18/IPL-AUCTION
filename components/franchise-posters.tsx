@@ -74,7 +74,7 @@ function PosterStudio({ state, team, token, connected }: { state: RoomState; tea
     <div className={`franchise-poster-preview${preview ? " is-generated" : ""}`} aria-busy={busy}>
       {preview ? /* eslint-disable-next-line @next/next/no-img-element */
         <a href={preview.url} target="_blank" rel="noreferrer" aria-label={`Open ${team.name} squad poster at full size`}><img src={preview.url} width={1440} height={1800} alt={`${team.name} squad poster with every signing, captain and vice captain`}/></a>
-        : <div className="franchise-poster-placeholder" aria-hidden="true"><span>PAVILION / FRANCHISE EDITION</span><TeamCrest team={team}/><strong>THE<br/>SQUAD</strong><b>{team.name}</b><span>{team.squad.length} SIGNINGS · ONE FRANCHISE</span></div>}
+        : <div className="franchise-poster-placeholder" aria-hidden="true"><span>PAVILION / FRANCHISE EDITION</span><TeamCrest team={team}/><strong>THE<br/>SQUAD</strong><b>{team.name}</b><span>{team.squad.length} {team.squad.length === 1 ? "SIGNING" : "SIGNINGS"} · ONE FRANCHISE</span></div>}
       {busy && <div className="franchise-poster-loading"><LoaderCircle size={28}/><span>Creating your poster…</span></div>}
     </div>
     <div className="franchise-poster-actions">

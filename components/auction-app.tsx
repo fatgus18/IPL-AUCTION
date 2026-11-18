@@ -3,7 +3,7 @@
 import { Activity, useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { ArrowDownLeft, ArrowRight, ArrowUpRight, Check, CheckCheck, CircleHelp, ClipboardList, Copy, Crown, Gavel, House, LayoutGrid, LockKeyhole, LockKeyholeOpen, LogOut, Menu, MessageCircle, MonitorPlay, Pause, Play, Plus, Radio, Send, Settings2, ShieldCheck, Sparkles, Target, Trophy, Users, Video, Wallet, X } from "lucide-react";
+import { ArrowDownLeft, ArrowRight, ArrowUpRight, Check, CheckCheck, CircleHelp, ClipboardList, Copy, Crown, Gavel, House, LayoutGrid, LockKeyhole, LockKeyholeOpen, LogOut, Menu, MessageCircle, MonitorPlay, Pause, Play, Plus, Radio, Send, Settings2, ShieldCheck, Sparkles, Target, Trophy, UserRound, Users, Video, Wallet, X } from "lucide-react";
 import { formatMoney, getNextBid } from "@/lib/auction-display";
 import type { AuctionAction, RoomState } from "@/lib/auction";
 import { AuctionRequestError, requestAuction } from "@/lib/auction-client";
@@ -32,6 +32,10 @@ import { LotNotificationTracker, type LotNotification } from "@/lib/lot-notifica
 import { LiveLotStatus, isOngoingLot } from "./live-lot-status";
 import { NewLotNotice } from "./new-lot-notice";
 import { toBroadcastState } from "@/lib/broadcast-display";
+import { isAvailableForAuction } from "@/lib/player-availability";
+import { normalizeBidIncrement } from "@/lib/bid-input";
+import { AccountRequestError, requestAccount, type AccountUser, type AccountRoomResume, type AccountRoomSummary } from "@/lib/account-client";
+import { AuctionBreak } from "./auction-break";
 import "./auction-panels.css";
 import "./cinematic-experience.css";
 import "./lobby-navigation.css";
@@ -41,26 +45,34 @@ import "./live-lot.css";
 import "./auction-results.css";
 import "./experience-polish.css";
 import "./broadcast-entry.css";
+import "./auction-break.css";
 
 const AuctionAdministration = dynamic(() => import("./auction-administration").then(module => module.AuctionAdministration));
 const AuctionRecap = dynamic(() => import("./auction-recap").then(module => module.AuctionRecap));
 const FranchisePosters = dynamic(() => import("./franchise-posters").then(module => module.FranchisePosters));
 const SaleAudit = dynamic(() => import("./auction-administration").then(module => module.SaleAudit));
+const AccountPanel = dynamic(() => import("./account-panel").then(module => module.AccountPanel), {
+  loading: () => <p role="status">Opening your account…</p>,
+});
 const BroadcastMode = dynamic(() => import("./broadcast-mode").then(module => module.BroadcastMode), {
   loading: () => <div className="room-loading" role="status">Opening broadcast…</div>,
 });
 
 type Tab = "home" | RoomView;
 type Session = RoomSession;
-type Modal = "create" | "join" | "help" | "invite" | null;
+type Modal = "create" | "join" | "help" | "invite" | "account" | null;
 
 async function request(path: string, body?: unknown, token?: string) {
-  return requestAuction<{ state: RoomState; token: string; memberId: string; unchanged?: boolean; serverTime?: number }>(path, body, token);
+  return requestAuction<{ state: RoomState; token: string; memberId: string; unchanged?: boolean; serverTime?: number; accountLinked?: boolean; accountLinkError?: string }>(path, body, token);
 }
 
 export default function AuctionApp({ initialState }: { initialState: RoomState }) {
   const [state, setState] = useState<RoomState>(initialState);
   const [session, setSession] = useState<Session | null>(null);
+  const [accountUser, setAccountUser] = useState<AccountUser | null>(null);
+  const [accountReady, setAccountReady] = useState(false);
+  const [accountRefreshKey, setAccountRefreshKey] = useState(0);
+  const accountEpochRef = useRef(0);
   const [bootReady, setBootReady] = useState(false);
   const [bootError, setBootError] = useState("");
   const [bootAttempt, setBootAttempt] = useState(0);
@@ -126,6 +138,7 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
   const member = state.members.find(m => m.id === memberId);
   const isHost = member?.role === "auctioneer";
   const isCreator = isHost && member?.id === state.hostId;
+  const auctionPaused = state.auctionPausedAt !== undefined;
   const player = state.players.find(p => p.id === state.currentPlayerId);
   const leadingTeam = state.teams.find(t => t.id === state.leadingTeamId);
   const ownTeam = state.teams.find(t => t.id === member?.teamId);
@@ -140,7 +153,7 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
   const nextBid = getNextBid(state);
   const cooldown = Math.max(0, (state.lastBidAt ?? 0) + state.settings.bidCooldownMs - (now + clockOffset));
   const activeBidHistory = state.bidHistory.filter(b => b.playerId === state.currentPlayerId).slice(-5).reverse();
-  const available = state.players.filter(p => !p.catalogArchived && p.status === "available" && p.id !== state.currentPlayerId);
+  const available = state.players.filter(p => isAvailableForAuction(p) && p.id !== state.currentPlayerId);
   const catalogCount = state.catalogCount ?? state.players.filter(p => !p.catalogArchived).length;
   const saleEvent = inRoom && state.phase === "sold" ? state.activity.findLast(event => event.type === "sold") : undefined;
 
@@ -156,6 +169,33 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
     else delete document.documentElement.dataset.broadcast;
     return () => { delete document.documentElement.dataset.broadcast; };
   }, [isBroadcast]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let loading = false;
+    const refresh = async () => {
+      if (loading || document.hidden) return;
+      loading = true;
+      const epoch = accountEpochRef.current;
+      try {
+        const result = await requestAccount<{ user: AccountUser | null }>("/api/account", undefined, controller.signal);
+        if (!controller.signal.aborted && epoch === accountEpochRef.current) setAccountUser(result.user);
+      } catch { /* Account errors are shown in the account panel; room access remains usable. */ }
+      finally { loading = false; if (!controller.signal.aborted) setAccountReady(true); }
+    };
+    const signedOutElsewhere = (event: StorageEvent) => {
+      if (event.key === "pavilion-account-signout" && event.newValue) {
+        // A document reload drops this tab's in-memory bearer after another
+        // tab signs out; client-side navigation can preserve the mounted app.
+        window.history.replaceState(null, "", "/");
+        window.location.reload();
+      }
+    };
+    void refresh();
+    window.addEventListener("focus", refresh);
+    window.addEventListener("storage", signedOutElsewhere);
+    return () => { controller.abort(); window.removeEventListener("focus", refresh); window.removeEventListener("storage", signedOutElsewhere); };
+  }, []);
 
   const notify = useCallback((text: string) => { setToast(text); }, []);
   const acceptCatalog = useCallback((incoming: CatalogSnapshot) => {
@@ -182,7 +222,7 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
     const personalTargets = incoming.myTargetPicks;
     const savedTargets = canViewTargets(viewer) && personalTargets && personalTargets.teamId === viewer?.teamId ? personalTargets.playerIds : [];
     const broadcasting = tabRef.current === "broadcast";
-    const announcement = incoming.endedAt ? null : lotTrackerRef.current!.observe(incoming, { connected: true, away: tabRef.current !== "room" && !broadcasting, targetPlayerIds: broadcasting ? [] : savedTargets });
+    const announcement = incoming.endedAt ? null : lotTrackerRef.current!.observe(incoming, { connected: true, away: tabRef.current !== "room" && !broadcasting && incoming.auctionPausedAt === undefined, targetPlayerIds: broadcasting || incoming.auctionPausedAt !== undefined ? [] : savedTargets });
     if (broadcasting) setLotNotice(null);
     else if (announcement) setLotNotice({ ...announcement, roomCode: incoming.code });
     else setLotNotice(current => !incoming.endedAt && current && (tabRef.current !== "room" || current.isTarget) && (!current.isTarget || savedTargets.includes(current.playerId)) && current.roomCode === incoming.code && current.playerId === incoming.currentPlayerId && isOngoingLot(incoming.currentPlayerId, incoming.phase) ? current : null);
@@ -233,6 +273,26 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
         const raw = code ? localStorage.getItem(`pavilion-session-${code}`) : null;
         const saved = parseRoomSession(raw);
         if (raw && (!saved || saved.code !== code)) throw new Error("Your saved room access could not be read. Use the original room link in this browser.");
+        if (!saved && code) {
+          try {
+            const recovered = await requestAccount<AccountRoomResume>(`/api/account/rooms/${encodeURIComponent(code)}/resume`, { method: "POST", body: "{}" });
+            if (cancelled) return;
+            const access = { code: recovered.state.code, token: recovered.token, memberId: recovered.memberId };
+            targetRef.current = access; setSession(access);
+            const restoredTab = parseRoomView(view);
+            tabRef.current = restoredTab; setTab(restoredTab);
+            acceptState(recovered.state);
+            try { localStorage.setItem(`pavilion-session-${access.code}`, JSON.stringify(access)); }
+            catch { setSessionSaveError("Your account restored the room, but this browser could not save access. Keep this tab open or sign in again to recover it."); }
+            setConnected(true); setBootReady(true);
+            window.history.replaceState(null, "", `/?room=${access.code}&view=${restoredTab}`);
+            return;
+          } catch (cause) {
+            // Missing account access permits guest admission. A network failure
+            // does not create a second seat in place of a saved account seat.
+            if (!(cause instanceof AccountRequestError) || ![401, 404, 410].includes(cause.status ?? 0)) throw cause;
+          }
+        }
         if (saved) {
           if (cancelled) return;
           targetRef.current = saved; setSession(saved); setBootReady(true);
@@ -256,7 +316,7 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
     }
     void restore();
     return () => { cancelled = true; };
-  }, [bootAttempt]);
+  }, [bootAttempt, acceptState]);
   const bidUntil = (state.lastBidAt ?? 0) + state.settings.bidCooldownMs;
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -264,7 +324,7 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
       const time = Date.now();
       if (document.hidden) return;
       setNow(time);
-      if (tab === "room" && time + clockOffset < bidUntil) {
+      if (tab === "room" && !auctionPaused && time + clockOffset < bidUntil) {
         timer = setTimeout(tick, 100);
       }
     };
@@ -272,7 +332,7 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
     const visible = () => { clearTimeout(timer); tick(); };
     document.addEventListener("visibilitychange", visible);
     return () => { clearTimeout(timer); document.removeEventListener("visibilitychange", visible); };
-  }, [bidUntil, clockOffset, tab]);
+  }, [bidUntil, clockOffset, tab, auctionPaused]);
   useEffect(() => { if (!toast) return; const timer = setTimeout(() => setToast(""), 4300); return () => clearTimeout(timer); }, [toast]);
   useEffect(() => { if (modal && bootReady) dialogRef.current?.showModal(); else dialogRef.current?.close(); }, [modal, bootReady]);
   useEffect(() => {
@@ -335,7 +395,7 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
       if (!cancelled) {
         clearTimeout(timer);
         const current = stateRef.current;
-        const liveAuction = current.mode !== "practice" && !current.endedAt && current.phase === "live" && (tab === "room" || tab === "broadcast");
+        const liveAuction = current.mode !== "practice" && !current.endedAt && current.auctionPausedAt === undefined && current.phase === "live" && (tab === "room" || tab === "broadcast");
         const delay = document.hidden ? 15000 : failures ? Math.min(15000, 2500 * 2 ** Math.min(failures - 1, 3)) : liveAuction ? 750 : 2500;
         timer = setTimeout(poll, delay);
       }
@@ -460,7 +520,8 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
       const accessSaved = saveRoomAccess(nextSession, attempt);
       window.history.replaceState(null, "", `?room=${nextSession.code}&view=${nextView}`);
       closeModal();
-      if (accessSaved && nextView !== "broadcast") notify(creating ? "Room ready. Your private team-entry password is in Room settings." : "You're in. Welcome to the auction.");
+      setAccountRefreshKey(value => value + 1);
+      if (accessSaved && nextView !== "broadcast") notify(result.accountLinkError ? "Your room is ready. Open My auctions and save this room to finish linking your account." : creating ? "Room ready. Your private team-entry password is in Room settings." : "You're in. Welcome to the auction.");
     } catch (cause) {
       if (attempt && cause instanceof AuctionRequestError && cause.code === "ROOM_DELETED") {
         try {
@@ -496,10 +557,55 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
 
   async function leaveRoom() {
     if (busyRef.current) return;
+    if (auctionPaused) { returnHome(); return; }
     if (isHost && !window.confirm("Leave this view? Your room and auctioneer access will be saved on this browser.")) return;
     if (!isHost && session) { try { await runAction({ type: "leave" }); } catch { return; } }
     try { localStorage.removeItem("pavilion-active-room"); if (!isHost && session) localStorage.removeItem(`pavilion-session-${session.code}`); } catch {}
     returnHome();
+  }
+
+  function accountAuthenticated(user: AccountUser) {
+    accountEpochRef.current += 1;
+    setAccountUser(user); setAccountReady(true);
+    if (!name && !pendingCreation) setName(user.name || user.username);
+    setAccountRefreshKey(value => value + 1);
+  }
+
+  function resumeAccountRoom(result: AccountRoomResume) {
+    if (busyRef.current) throw new Error("Wait for the current auction action to finish before opening another room.");
+    const nextSession = { code: result.state.code, token: result.token, memberId: result.memberId };
+    targetRef.current = nextSession; setSession(nextSession);
+    lotTrackerRef.current?.reset(); setLotNotice(null);
+    acceptState(result.state); changeTab("room");
+    saveRoomAccess(nextSession, null);
+    setConnected(true); setBootReady(true); setBootError("");
+    window.history.replaceState(null, "", `/?room=${nextSession.code}&view=room`);
+    closeModal();
+  }
+
+  function accountSignedOut(rooms: AccountRoomSummary[]) {
+    accountEpochRef.current += 1;
+    // Clear account-linked capabilities without discarding the only remaining
+    // credential for a guest room that has not been saved to any account.
+    try {
+      for (const room of rooms) {
+        const key = `pavilion-session-${room.code}`;
+        const saved = parseRoomSession(localStorage.getItem(key));
+        if (saved?.memberId === room.memberId) localStorage.removeItem(key);
+      }
+      localStorage.removeItem("pavilion-active-room");
+      localStorage.setItem("pavilion-account-signout", String(Date.now()));
+    } catch { /* The account cookie is revoked by the server regardless of browser storage. */ }
+    setAccountUser(null); setSessionSaveError("");
+    targetRef.current = null; setSession(null);
+    tabRef.current = "home"; setTab("home"); setSidebar(false);
+    lotTrackerRef.current?.reset(); setLotNotice(null); closeModal();
+    const lobby = createBootstrapState(); stateRef.current = lobby; setState(lobby);
+    if (catalogRef.current) acceptCatalog(catalogRef.current);
+    setConnected(true);
+    window.history.replaceState(null, "", "/");
+    window.scrollTo({ top: 0, behavior: "instant" });
+    notify("Signed out. Your linked rooms and team seats are saved to your account.");
   }
 
   if (!bootReady) return <main className="room-loading"><div className="dialog-symbol"><Gavel size={26}/></div><h1>{bootError ? "Your saved room needs a moment." : "Opening your pavilion."}</h1><p role={bootError ? "alert" : "status"}>{bootError || "Getting the stage ready…"}</p>{bootError && <><button className="button primary" onClick={() => setBootAttempt(attempt => attempt + 1)}>Retry connection</button><button className="button secondary" onClick={returnHome}>Return home</button></>}</main>;
@@ -520,33 +626,36 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
     {isBroadcast && <BroadcastMode state={toBroadcastState(state)} connected={connected} sound={sound} onExit={() => changeTab(broadcastReturnRef.current)}/>}
     <Activity mode={isBroadcast ? "hidden" : "visible"}>
     <div className={`app-shell ${inRoom ? "in-auction" : "in-lobby"}${franchiseId ? " franchise-room" : ""} tab-${tab}`} data-franchise={franchiseId}>
-    {inRoom && !isBroadcast && !state.endedAt && connected && (tab !== "room" || lotNotice?.isTarget) && lotNotice?.roomCode === state.code && lotNotice.playerId === state.currentPlayerId && player && isOngoingLot(state.currentPlayerId, state.phase) && <NewLotNotice key={lotNotice.key} player={player} phase={state.phase} isTarget={lotNotice.isTarget} onAuctionPage={tab === "room"} onView={() => changeTab("room")} onDismiss={() => setLotNotice(null)}/>}
+    {inRoom && !isBroadcast && !auctionPaused && !state.endedAt && connected && (tab !== "room" || lotNotice?.isTarget) && lotNotice?.roomCode === state.code && lotNotice.playerId === state.currentPlayerId && player && isOngoingLot(state.currentPlayerId, state.phase) && <NewLotNotice key={lotNotice.key} player={player} phase={state.phase} isTarget={lotNotice.isTarget} onAuctionPage={tab === "room"} onView={() => changeTab("room")} onDismiss={() => setLotNotice(null)}/>}
     <SoldCelebration roomId={state.id} connected={connected && !isBroadcast} sale={saleEvent && player && leadingTeam ? { id: saleEvent.id, at: saleEvent.at, playerName: player.name, teamName: leadingTeam.shortName, amount: formatMoney(state.currentBid), teamColor: leadingTeam.color } : null}/>
     {sidebar && <button className="sidebar-scrim" aria-label="Close navigation" onClick={() => setSidebar(false)} />}
     <aside className={`sidebar ${sidebar ? "is-open" : ""}`}>
       <Link className="brand" href="/" prefetch={false} onClick={event => { event.preventDefault(); returnHome(); }} aria-label="Pavilion home"><span className="brand-mark"><Gavel size={24} strokeWidth={2.5} /></span><span className="brand-word">PAVILION<span className="brand-dot">.</span><small>THE AUCTION EXPERIENCE</small></span></Link>
       <div className="workspace-label">YOUR DUGOUT</div>
       <nav aria-label="Main navigation">
-        {navigation.map(item => <button key={item.key} className={`nav-item ${tab === item.key ? "active" : ""}`} onClick={() => { changeTab(item.key); setSidebar(false); }} aria-current={tab === item.key ? "page" : undefined}><item.icon size={19}/><span>{item.label}</span>{item.key === "players" && <span className="nav-count">{catalogCount || "—"}</span>}{item.key === "my-squad" && !!ownTeam?.squad.length && <span className="nav-count">{ownTeam.squad.length}</span>}{item.key === "targets" && targetPicks.length > 0 && <span className="nav-count">{targetPicks.length}</span>}{item.key === "room" && !state.endedAt && <span className="nav-live-dot"/>}</button>)}
+        {navigation.map(item => <button key={item.key} className={`nav-item ${tab === item.key ? "active" : ""}`} onClick={() => { changeTab(item.key); setSidebar(false); }} aria-current={tab === item.key ? "page" : undefined}><item.icon size={19}/><span>{item.label}</span>{item.key === "players" && <span className="nav-count">{catalogCount || "—"}</span>}{item.key === "my-squad" && !!ownTeam?.squad.length && <span className="nav-count">{ownTeam.squad.length}</span>}{item.key === "targets" && targetPicks.length > 0 && <span className="nav-count">{targetPicks.length}</span>}{item.key === "room" && !state.endedAt && !auctionPaused && <span className="nav-live-dot"/>}</button>)}
       </nav>
       <div className="sidebar-season"><span className="tiny-label">A NEW SEASON. A NEW SQUAD.</span><Trophy size={35} strokeWidth={1.4}/><h3>Every legend starts<br/>with a bold bid.</h3><p>The auction is yours.<br/>Make it a memorable one.</p><div className="season-lines"/></div>
       <div className="sidebar-bottom"><button className="nav-item" onClick={() => setModal("help")}><CircleHelp size={19}/>How it works<ArrowUpRight size={15}/></button>{inRoom && <div className="sidebar-profile"><div className={ownTeam ? "profile-franchise-crest" : "avatar coral"}>{ownTeam ? <TeamCrest key={ownTeam.id} team={ownTeam}/> : (member?.name ?? "A").slice(0, 1).toUpperCase()}</div><div><strong>{member?.name ?? "Guest"}</strong><span>{isHost ? "Auctioneer" : ownTeam?.shortName ?? "Spectator"}</span></div><ShieldCheck size={17}/></div>}</div>
     </aside>
 
     <div className="main-shell">
-      <header className="topbar"><div className="topbar-left"><button className="icon-btn mobile-menu" aria-label="Open navigation" onClick={() => setSidebar(true)}><Menu size={21}/></button><span className="breadcrumb"><Trophy size={13}/>IPL</span><span className="breadcrumb-slash">/</span><strong>{inRoom ? state.name : "The auction starts here"}</strong><span className="season-tag">MOCK AUCTION</span></div><div className="topbar-right">{inRoom && <button ref={broadcastEntryRef} className="broadcast-entry" aria-label="Broadcast mode" title="Open broadcast mode" onClick={() => changeTab("broadcast")}><MonitorPlay size={18}/><span>Broadcast</span></button>}<SoundControls sound={sound}/>{inRoom && <><span className={`connection ${!connected ? "offline" : ""}`}><i/>{!connected ? "Reconnecting…" : "Connected"}</span><div className="topbar-divider"/></>}<button className={`avatar small${ownTeam ? " profile-franchise-crest" : ""}`} aria-label="How this auction works" onClick={() => setModal("help")}>{ownTeam ? <TeamCrest key={ownTeam.id} team={ownTeam}/> : member?.name.slice(0, 1) ?? "?"}</button></div></header>
+      <header className="topbar"><div className="topbar-left"><button className="icon-btn mobile-menu" aria-label="Open navigation" onClick={() => setSidebar(true)}><Menu size={21}/></button><span className="breadcrumb"><Trophy size={13}/>IPL</span><span className="breadcrumb-slash">/</span><strong>{inRoom ? state.name : "The auction starts here"}</strong><span className="season-tag">MOCK AUCTION</span></div><div className="topbar-right"><button className="account-entry" aria-label={accountUser ? "My auctions" : "Sign in"} title={accountUser ? `My auctions · ${accountUser.username}` : "Sign in to your account"} onClick={() => setModal("account")}><UserRound size={18}/><span>{accountUser ? "My auctions" : "Sign in"}</span></button>{isCreator && !state.endedAt && <button type="button" className="room-break-trigger" disabled={busy || !connected} aria-label={auctionPaused ? "Resume auction" : "Pause auction"} onClick={() => act({ type: auctionPaused ? "resume_auction" : "pause_auction" })}>{auctionPaused ? <Play size={18}/> : <Pause size={18}/>}<span>{auctionPaused ? "Resume auction" : "Pause auction"}</span></button>}{inRoom && <button ref={broadcastEntryRef} className="broadcast-entry" aria-label="Broadcast mode" title="Open broadcast mode" onClick={() => changeTab("broadcast")}><MonitorPlay size={18}/><span>Broadcast</span></button>}<SoundControls sound={sound}/>{inRoom && <><span className={`connection ${!connected ? "offline" : ""}`}><i/>{!connected ? "Reconnecting…" : "Connected"}</span><div className="topbar-divider"/></>}<button className={`avatar small${ownTeam ? " profile-franchise-crest" : ""}`} aria-label="How this auction works" onClick={() => setModal("help")}>{ownTeam ? <TeamCrest key={ownTeam.id} team={ownTeam}/> : member?.name.slice(0, 1) ?? "?"}</button></div></header>
       <main>
         {tab === "broadcast" || (inRoom && state.endedAt && tab === "room") ? null : inRoom && ownTeam ? <FranchiseHero team={ownTeam} ownerName={member?.name ?? "Team owner"}/> : <CinematicHero tab={tab} playerCount={catalogCount}>{heroActions}</CinematicHero>}
+
+        {inRoom && accountReady && !accountUser && <div className="account-save-reminder"><ShieldCheck size={19}/><span>Sign in to save your room access across devices.</span><button type="button" onClick={() => setModal("account")}>Sign in</button></div>}
+        {inRoom && !state.endedAt && <AuctionBreak paused={auctionPaused} creator={!!isCreator} busy={busy || !connected} onResume={() => act({ type: "resume_auction" })}/>}
 
         {sessionSaveError && session && <div className="offline-banner" role="alert"><span>{sessionSaveError}</span><button className="button secondary" onClick={() => { if (saveRoomAccess(session)) notify("Room access saved. You can safely refresh."); }}>Retry saving access</button></div>}
 
         {!connected && <div className="offline-banner" role="status">{inRoom ? "Connection interrupted. Bidding is disabled until we reconnect. Your room is saved." : "The shared player pool is reconnecting. Your saved players are safe."}</div>}
 
-        {tab === "room" && !state.endedAt && <section className="metrics" aria-label="Auction overview"><div className="metric"><span className="metric-icon mint"><Users size={20}/></span><div><span>TEAMS AT THE TABLE</span><strong>{state.members.filter(member => member.role === "bidder").length.toString().padStart(2, "0")}<small> / {state.teams.length.toString().padStart(2, "0")}</small></strong></div><span className="metric-note">{state.members.filter(m => m.role === "bidder").length} seats claimed</span></div><div className="metric"><span className="metric-icon apricot"><Gavel size={20}/></span><div><span>PLAYERS SOLD</span><strong>{sold.length.toString().padStart(2, "0")}<small> / {catalogCount}</small></strong></div><div className="mini-progress"><i style={{ width: `${sold.length / Math.max(1, state.players.length) * 100}%` }}/></div></div><div className="metric" data-metric="own-spending"><span className="metric-icon lilac"><Wallet size={20}/></span><div><span>YOUR SPENDING</span><strong>{ownTeam ? formatMoney(ownSpent) : "—"}</strong></div><span className="metric-note">{ownTeam ? `${ownTeam.shortName} signings` : "No team assigned"}</span></div><div className="metric"><span className="metric-icon blue"><ClipboardList size={20}/></span><div><span>STILL IN THE POOL</span><strong>{state.players.filter(p => !p.catalogArchived && p.status === "available").length.toString().padStart(2, "0")}</strong></div><button className="metric-link" aria-label="View player pool" onClick={() => changeTab("players")}><ArrowUpRight size={20}/></button></div></section>}
+        {tab === "room" && !state.endedAt && <section className={`metrics${!ownTeam || isHost ? " without-spending" : ""}`} aria-label="Auction overview"><div className="metric"><span className="metric-icon mint"><Users size={20}/></span><div><span>TEAMS AT THE TABLE</span><strong>{state.members.filter(member => member.role === "bidder").length.toString().padStart(2, "0")}<small> / {state.teams.length.toString().padStart(2, "0")}</small></strong></div><span className="metric-note">{state.members.filter(m => m.role === "bidder").length} seats claimed</span></div><div className="metric"><span className="metric-icon apricot"><Gavel size={20}/></span><div><span>PLAYERS SOLD</span><strong>{sold.length.toString().padStart(2, "0")}<small> / {catalogCount}</small></strong></div><div className="mini-progress"><i style={{ width: `${sold.length / Math.max(1, state.players.length) * 100}%` }}/></div></div>{ownTeam && !isHost && <div className="metric" data-metric="own-spending"><span className="metric-icon lilac"><Wallet size={20}/></span><div><span>YOUR SPENDING</span><strong>{ownTeam ? formatMoney(ownSpent) : "—"}</strong></div><span className="metric-note">{ownTeam ? `${ownTeam.shortName} signings` : "No team assigned"}</span></div>}<div className="metric"><span className="metric-icon blue"><ClipboardList size={20}/></span><div><span>STILL IN THE POOL</span><strong>{state.players.filter(isAvailableForAuction).length.toString().padStart(2, "0")}</strong></div><button className="metric-link" aria-label="View player pool" onClick={() => changeTab("players")}><ArrowUpRight size={20}/></button></div></section>}
 
         {inRoom && state.endedAt && tab !== "room" && <div className="auction-ended-banner" role="status"><span><strong>Auction complete.</strong> Your room and final squads are saved.</span><button className="button secondary" onClick={() => changeTab("room")}>View recap & downloads<ArrowRight size={16}/></button></div>}
         {inRoom && ownTeam && tab !== "room" && !state.endedAt && <PrivateBidBudget state={state} memberId={memberId} compact onViewAuction={() => changeTab("room")}/>}
-        {tab === "players" && (!inRoom && !state.sharedCatalogVersion ? <div className="lobby-pool-loading" role="status">{connected ? "Loading the shared player pool…" : "Waiting for the player pool to reconnect…"}</div> : <PlayerPool state={state} isHost={!inRoom || (!!isHost && !state.endedAt)} inRoom={inRoom} canSelect={inRoom && !!isHost && !state.endedAt} onAction={runAction}/>)}
+        {tab === "players" && (!inRoom && !state.sharedCatalogVersion ? <div className="lobby-pool-loading" role="status">{connected ? "Loading the shared player pool…" : "Waiting for the player pool to reconnect…"}</div> : <PlayerPool state={state} isHost={!inRoom || (!!isHost && !state.endedAt)} inRoom={inRoom} canSelect={inRoom && !!isHost && !state.endedAt && !auctionPaused} onAction={runAction}/>)}
         {inRoom && tab === "squads" && <><Squads state={state}/>{!!state.saleCorrections?.length && <SaleAudit state={state}/>}</>}
         {showTargets && session && <Activity key={`targets:${session.code}:${memberId}:${ownTeam?.id}`} mode={tab === "targets" ? "visible" : "hidden"}><MyTargetPicks state={state} memberId={memberId} onAction={runAction} connected={connected}/></Activity>}
         {showMySquad && tab === "my-squad" && <MySquad state={state} memberId={memberId}/>}
@@ -556,7 +665,7 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
         {inRoom && !!state.endedAt && <Activity key={`recap:${session.code}:${memberId}`} mode={tab === "room" ? "visible" : "hidden"}><AuctionRecap key={state.code} state={state} token={session.token} preferredTeamId={ownTeam?.id} connected={connected} onSquads={() => changeTab("squads")} onSettings={() => changeTab("settings")} isCreator={!!isCreator}/></Activity>}
         {inRoom && !state.endedAt && tab === "room" && <>
           <div className="auction-titlebar"><div><span className="eyebrow"><span/>THE LIVE FLOOR</span><h2>WHERE LEGENDS FIND A HOME.</h2></div><span className="floor-note"><ShieldCheck size={15}/><span>HUMAN-LED AUCTION<br/><strong>You make the final call.</strong></span></span></div><div className="auction-layout"><div className="auction-primary">
-            <section className={`player-card phase-${state.phase}`}><div className="card-topline"><div className="lot-status-group"><LiveLotStatus playerId={state.currentPlayerId} phase={state.phase} connected={connected}/>{isOwnTarget && isOngoingLot(state.currentPlayerId, state.phase) && <span className="my-target-lot-badge"><Target size={14}/>Your target</span>}</div><span className="lot-label">{player ? `LOT ${String(state.players.findIndex(p => p.id === player.id) + 1).padStart(2, "0")} · ${player.role.toUpperCase()} SET` : "THE STAGE IS SET"}</span></div>
+            <section className={`player-card phase-${state.phase}`}><div className="card-topline"><div className="lot-status-group"><LiveLotStatus playerId={state.currentPlayerId} phase={state.phase} connected={connected} auctionPaused={auctionPaused}/>{isOwnTarget && isOngoingLot(state.currentPlayerId, state.phase) && <span className="my-target-lot-badge"><Target size={14}/>Your target</span>}</div><span className="lot-label">{player ? `LOT ${String(state.players.findIndex(p => p.id === player.id) + 1).padStart(2, "0")} · ${player.role.toUpperCase()} SET` : "THE STAGE IS SET"}</span></div>
               {player ? <div className="player-hero" key={player.id}><div className="player-ghost" aria-hidden="true">{player.name.split(" ").at(-1)}</div><div className="player-bio"><div className="player-country"><span className={player.country === "India" ? "country-dot" : "country-neutral"}/>{player.country}<span>•</span>{player.eligibilityVerified === false ? "Review needed" : player.isOverseas ? "Overseas" : "Domestic"}</div><h2>{player.name.split(" ").slice(0, -1).join(" ")}<br/><span style={{ "--surname-length": Math.max(4, (player.name.split(" ").at(-1) ?? "").length) } as CSSProperties} title={player.name}>{player.name.split(" ").at(-1)}</span></h2><div className="player-tags"><span>{player.playingRole || player.role}</span>{player.role === "Marquee" && <span><Sparkles size={12}/>Marquee player</span>}</div><div className="base-price"><span>BASE PRICE</span><strong>{formatMoney(player.basePrice)}</strong></div></div><div className="player-art"><div className="player-halo"/><div className="player-orbit"/><span className="player-art-label">READY TO MAKE HISTORY</span><PlayerImage key={player.id} player={player} className="hero-player-image" priority/>{state.phase === "sold" && <span className="sold-stamp">SOLD<Gavel size={24}/></span>}<span className="portrait-floor"/></div></div> : <div className="no-player"><Gavel size={48} strokeWidth={1.2}/><h2>The next big name is up to you.</h2><p>{isHost ? "Choose a player from the pool to open the bidding." : "Your auctioneer is choosing the next player."}</p>{isHost && <button className="button primary" onClick={() => changeTab("players")}>Choose a player<ArrowRight size={16}/></button>}</div>}
               {player && <div className="player-stats"><div><span>MATCHES</span><strong>{player.stats.matches?.toLocaleString("en-IN") ?? "—"}</strong></div><div><span>RUNS</span><strong>{player.stats.runs?.toLocaleString("en-IN") ?? "—"}</strong></div><div><span>STRIKE RATE</span><strong>{player.stats.strikeRate?.toFixed(1) ?? "—"}</strong></div><div><span>WICKETS</span><strong>{player.stats.wickets?.toLocaleString("en-IN") ?? "—"}</strong></div><span className="stats-note">{player.statsFormat && player.statsFormat !== "Unknown" ? player.statsFormat : ""}<br/>{player.dataStatus === "manual" ? "ORGANIZER STATS" : "CAREER STATS"}</span></div>}
               {player && <div className="player-data-note"><span>{player.statsFormat && player.statsFormat !== "Unknown" ? `${player.statsFormat} career statistics` : "Career statistics not available"}{player.dataStatus === "manual" ? " · Organizer-provided" : player.dataSources?.length ? ` · ${player.dataSources[0].label}` : ""}</span>{player.profileUrl && <a href={player.profileUrl} target="_blank" rel="noreferrer">Player profile<ArrowUpRight size={14}/></a>}</div>}
@@ -565,8 +674,8 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
             <section className="table-section"><div className="section-heading"><div><h3><LayoutGrid size={17}/>THE FRANCHISE DUGOUTS</h3><p>{state.teams.length} tables. One winning bid.</p></div><span className="small-label"><span className="green-dot"/>{state.members.filter(m => m.role === "bidder").length} team owners</span></div><div className="team-tables">{state.teams.map((team, index) => { const owner = state.members.find(m => m.teamId === team.id); const leading = team.id === state.leadingTeamId; return <div key={team.id} className={`team-table ${leading ? "leading" : ""} ${ownTeam?.id === team.id ? "your-table" : ""}`} style={{ "--team-color": team.color } as CSSProperties}><div className="table-top"><span>TABLE {String(index + 1).padStart(2, "0")}</span>{leading ? <span className="table-leading"><Crown size={10}/>LEADING</span> : <span className={`presence-dot ${owner ? "present" : ""}`}/>}</div><div className="team-identity"><div className="team-badge"><TeamCrest team={team}/></div><div><h4>{team.shortName}{ownTeam?.id === team.id && <span>YOU</span>}</h4><span>{owner?.name ?? "Waiting for an owner"}</span></div></div><div className="table-purse"><span>Purse left</span><strong>{formatMoney(team.purse)}</strong></div><div className="team-purse-track" aria-hidden="true"><span style={{width: `${Math.max(0,Math.min(100,team.purse/state.settings.purse*100))}%`}}/></div><div className="table-floor"><span>{team.squad.length}/{state.settings.maxSquadSize} players</span><div className="table-seats">{[0,1,2].map(i => <i key={i}/>)}</div><span>{leading ? formatMoney(state.currentBid) : "—"}</span></div></div>; })}</div></section>
           </div>
 
-          <aside className="bidding-column"><section className="bid-card"><div className="bid-card-heading"><h3>{state.phase === "sold" ? "THE WINNING BID" : "THE BIDDING ROOM"}</h3><span><Radio size={14}/>{state.phase === "live" ? "Bidding open" : state.phase === "locked" ? "Bidding locked" : state.phase === "paused" ? "Paused" : state.phase === "sold" ? "Sold!" : "Awaiting the call"}</span></div><div className="bid-price"><span>{leadingTeam ? state.phase === "sold" ? "FINAL SALE PRICE" : "CURRENT HIGHEST BID" : "OPENING BID"}</span><strong key={`${state.currentPlayerId}-${state.currentBid}`}>{formatMoney(leadingTeam ? state.currentBid : player?.basePrice ?? 0)}</strong><div className="leading-team">{leadingTeam ? <><span className="tiny-team"><TeamCrest team={leadingTeam}/></span><span>{leadingTeam.name}</span><Crown size={15}/></> : <span>The first move is yours.</span>}</div></div>
-            <div className="bid-controls">{isHost ? <><div className="control-label"><ShieldCheck size={14}/>AUCTIONEER CONTROLS</div>{state.phase === "live" || state.phase === "paused" ? <div className="host-buttons"><button className="button lock-button" disabled={busy || !connected} onClick={() => act({ type: "lock" })}><LockKeyhole size={17}/>Lock bidding</button><button className="button secondary icon-square" disabled={busy || !connected} onClick={() => act({ type: state.phase === "live" ? "pause" : "resume" })} aria-label={state.phase === "live" ? "Pause bidding" : "Resume bidding"}>{state.phase === "live" ? <Pause size={18}/> : <Play size={18}/>}</button></div> : state.phase === "locked" ? <div className="locked-decision"><button className="button primary full" disabled={busy || !connected} onClick={() => act({ type: leadingTeam ? "sell" : "unsold" })}><Gavel size={18}/>{leadingTeam ? `Sell to ${leadingTeam.shortName}` : "Mark as unsold"}</button><button type="button" className="button secondary full unlock-bidding" disabled={busy || !connected || !player} onClick={() => { if (player) act({ type: "unlock", expectedPlayerId: player.id, expectedAmount: state.currentBid, expectedLockVersion: state.bidLockVersion ?? 0 }); }}><LockKeyholeOpen size={17}/>Unlock bidding</button></div> : state.phase === "waiting" && player ? <button className="button primary full" disabled={busy || !connected} onClick={() => act({ type: "start" })}><Play size={17}/>Open the bidding</button> : <button className="button primary full" onClick={() => changeTab("players")}><Plus size={17}/>Choose next player</button>}<p className="control-hint"><LockKeyhole size={12}/>Your call. Bids stop the moment you lock.</p></> : ownTeam ? <><button className="button primary full bid-button" disabled={busy || !connected || state.phase !== "live" || cooldown > 0 || leadingTeam?.id === ownTeam.id || ownTeam.purse < nextBid} onClick={() => act({ type: "bid", expectedAmount: nextBid, expectedPlayerId: state.currentPlayerId! })}><Gavel size={18}/>{busy ? "Placing bid…" : state.phase !== "live" ? (state.phase === "sold" && leadingTeam?.id === ownTeam.id ? "Signed by your team" : state.phase === "locked" ? "Bidding locked" : state.phase === "paused" ? "Auction paused" : "Waiting for the auctioneer") : leadingTeam?.id === ownTeam.id ? "You're leading the bidding" : cooldown > 0 ? `Next bid in ${(cooldown / 1000).toFixed(1)}s` : `Raise to ${formatMoney(nextBid)}`}</button><p className="control-hint">{ownTeam.purse < nextBid ? "Your purse is below the next bid." : `${formatMoney(state.settings.bidIncrement)} increments · ${state.settings.bidCooldownMs / 1000}s bid cooldown`}</p>{player && <CustomBid key={player.id} state={state} team={ownTeam} cooldown={cooldown} busy={busy} connected={connected} onAction={runAction}/>}<PrivateBidBudget state={state} memberId={memberId}/></> : <div className="spectator-note"><Users size={18}/>You have a front-row seat as a spectator.</div>}</div>
+          <aside className="bidding-column"><section className="bid-card"><div className="bid-card-heading"><h3>{state.phase === "sold" ? "THE WINNING BID" : "THE BIDDING ROOM"}</h3><span><Radio size={14}/>{auctionPaused ? "Auction paused" : state.phase === "live" ? "Bidding open" : state.phase === "locked" ? "Bidding locked" : state.phase === "paused" ? "Paused" : state.phase === "sold" ? "Sold!" : "Awaiting the call"}</span></div><div className="bid-price"><span>{leadingTeam ? state.phase === "sold" ? "FINAL SALE PRICE" : "CURRENT HIGHEST BID" : "OPENING BID"}</span><strong key={`${state.currentPlayerId}-${state.currentBid}`}>{formatMoney(leadingTeam ? state.currentBid : nextBid)}</strong><div className="leading-team">{leadingTeam ? <><span className="tiny-team"><TeamCrest team={leadingTeam}/></span><span>{leadingTeam.name}</span><Crown size={15}/></> : <span>The first move is yours.</span>}</div></div>
+            <div className="bid-controls"><fieldset className="bid-session-controls" disabled={auctionPaused}>{isHost ? <><div className="control-label"><ShieldCheck size={14}/>AUCTIONEER CONTROLS</div>{state.phase === "live" || state.phase === "paused" ? <div className="host-buttons"><button className="button lock-button" disabled={busy || !connected} onClick={() => act({ type: "lock" })}><LockKeyhole size={17}/>Lock bidding</button><button className="button secondary icon-square" disabled={busy || !connected} onClick={() => act({ type: state.phase === "live" ? "pause" : "resume" })} aria-label={state.phase === "live" ? "Pause bidding" : "Resume bidding"}>{state.phase === "live" ? <Pause size={18}/> : <Play size={18}/>}</button></div> : state.phase === "locked" ? <div className="locked-decision"><button className="button primary full" disabled={busy || !connected} onClick={() => act({ type: leadingTeam ? "sell" : "unsold" })}><Gavel size={18}/>{leadingTeam ? `Sell to ${leadingTeam.shortName}` : "Mark as unsold"}</button><button type="button" className="button secondary full unlock-bidding" disabled={busy || !connected || !player} onClick={() => { if (player) act({ type: "unlock", expectedPlayerId: player.id, expectedAmount: state.currentBid, expectedLockVersion: state.bidLockVersion ?? 0 }); }}><LockKeyholeOpen size={17}/>Unlock bidding</button></div> : state.phase === "waiting" && player ? <button className="button primary full" disabled={busy || !connected} onClick={() => act({ type: "start" })}><Play size={17}/>Open the bidding</button> : <button className="button primary full" onClick={() => changeTab("players")}><Plus size={17}/>Choose next player</button>}<p className="control-hint"><LockKeyhole size={12}/>Your call. Bids stop the moment you lock.</p></> : ownTeam ? <><button className="button primary full bid-button" disabled={busy || !connected || state.phase !== "live" || cooldown > 0 || leadingTeam?.id === ownTeam.id || ownTeam.purse < nextBid} onClick={() => act({ type: "bid", expectedAmount: nextBid, expectedPlayerId: state.currentPlayerId! })}><Gavel size={18}/>{auctionPaused ? "Auction paused" : busy ? "Placing bid…" : state.phase !== "live" ? (state.phase === "sold" && leadingTeam?.id === ownTeam.id ? "Signed by your team" : state.phase === "locked" ? "Bidding locked" : state.phase === "paused" ? "Auction paused" : "Waiting for the auctioneer") : leadingTeam?.id === ownTeam.id ? "You're leading the bidding" : cooldown > 0 ? `Next bid in ${(cooldown / 1000).toFixed(1)}s` : `Raise to ${formatMoney(nextBid)}`}</button><p className="control-hint">{ownTeam.purse < nextBid ? "Your purse is below the next bid." : `${formatMoney(normalizeBidIncrement(state.settings.bidIncrement))} increments · ${state.settings.bidCooldownMs / 1000}s bid cooldown`}</p>{player && <CustomBid key={player.id} state={state} team={ownTeam} cooldown={cooldown} busy={busy} connected={connected} onAction={runAction}/>}<PrivateBidBudget state={state} memberId={memberId}/></> : <div className="spectator-note"><Users size={18}/>You have a front-row seat as a spectator.</div>}</fieldset></div>
             <div className="bid-history"><div className="subsection-heading"><h4>Bid history</h4><span>{state.bidHistory.filter(b => b.playerId === state.currentPlayerId).length} bids</span></div>{activeBidHistory.length ? activeBidHistory.map((bid, index) => { const team = state.teams.find(t => t.id === bid.teamId); return <div className={`history-row ${index === 0 ? "latest" : ""}`} key={bid.id}><span className="history-dot" style={{ background: team?.color }}/><span>{team?.shortName}<small>{new Date(bid.at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" })}</small></span><strong>{formatMoney(bid.amount)}</strong>{index === 0 && <ArrowUpRight size={14}/>}</div>; }) : <div className="quiet-state"><Gavel size={22}/><p>Every great squad starts<br/>with the first bid.</p></div>}</div>
           </section>
 
@@ -579,10 +688,10 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
 
       </main>
 
-      {inRoom && <div className="room-dock"><div className="dock-status"><span className="dock-icon"><Users size={19}/></span><div><strong>{state.name}</strong><span>{state.members.length} participants <i>·</i> Room {state.code}</span></div></div><div className="dock-actions">{state.settings.callUrl ? <a aria-label="Join room call" className="dock-button" href={state.settings.callUrl} target="_blank" rel="noopener noreferrer"><Video size={17}/><span>Join room call</span><ArrowUpRight size={13}/></a> : !state.endedAt && <button aria-label={isHost ? "Add call link" : "Room call"} className="dock-button" onClick={() => { if (isHost) { changeTab("settings"); notify("Add your Meet, Zoom, or other call link in room settings."); } else notify("Your auctioneer can add a call link in room settings."); }}><Video size={17}/><span>{isHost ? "Add call link" : "Room call"}</span></button>}{(state.settings.callUrl || !state.endedAt) && <span className="dock-divider"/>}<button aria-label="Leave room" className="dock-button leave" disabled={busy} onClick={() => void leaveRoom()}><LogOut size={16}/><span>Leave room</span></button></div></div>}
+      {inRoom && <div className="room-dock"><div className="dock-status"><span className="dock-icon"><Users size={19}/></span><div><strong>{state.name}</strong><span>{state.members.length} participants <i>·</i> Room {state.code}</span></div></div><div className="dock-actions">{state.settings.callUrl ? <a aria-label="Join room call" className="dock-button" href={state.settings.callUrl} target="_blank" rel="noopener noreferrer"><Video size={17}/><span>Join room call</span><ArrowUpRight size={13}/></a> : !state.endedAt && <button aria-label={isHost ? "Add call link" : "Room call"} className="dock-button" onClick={() => { if (isHost) { changeTab("settings"); notify("Add your Meet, Zoom, or other call link in room settings."); } else notify("Your auctioneer can add a call link in room settings."); }}><Video size={17}/><span>{isHost ? "Add call link" : "Room call"}</span></button>}{(state.settings.callUrl || !state.endedAt) && <span className="dock-divider"/>}<button aria-label={auctionPaused ? "Exit to home" : "Leave room"} className="dock-button leave" disabled={busy} onClick={() => void leaveRoom()}><LogOut size={16}/><span>{auctionPaused ? "Exit to home" : "Leave room"}</span></button></div></div>}
     </div>
 
-    <dialog aria-label={modal === "create" ? "Create auction room" : modal === "join" ? "Join auction room" : modal === "invite" ? "Invite people" : "How it works"} className={`app-dialog${modal === "help" ? " help-dialog" : modal === "invite" ? " invite-dialog" : ""}`} ref={dialogRef} onCancel={closeModal} onClick={e => { if (e.target === e.currentTarget) closeModal(); }}><div className="dialog-inner">{modal !== "help" && <button className="dialog-close icon-btn" aria-label="Close dialog" onClick={closeModal}><X size={20}/></button>}{modal !== "help" && modal !== "invite" && <div className="dialog-symbol"><Gavel size={25}/></div>}{modal === "create" || modal === "join" ? <><span className="eyebrow">YOUR SEAT IS WAITING</span><h2>{modal === "create" ? "Let’s make auction day." : "Welcome to the pavilion."}</h2><p>{modal === "create" ? "Start with the shared player pool. You choose who goes up for bidding." : "Join freely as a spectator, or enter the creator’s password to take a team."}</p><form onSubmit={connectRoom}><label>Your name<input required autoComplete="name" readOnly={modal === "create" && !!pendingCreation} minLength={pendingCreation ? 1 : 2} maxLength={32} placeholder="e.g. Anmol" value={name} onChange={e => setName(e.target.value)}/></label>{modal === "create" ? <label>Room name<input required readOnly={!!pendingCreation} minLength={pendingCreation ? 1 : 3} maxLength={60} value={roomName} onChange={e => setRoomName(e.target.value)}/></label> : <><label>Room code<input required autoCapitalize="characters" maxLength={10} placeholder="ABC123" value={joinCode} onChange={e => { setJoinCode(e.target.value.toUpperCase()); setJoinPassword(""); }}/></label><label>Your team<select value={joinTeam} onChange={e => { setJoinTeam(e.target.value); setJoinPassword(""); }}><option value="">Join as a spectator</option>{TEAM_SEEDS.map(team => <option key={team.id} value={team.id}>{team.name} ({team.shortName})</option>)}</select></label>{joinTeam && <label>Team password<input type="password" required maxLength={128} autoComplete="off" spellCheck={false} autoCapitalize="none" placeholder="Ask the room creator" value={joinPassword} onChange={e => setJoinPassword(e.target.value)}/></label>}</>}{error && <p className="form-error" role="alert">{error}</p>}<button className="button primary full" disabled={busy} type="submit">{busy ? "Setting up your seat…" : modal === "create" ? pendingCreation ? "Retry room creation" : "Create auction room" : "Join auction room"}<ArrowRight size={17}/></button></form><p className="dialog-footnote"><ShieldCheck size={13}/>{modal === "create" ? "Your team-entry password is available privately in Room settings." : "Spectators join freely. Team seats need the creator’s password."}</p></> : modal === "invite" ? <InvitePanel code={state.code} ended={!!state.endedAt} token={isCreator ? session?.token : undefined} isCreator={!!isCreator} onManagePassword={isCreator ? () => { closeModal(); changeTab("settings"); } : undefined}/> : <HowItWorks onClose={closeModal}/>}</div></dialog>
+    <dialog aria-label={modal === "create" ? "Create auction room" : modal === "join" ? "Join auction room" : modal === "invite" ? "Invite people" : modal === "account" ? "Your account" : "How it works"} className={`app-dialog${modal === "help" ? " help-dialog" : modal === "invite" ? " invite-dialog" : modal === "account" ? " account-dialog" : ""}`} ref={dialogRef} onCancel={closeModal} onClick={e => { if (e.target === e.currentTarget) closeModal(); }}><div className="dialog-inner">{modal !== "help" && <button className="dialog-close icon-btn" aria-label="Close dialog" onClick={closeModal}><X size={20}/></button>}{modal !== "help" && modal !== "invite" && modal !== "account" && <div className="dialog-symbol"><Gavel size={25}/></div>}{modal === "create" || modal === "join" ? <><span className="eyebrow">YOUR SEAT IS WAITING</span><h2>{modal === "create" ? "Let’s make auction day." : "Welcome to the pavilion."}</h2><p>{modal === "create" ? "Start with the shared player pool. You choose who goes up for bidding." : "Join freely as a spectator, or enter the creator’s password to take a team."}</p><form onSubmit={connectRoom}><label>Your name<input required autoComplete="name" readOnly={modal === "create" && !!pendingCreation} minLength={pendingCreation ? 1 : 2} maxLength={32} placeholder="e.g. Anmol" value={name} onChange={e => setName(e.target.value)}/></label>{modal === "create" ? <label>Room name<input required readOnly={!!pendingCreation} minLength={pendingCreation ? 1 : 3} maxLength={60} value={roomName} onChange={e => setRoomName(e.target.value)}/></label> : <><label>Room code<input required autoCapitalize="characters" maxLength={10} placeholder="ABC123" value={joinCode} onChange={e => { setJoinCode(e.target.value.toUpperCase()); setJoinPassword(""); }}/></label><label>Your team<select value={joinTeam} onChange={e => { setJoinTeam(e.target.value); setJoinPassword(""); }}><option value="">Join as a spectator</option>{TEAM_SEEDS.map(team => <option key={team.id} value={team.id}>{team.name} ({team.shortName})</option>)}</select></label>{joinTeam && <label>Team password<input type="password" required maxLength={128} autoComplete="off" spellCheck={false} autoCapitalize="none" placeholder="Ask the room creator" value={joinPassword} onChange={e => setJoinPassword(e.target.value)}/></label>}</>}{error && <p className="form-error" role="alert">{error}</p>}<button className="button primary full" disabled={busy} type="submit">{busy ? "Setting up your seat…" : modal === "create" ? pendingCreation ? "Retry room creation" : "Create auction room" : "Join auction room"}<ArrowRight size={17}/></button></form><p className="dialog-footnote"><ShieldCheck size={13}/>{modal === "create" ? "Your team-entry password is available privately in Room settings." : "Spectators join freely. Team seats need the creator’s password."}</p></> : modal === "invite" ? <InvitePanel code={state.code} ended={!!state.endedAt} token={isCreator ? session?.token : undefined} isCreator={!!isCreator} onManagePassword={isCreator ? () => { closeModal(); changeTab("settings"); } : undefined}/> : modal === "account" ? <AccountPanel user={accountUser} currentSession={session} refreshKey={accountRefreshKey} onAuthenticated={accountAuthenticated} onSignedOut={accountSignedOut} onResume={resumeAccountRoom} onLinked={() => setAccountRefreshKey(value => value + 1)}/> : <HowItWorks onClose={closeModal}/>}</div></dialog>
     {toast && <div className="toast" role="status"><span><Check size={15}/></span>{toast}<button aria-label="Dismiss notification" onClick={() => setToast("")}><X size={15}/></button></div>}
   </div>
   </Activity>

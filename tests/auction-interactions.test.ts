@@ -51,13 +51,13 @@ test("custom bids use exact integer lakhs for the leader, history, next incremen
   assert.equal(jumped.teams.find(team => team.id === "rcb")!.purse, 10000, "bidding reserves no premature debit");
   assert.equal(getNextBid(jumped), 525);
   assert.match(jumped.activity.at(-1)!.text, /₹5\.00 Cr/);
-  const raised = act(jumped, customBid(jumped, 577), MI, NOW + 1000);
-  assert.equal(getNextBid(raised), 602, "a custom amount need not be a multiple of the increment");
+  const raised = act(jumped, customBid(jumped, 575), MI, NOW + 1000);
+  assert.equal(getNextBid(raised), 600, "a custom jump still uses quarter-crore amounts");
   const sold = act(act(raised, { type: "lock" }), { type: "sell" });
   const winner = sold.teams.find(team => team.id === "mi")!;
-  assert.equal(winner.purse, 10000 - 577);
-  assert.deepEqual(winner.squad, [{ playerId: initial.currentPlayerId, amount: 577 }]);
-  assert.equal(sold.players.find(player => player.id === initial.currentPlayerId)!.soldFor, 577);
+  assert.equal(winner.purse, 10000 - 575);
+  assert.deepEqual(winner.squad, [{ playerId: initial.currentPlayerId, amount: 575 }]);
+  assert.equal(sold.players.find(player => player.id === initial.currentPlayerId)!.soldFor, 575);
   rejects(sold, { type: "sell" }, "INVALID_ACTION", HOST);
   assert.deepEqual(initial, before, "successful transitions are immutable too");
 });
@@ -99,7 +99,7 @@ test("custom amounts cannot bypass purse, squad or overseas limits", () => {
   const room = live();
   const team = room.teams.find(value => value.id === "rcb")!;
   team.purse = 500;
-  rejects(room, customBid(room, 501), "INSUFFICIENT_PURSE");
+  rejects(room, customBid(room, 525), "INSUFFICIENT_PURSE");
   assert.equal(act(room, customBid(room, 500), RCB).currentBid, 500);
   team.squad = Array.from({ length: room.settings.maxSquadSize }, (_, index) => ({ playerId: `held-${index}`, amount: 1 }));
   rejects(room, customBid(room, 500), "SQUAD_FULL");

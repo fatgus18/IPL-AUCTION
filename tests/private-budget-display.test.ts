@@ -58,9 +58,14 @@ test("private reminders distinguish approaching, reached and exceeded limits wit
   assert.equal(currentPrivateBudget(state, owner.id)?.warning, "within");
   assert.deepEqual(state, baseline);
   state.currentBid = 490;
+  assert.equal(currentPrivateBudget(state, owner.id)?.nextBid, 500, "legacy off-grid bids round to the next quarter-crore amount");
+  assert.equal(currentPrivateBudget(state, owner.id)?.warning, "within");
+  state.myTargetPicks!.maxBids![player.id] = 490;
+  state.currentBid = 475;
   assert.equal(currentPrivateBudget(state, owner.id)?.warning, "next-over");
   state.leadingTeamId = "rcb";
   assert.equal(currentPrivateBudget(state, owner.id)?.warning, "within", "a leading team is not asked to outbid itself");
+  state.myTargetPicks!.maxBids![player.id] = 500;
   state.currentBid = 500;
   assert.equal(currentPrivateBudget(state, owner.id)?.warning, "at");
   state.currentBid = 525;

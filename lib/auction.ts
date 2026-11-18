@@ -2,6 +2,7 @@ import { CATALOG_VERSION, CATALOG_DATA_REVISION, buildCatalogPool, legacyPlayerD
 import { PLAYER_ROLES, formatMoney, getNextBid } from "./auction-display.ts";
 import { TEAM_SEEDS, TEAM_CATALOG_VERSION, PRACTICE_MANAGER_NAMES } from "./team-catalog.ts";
 import { recordAuctionAwards, type AuctionAwardLedger } from "./auction-awards.ts";
+import { BID_STEP_LAKHS, isValidBidAmount, normalizeBidIncrement } from "./bid-input.ts";
 export { PLAYER_ROLES, formatMoney, getNextBid } from "./auction-display.ts";
 export { TEAM_SEEDS } from "./team-catalog.ts";
 
@@ -72,6 +73,8 @@ export type RoomState = {
   phase: Phase; lastBidAt: number | null; bidHistory: Bid[]; activity: Activity[];
   /** Identifies the latest lock cycle independently of chat and other room changes. */
   bidLockVersion?: number;
+  /** A durable break for the entire auction, independent of the current lot phase. */
+  auctionPausedAt?: number;
   settings: RoomSettings;
   catalogVersion?: string;
   catalogDataRevision?: string;
@@ -93,7 +96,7 @@ export type RoomState = {
 export type PlayerInput = Omit<Player, "id" | "status" | "soldTo" | "soldFor"> & { id?: string };
 export type AuctionAction =
   | { type: "select_player"; playerId: string }
-  | { type: "start" | "pause" | "resume" | "lock" | "sell" | "unsold" | "leave" | "ping" }
+  | { type: "start" | "pause" | "resume" | "pause_auction" | "resume_auction" | "lock" | "sell" | "unsold" | "leave" | "ping" }
   | { type: "unlock"; expectedPlayerId: string; expectedAmount: number; expectedLockVersion: number }
   | { type: "bid"; expectedAmount: number; expectedPlayerId: string; customAmount?: number }
   | { type: "add_player"; player: PlayerInput }
@@ -366,10 +369,13 @@ export function applyAction(source: RoomState, action: AuctionAction, memberId: 
   const state = structuredClone(source);
   const member = state.members.find((entry) => entry.id === memberId);
   requireCondition(member, "Join this room to continue.", 401, "UNAUTHORIZED");
-  const hostActions = ["select_player", "start", "pause", "resume", "lock", "unlock", "sell", "unsold", "add_player", "update_player", "delete_player", "update_settings", "end_auction", "correct_sale"];
+  const hostActions = ["select_player", "start", "pause", "resume", "pause_auction", "resume_auction", "lock", "unlock", "sell", "unsold", "add_player", "update_player", "delete_player", "update_settings", "end_auction", "correct_sale"];
   if (hostActions.includes(action.type)) requireCondition(member.id === state.hostId && member.role === "auctioneer", "Only the auctioneer can do that.", 403, "FORBIDDEN");
   if (state.endedAt !== undefined && !["end_auction", "correct_sale", "set_lineup", "chat", "ping", "leave"].includes(action.type)) {
     throw new AuctionError("This auction has ended. Its results remain available in the recap.", 409, "AUCTION_ENDED");
+  }
+  if (state.auctionPausedAt !== undefined && ["select_player", "start", "pause", "resume", "lock", "unlock", "sell", "unsold", "bid", "end_auction", "correct_sale"].includes(action.type)) {
+    throw new AuctionError("The auction is on a break. The auctioneer must resume it before bidding or changing the current round.", 409, "AUCTION_PAUSED");
   }
   const player = state.players.find((entry) => entry.id === state.currentPlayerId);
   const log = (type: string, text: string) => state.activity.push({
@@ -380,6 +386,16 @@ export function applyAction(source: RoomState, action: AuctionAction, memberId: 
     requireCondition(Number.isSafeInteger(expected) && expected >= 0 && expected < Number.MAX_SAFE_INTEGER && expected === (state.resultsRevision ?? 0), "The auction results changed. Review the latest results before confirming.", 409, "RESULTS_CONFLICT");
   };
   switch (action.type) {
+    case "pause_auction":
+      requireCondition(state.auctionPausedAt === undefined, "This auction is already on a break.", 409, "AUCTION_ALREADY_PAUSED");
+      state.auctionPausedAt = now;
+      log("auction_paused", "The auctioneer paused the auction. All bids and squads are saved for when it resumes.");
+      break;
+    case "resume_auction":
+      requireCondition(state.auctionPausedAt !== undefined, "This auction is not on a break.", 409, "AUCTION_NOT_PAUSED");
+      delete state.auctionPausedAt;
+      log("auction_resumed", "The auctioneer resumed the auction.");
+      break;
     case "select_player": {
       requireCondition(["waiting", "sold", "unsold"].includes(state.phase), "Close the current auction before selecting another player.", 409);
       const next = state.players.find((entry) => entry.id === action.playerId);
@@ -499,6 +515,7 @@ export function applyAction(source: RoomState, action: AuctionAction, memberId: 
       const amount = action.customAmount === undefined ? nextAmount : action.customAmount;
       requireCondition(typeof amount === "number" && Number.isSafeInteger(amount) && amount > 0, "Enter a whole number of lakhs for your bid.", 400, "INVALID_BID_AMOUNT");
       requireCondition(amount >= nextAmount, `Your bid must be at least ${formatMoney(nextAmount)}.`, 400, "BID_TOO_LOW");
+      requireCondition(isValidBidAmount(amount), "Bid amounts must be multiples of ₹0.25 Cr (₹25 L).", 400, "INVALID_BID_INCREMENT");
       requireCondition(state.lastBidAt === null || now - state.lastBidAt >= state.settings.bidCooldownMs, "The next bid opens in a moment.", 429, "BID_COOLDOWN");
       validateTeamBid(state, team, player, amount);
       state.currentBid = amount; state.leadingTeamId = team.id; state.lastBidAt = now;
@@ -537,10 +554,11 @@ export function applyAction(source: RoomState, action: AuctionAction, memberId: 
       const settings: RoomSettings = {
         purse: numberInRange(value.purse, "Starting purse", 100, 100000), maxSquadSize: numberInRange(value.maxSquadSize, "Squad limit", 1, 30),
         maxOverseas: numberInRange(value.maxOverseas, "Overseas limit", 0, 30), bidCooldownMs: numberInRange(value.bidCooldownMs, "Bid cooldown", 1000, 2000),
-        bidIncrement: numberInRange(value.bidIncrement, "Bid increment", 5, 500), callUrl: safeUrl(value.callUrl, "Call link"),
+        bidIncrement: numberInRange(action.settings.bidIncrement === undefined ? normalizeBidIncrement(value.bidIncrement) : value.bidIncrement, "Bid increment", BID_STEP_LAKHS, 500), callUrl: safeUrl(value.callUrl, "Call link"),
       };
+      requireCondition(isValidBidAmount(settings.bidIncrement), "Bid increments must be multiples of ₹0.25 Cr (₹25 L).", 400, "INVALID_BID_INCREMENT");
       requireCondition(settings.maxOverseas <= settings.maxSquadSize, "Overseas limit cannot exceed squad size.");
-      requireCondition(!["live", "paused", "locked"].includes(state.phase) || (settings.bidIncrement === state.settings.bidIncrement && settings.bidCooldownMs === state.settings.bidCooldownMs), "Change bidding rules between players.", 409);
+      requireCondition(!["live", "paused", "locked"].includes(state.phase) || (settings.bidIncrement === normalizeBidIncrement(state.settings.bidIncrement) && settings.bidCooldownMs === state.settings.bidCooldownMs), "Change bidding rules between players.", 409);
       if (settings.purse !== state.settings.purse) {
         requireCondition(state.bidHistory.length === 0 && state.teams.every((team) => team.squad.length === 0), "Starting purse can only change before the first bid.", 409);
         state.teams.forEach((team) => { team.purse = settings.purse; });

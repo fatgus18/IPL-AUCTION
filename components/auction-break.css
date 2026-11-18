@@ -1,0 +1,27 @@
+.app-shell .auction-break, .app-shell .account-save-reminder { display: flex; align-items: center; gap: 18px; padding: 20px 24px; margin-bottom: 24px; border: 1px solid #e6c48a46; border-radius: 12px; background: #e6c48a09; }
+.auction-break-icon { display: grid; place-items: center; flex-shrink: 0; width: 42px; height: 42px; border-radius: 10px; background: #e6c48a14; color: #e6c48a; }
+.auction-break > div, .account-save-reminder > span { flex: 1; min-width: 0; }
+.auction-break strong { display: block; font-size: 18px; color: #f4dfbb; }
+.auction-break p { margin-top: 6px; font-size: 14px; color: #b7c2ce; line-height: 1.6; }
+.auction-break .button { flex-shrink: 0; }
+.auction-break-saved { flex-shrink: 0; color: #e6c48a; }
+.bid-session-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
+.app-shell .room-break-trigger, .app-shell .account-entry { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 12px; border: 1px solid var(--desk-line); border-radius: 8px; color: var(--desk-accent); background: var(--desk-surface); font-size: 14px; font-weight: 600; white-space: nowrap; }
+.app-shell .room-break-trigger:hover, .app-shell .account-entry:hover { border-color: var(--desk-accent); background: var(--desk-raised); }
+.app-shell .account-save-reminder { font-size: 14px; color: #b9c5d3; padding: 15px 20px; border-color: var(--desk-line); }
+.account-save-reminder > svg { flex-shrink: 0; color: var(--desk-accent); }
+.account-save-reminder button { color: var(--desk-accent); font-weight: 600; min-height: 44px; white-space: nowrap; }
+.app-shell .metrics.without-spending { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1100px) {
+  .app-shell .room-break-trigger span, .app-shell .account-entry span { display: none; }
+  .app-shell .room-break-trigger, .app-shell .account-entry { min-width: 44px; padding: 10px; }
+}
+@media (max-width: 760px) {
+  .app-shell .auction-break { flex-wrap: wrap; padding: 18px; gap: 12px; }
+  .auction-break > div { flex-basis: calc(100% - 60px); }
+  .auction-break .button { width: 100%; }
+  .app-shell .metrics.without-spending { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .app-shell .metrics.without-spending .metric:last-child { grid-column: 1 / -1; }
+  .app-shell .account-save-reminder { flex-wrap: wrap; gap: 10px; }
+  .app-shell .topbar .connection { display: none; }
+}

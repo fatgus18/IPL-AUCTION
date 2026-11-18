@@ -5,6 +5,7 @@ import { createClient, type Client } from "@libsql/client";
 import { drizzle, type LibSQLDatabase } from "drizzle-orm/libsql";
 import * as schema from "./schema";
 import { createDatabaseWriteQueue } from "@/lib/database-write-queue";
+import { AUTH_SCHEMA_SQL } from "./auth-migrations";
 
 export type Database = LibSQLDatabase<typeof schema>;
 const databaseGlobal = globalThis as typeof globalThis & {
@@ -80,6 +81,7 @@ async function initializeDatabase(): Promise<Database> {
       host_token_hash TEXT NOT NULL,
       deleted_at INTEGER NOT NULL
     )`);
+    await client.batch(AUTH_SCHEMA_SQL, "write");
     return drizzle(client, { schema });
   } catch (error) {
     client.close();

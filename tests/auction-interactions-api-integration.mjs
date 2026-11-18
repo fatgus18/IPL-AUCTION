@@ -57,7 +57,8 @@ try {
     await rejected(owner, bidFor(first, customAmount), 400, "INVALID_BID_AMOUNT");
   }
   await rejected(owner, bidFor(first, first.basePrice - 1), 400, "BID_TOO_LOW");
-  await rejected(owner, bidFor(first, 10001), 409, "INSUFFICIENT_PURSE");
+  for (const offGridAmount of [627, 631, 748]) await rejected(owner, bidFor(first, offGridAmount), 400, "INVALID_BID_INCREMENT");
+  await rejected(owner, bidFor(first, 10025), 409, "INSUFFICIENT_PURSE");
   await rejected(owner, bidFor(first, 500, 500), 409, "STALE_BID");
   await rejected(owner, { ...bidFor(first, 500), expectedPlayerId: candidates[1].id }, 409, "STALE_PLAYER");
   await rejected(spectator, bidFor(first, 500), 403, "NO_TEAM");
@@ -87,7 +88,7 @@ try {
   const owned = [];
   for (const player of candidates.slice(1)) {
     await open(player);
-    ok(await act(owner, bidFor(player, 577)));
+    ok(await act(owner, bidFor(player, 575)));
     await finish();
     owned.push(player.id);
   }

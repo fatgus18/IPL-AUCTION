@@ -9,8 +9,9 @@ export const LOT_PHASE_LABELS: Record<Phase, string> = {
   locked: "Bidding locked", sold: "Sold", unsold: "Unsold",
 };
 
-export function LiveLotStatus({ playerId, phase, connected }: { playerId: string | null; phase: Phase; connected: boolean }) {
+export function LiveLotStatus({ playerId, phase, connected, auctionPaused = false }: { playerId: string | null; phase: Phase; connected: boolean; auctionPaused?: boolean }) {
   if (!connected) return <span className="status-pill">Reconnecting</span>;
+  if (auctionPaused) return <span className="status-pill">AUCTION PAUSED</span>;
   if (!isOngoingLot(playerId, phase)) return <span className="status-pill"><i/>{playerId ? phase.toUpperCase() : "READY WHEN YOU ARE"}</span>;
   return <span className={`live-lot-status ${phase === "live" ? "live-lot-bidding" : ""}`}>
     <span className="live-lot-badge"><i aria-hidden="true"/>LIVE</span>

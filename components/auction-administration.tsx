@@ -40,14 +40,14 @@ export function AuctionAdministration({ state, connected, onAction }: Props) {
   const [selected, setSelected] = useState<SaleSelection | null>(null);
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(12);
-  const activeRound = ["live", "paused", "locked"].includes(state.phase);
+  const activeRound = (state.auctionPausedAt !== undefined || ["live", "paused", "locked"].includes(state.phase));
   const players = new Map(state.players.map(player => [player.id, player]));
   const sales = state.teams.flatMap(team => team.squad.map(sale => ({ ...sale, team, player: players.get(sale.playerId) }))).filter(sale => sale.player);
   const filtered = sales.filter(sale => `${sale.player!.name} ${sale.team.name}`.toLowerCase().includes(query.trim().toLowerCase()));
   return <section className="auction-admin" aria-labelledby="auction-admin-heading">
     <div className="result-section-heading"><div><span className="result-overline"><ShieldCheck size={15}/>CREATOR CONTROLS</span><h2 id="auction-admin-heading">Results & final call</h2></div><span className="result-revision">Revision {state.resultsRevision ?? 0}</span></div>
     <div className="auction-end-card"><span className="auction-end-icon"><FileCheck2 size={28}/></span><div><h3>{state.endedAt ? "Auction completed" : "Ready to close the auction?"}</h3><p>{state.endedAt ? "Bidding is closed. Corrections remain available and are included in new downloads." : "End bidding and make the recap and Excel workbook available to everyone in the room."}</p></div>{!state.endedAt && <button type="button" className="button primary" disabled={!connected || activeRound} onClick={() => setEnding(state.resultsRevision ?? 0)}>End auction<ArrowRight size={17}/></button>}</div>
-    {activeRound && <p className="result-notice">Settle the current player before ending the auction or correcting a sale.</p>}
+    {activeRound && <p className="result-notice">{state.auctionPausedAt !== undefined ? "Resume the auction before ending it or correcting a sale." : "Settle the current player before ending the auction or correcting a sale."}</p>}
     <div className="sale-management"><div className="sale-management-heading"><div><h3>Correct a sale</h3><p>Change the team or price, or cancel a purchase and refund it.</p></div><span>{sales.length} signings</span></div>
       {!!sales.length && <label className="result-search"><Search size={18}/><input aria-label="Search confirmed sales" placeholder="Search player or franchise" value={query} onChange={event => { setQuery(event.target.value); setLimit(12); }}/></label>}
       <ul className="sale-management-list">{filtered.slice(0, limit).map(sale => <li key={sale.playerId}><span className="sale-management-photo"><PlayerImage player={sale.player!}/></span><span className="sale-management-name"><strong>{sale.player!.name}</strong><span>{sale.team.name}</span></span><strong className="sale-management-price">{formatMoney(sale.amount)}</strong><button type="button" className="button secondary" aria-label={`Correct sale for ${sale.player!.name}`} disabled={!connected || activeRound} onClick={() => setSelected({ player: sale.player!, teamId: sale.team.id, amount: sale.amount, revision: state.resultsRevision ?? 0 })}><Pencil size={15}/><span>Correct</span></button></li>)}</ul>
@@ -71,7 +71,7 @@ function CorrectionDialog({ state, selection, connected, onAction, onClose }: Pr
   const nextAmount = parseCroreBid(price);
   const changed = mode === "cancel" || teamId !== selection.teamId || nextAmount !== selection.amount;
   const stale = selection.revision !== (state.resultsRevision ?? 0);
-  const roundActive = ["live", "paused", "locked"].includes(state.phase);
+  const roundActive = (state.auctionPausedAt !== undefined || ["live", "paused", "locked"].includes(state.phase));
   const oldTeam = state.teams.find(team => team.id === selection.teamId);
   const newTeam = state.teams.find(team => team.id === teamId);
   async function submit(event: FormEvent) {
@@ -91,7 +91,7 @@ function CorrectionDialog({ state, selection, connected, onAction, onClose }: Pr
     <div className="correction-preview"><span>{oldTeam?.shortName} · {formatMoney(selection.amount)}</span><ArrowRight size={18}/><strong>{mode === "cancel" ? "Refund & return to pool" : `${newTeam?.shortName} · ${nextAmount === null ? "Enter price" : formatMoney(nextAmount)}`}</strong></div>
     {(mode === "cancel" || teamId !== selection.teamId) && <p className="result-notice">The player will also be removed from the previous team’s XI, substitutes and leadership selections.</p>}
     {stale && <p role="alert" className="result-error">Results changed while this form was open. Close it and review the latest sale before correcting.</p>}
-    {roundActive && <p role="alert" className="result-error">Bidding has started. Settle the current player before applying this correction.</p>}
+    {roundActive && <p role="alert" className="result-error">{state.auctionPausedAt !== undefined ? "Resume the auction before applying this correction." : "Bidding has started. Settle the current player before applying this correction."}</p>}
     {error && <p role="alert" className="result-error">{error}</p>}
     <footer className="result-dialog-actions"><button type="button" className="button secondary" disabled={busy} onClick={onClose}>Keep current sale</button><button type="submit" className="button primary" disabled={busy || !connected || stale || roundActive || !changed || !reason.trim() || (mode === "update" && nextAmount === null)}>{busy ? "Saving correction…" : "Confirm correction"}<Check size={17}/></button></footer>
   </form></ResultDialog>;
@@ -103,7 +103,7 @@ function EndAuctionDialog({ state, revision, connected, onAction, onClose }: Pro
   const pending = useRef(false);
   const sales = state.teams.flatMap(team => team.squad);
   const changed = revision !== (state.resultsRevision ?? 0);
-  const activeRound = ["live", "paused", "locked"].includes(state.phase);
+  const activeRound = (state.auctionPausedAt !== undefined || ["live", "paused", "locked"].includes(state.phase));
   async function finish() {
     if (pending.current || changed || activeRound || !connected || state.endedAt) return;
     pending.current = true; setBusy(true);

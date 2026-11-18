@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ArrowLeft, Check, Gavel, Maximize, Minimize, Pause, Radio, Trophy, Volume2, VolumeX, WifiOff } from "lucide-react";
 import type { BroadcastState } from "@/lib/broadcast-display";
 import { formatMoney } from "@/lib/auction-display";
+import { isAvailableForAuction } from "@/lib/player-availability";
+import { roundUpToBidGrid } from "@/lib/bid-input";
 import { getPlayingRole } from "@/lib/player-roles";
 import { PlayerImage, TeamCrest } from "./ipl-visuals";
 import type { AuctionAudioControls } from "./sound-controls";
@@ -42,15 +44,16 @@ export function BroadcastMode({ state, connected, onExit, sound }: BroadcastMode
   const leader = state.teams.find(team => team.id === (state.phase === "sold" ? current?.soldTo ?? state.leadingTeamId : state.leadingTeamId));
   const soldPlayers = state.players.filter(player => player.status === "sold");
   const catalogPlayers = state.players.filter(player => !player.catalogArchived);
-  const availableCount = catalogPlayers.filter(player => player.status === "available").length;
+  const availableCount = catalogPlayers.filter(isAvailableForAuction).length;
+  const auctionPaused = state.auctionPausedAt !== undefined;
   const auctionSpend = state.teams.reduce((sum, team) => sum + team.squad.reduce((spent, purchase) => spent + purchase.amount, 0), 0);
   const currentBids = state.bidHistory.filter(bid => bid.playerId === current?.id).slice(-3).reverse();
   const leadingSignings = [...soldPlayers].sort((a, b) => (b.soldFor ?? 0) - (a.soldFor ?? 0) || a.name.localeCompare(b.name)).slice(0, 3);
   const activeBid = state.phase === "sold" ? current?.soldFor ?? state.currentBid : state.currentBid;
   const hasBid = !!leader && activeBid > 0;
-  const bidDisplay = state.phase === "unsold" ? "UNSOLD" : formatMoney(hasBid ? activeBid : current?.basePrice ?? 0);
-  const phaseLabel = completed ? "Auction complete" : !current ? "Ready for the first player" : PHASE_LABELS[state.phase];
-  const live = connected && !completed && !!current && state.phase === "live";
+  const bidDisplay = state.phase === "unsold" ? "UNSOLD" : formatMoney(hasBid ? activeBid : current ? roundUpToBidGrid(current.basePrice) : 0);
+  const phaseLabel = completed ? "Auction complete" : auctionPaused ? "Auction paused" : !current ? "Ready for the first player" : PHASE_LABELS[state.phase];
+  const live = connected && !completed && !auctionPaused && !!current && state.phase === "live";
   const accent = !completed && leader ? leader.color : "#e6c48a";
 
   useEffect(() => {
@@ -105,6 +108,7 @@ export function BroadcastMode({ state, connected, onExit, sound }: BroadcastMode
     data-player-id={current?.id ?? ""}
     data-completed={completed ? "true" : "false"}
     data-connected={connected ? "true" : "false"}
+    data-auction-paused={auctionPaused ? "true" : "false"}
     style={{ "--broadcast-accent": accent } as CSSProperties}
   >
     <header className="broadcast-header">
@@ -147,7 +151,7 @@ export function BroadcastMode({ state, connected, onExit, sound }: BroadcastMode
         </article>
 
         <aside className={`broadcast-bidding ${state.phase === "sold" ? "is-sold" : ""}`} aria-label="Current auction bid">
-          <div className="broadcast-bid-primary"><p className="broadcast-eyebrow">{state.phase === "sold" ? "Winning bid" : state.phase === "unsold" ? "No sale" : hasBid ? "Current bid" : "Opening bid"}</p><strong className="broadcast-bid-amount" data-testid="broadcast-bid-amount" key={`${current.id}-${activeBid}-${state.phase}`} style={{ "--broadcast-price-length": bidDisplay.length } as CSSProperties}>{bidDisplay}</strong><p className="broadcast-bid-note">{state.phase === "sold" ? "SOLD · Confirmed by the auctioneer" : state.phase === "unsold" ? "Back to the player pool" : state.phase === "locked" ? "Bids are closed" : state.phase === "paused" ? "Waiting for the auctioneer to resume" : state.phase === "waiting" ? "Waiting for the auctioneer to open" : hasBid ? "Highest accepted bid" : "Waiting for the first bid"}</p></div>
+          <div className="broadcast-bid-primary"><p className="broadcast-eyebrow">{state.phase === "sold" ? "Winning bid" : state.phase === "unsold" ? "No sale" : hasBid ? "Current bid" : "Opening bid"}</p><strong className="broadcast-bid-amount" data-testid="broadcast-bid-amount" key={`${current.id}-${activeBid}-${state.phase}`} style={{ "--broadcast-price-length": bidDisplay.length } as CSSProperties}>{bidDisplay}</strong><p className="broadcast-bid-note">{auctionPaused ? "Auction paused · progress saved" : state.phase === "sold" ? "SOLD · Confirmed by the auctioneer" : state.phase === "unsold" ? "Back to the player pool" : state.phase === "locked" ? "Bids are closed" : state.phase === "paused" ? "Waiting for the auctioneer to resume" : state.phase === "waiting" ? "Waiting for the auctioneer to open" : hasBid ? "Highest accepted bid" : "Waiting for the first bid"}</p></div>
           {leader && state.phase !== "unsold" ? <div className="broadcast-leader" data-testid="broadcast-leading-team"><TeamCrest key={leader.id} team={leader} className="broadcast-leader-crest" /><div><span>{state.phase === "sold" ? "Signed by" : "Leading franchise"}</span><h2>{leader.name}</h2></div></div> : <div className="broadcast-no-leader"><Gavel size={26} strokeWidth={1.4} aria-hidden="true" /><span>{state.phase === "unsold" ? "The next opportunity awaits" : "The next move is yours"}</span></div>}
           <div className="broadcast-bid-trail"><h3>Latest bids</h3>{currentBids.length ? <ol>{currentBids.map(bid => {
             const team = state.teams.find(entry => entry.id === bid.teamId);
@@ -160,7 +164,7 @@ export function BroadcastMode({ state, connected, onExit, sound }: BroadcastMode
         <div className="broadcast-franchises-heading"><h2>The franchises</h2><span>Remaining purse · Squad filled</span></div>
         <ul>{state.teams.map(team => <li key={team.id} className={!completed && leader?.id === team.id ? "is-leading" : ""} style={{ "--franchise-strip-color": team.color } as CSSProperties} aria-label={`${team.name}, purse ${formatMoney(team.purse)}, ${team.squad.length} of ${state.settings.maxSquadSize} squad spots filled`}><TeamCrest team={team} className="broadcast-franchise-crest" /><div><strong>{team.shortName}</strong><span>{formatMoney(team.purse)}</span></div><span className="broadcast-franchise-count">{team.squad.length}<small>/{state.settings.maxSquadSize}</small></span></li>)}</ul>
       </section>
-      <footer className="broadcast-footer"><span><Radio size={14} aria-hidden="true" />{!connected ? "Reconnecting to the auction" : completed ? "Final auction results" : "Synced with the auction room"}</span><span>Room {state.code}</span></footer>
+      <footer className="broadcast-footer"><span><Radio size={14} aria-hidden="true" />{!connected ? "Reconnecting to the auction" : completed ? "Final auction results" : auctionPaused ? "Auction paused · progress saved" : "Synced with the auction room"}</span><span>Room {state.code}</span></footer>
     </div>
   </section>;
 }

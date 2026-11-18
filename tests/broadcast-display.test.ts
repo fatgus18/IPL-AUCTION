@@ -13,7 +13,7 @@ test("broadcast projection excludes private plans, participant identities, chat 
   state.bidHistory.push({ id: "public-bid", playerId: player.id, teamId: "rcb", memberId: "private-member", amount: 200, at: 1 });
   const before = structuredClone(state);
   const display = toBroadcastState(state);
-  assert.deepEqual(Object.keys(display).sort(), ["code", "name", "players", "teams", "currentPlayerId", "currentBid", "leadingTeamId", "phase", "endedAt", "settings", "bidHistory"].sort());
+  assert.deepEqual(Object.keys(display).sort(), ["code", "name", "players", "teams", "currentPlayerId", "currentBid", "leadingTeamId", "phase", "endedAt", "auctionPausedAt", "settings", "bidHistory"].sort());
   assert.deepEqual(display.settings, { maxSquadSize: state.settings.maxSquadSize, bidIncrement: state.settings.bidIncrement });
   assert.deepEqual(display.bidHistory.at(-1), { id: "public-bid", playerId: player.id, teamId: "rcb", amount: 200 });
   for (const secret of ["myTargetPicks", "maxBids", "members", "hostId", "completedManagers", "callUrl", "private-member", "Secret chat", "Private identity"]) {

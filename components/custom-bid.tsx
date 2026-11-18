@@ -4,7 +4,7 @@ import { useId, useRef, useState, type FormEvent } from "react";
 import { Gavel } from "lucide-react";
 import type { AuctionAction, RoomState, Team } from "@/lib/auction";
 import { formatMoney, getNextBid } from "@/lib/auction-display";
-import { parseCroreBid } from "@/lib/bid-input";
+import { isValidBidAmount, parseCroreBid } from "@/lib/bid-input";
 import "./custom-bid.css";
 
 export function CustomBid({ state, team, cooldown, busy, connected, onAction }: {
@@ -17,8 +17,9 @@ export function CustomBid({ state, team, cooldown, busy, connected, onAction }: 
   const id = useId();
   const amount = parseCroreBid(input);
   const minimum = getNextBid(state);
-  const unavailable = busy || !connected || state.phase !== "live" || state.leadingTeamId === team.id;
+  const unavailable = busy || !connected || state.auctionPausedAt !== undefined || state.phase !== "live" || state.leadingTeamId === team.id;
   const validation = !input.trim() ? "" : amount === null ? "Use a value in crores, such as 5 or 5.25."
+    : !isValidBidAmount(amount) ? "Use multiples of ₹0.25 Cr, such as 5.25, 5.50 or 5.75."
     : amount > team.purse ? "This bid exceeds your remaining purse."
       : amount < minimum ? `The minimum bid is now ${formatMoney(minimum)}.` : "";
 
@@ -41,6 +42,6 @@ export function CustomBid({ state, team, cooldown, busy, connected, onAction }: 
       <input id={id} aria-label="Custom bid in crore" aria-describedby={`${id}-hint`} inputMode="decimal" autoComplete="off" placeholder="e.g. 5.00" maxLength={10} value={input} disabled={unavailable} onChange={event => { setInput(event.target.value); setError(""); }}/>
       <button className="button secondary" type="submit" disabled={unavailable || cooldown > 0 || amount === null || !!validation}><Gavel size={15}/>{amount !== null && !validation ? `Bid ${formatMoney(amount)}` : "Place bid"}</button>
     </div>
-    <p id={`${id}-hint`} className={error || validation ? "custom-bid-error" : "custom-bid-hint"} role={error ? "alert" : undefined}>{error || validation || `Minimum ${formatMoney(minimum)}. Enter 5 to bid ₹5 Cr.`}</p>
+    <p id={`${id}-hint`} className={error || validation ? "custom-bid-error" : "custom-bid-hint"} role={error ? "alert" : undefined}>{error || validation || `Minimum ${formatMoney(minimum)}. Use multiples of ₹0.25 Cr.`}</p>
   </form>;
 }

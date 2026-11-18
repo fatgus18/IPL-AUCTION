@@ -1,5 +1,7 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+export * from "./auth-schema";
+
 export const auctionRooms = sqliteTable("auction_rooms", {
   code: text("code").primaryKey(),
   stateJson: text("state_json").notNull(),

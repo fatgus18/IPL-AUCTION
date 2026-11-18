@@ -20,6 +20,7 @@ const baseUrl = `http://127.0.0.1:${port}`;
 const env = {
   ...process.env, DATABASE_URL: pathToFileURL(join(temporaryDirectory, "isolated.db")).href,
   BASE_URL: baseUrl, PAVILION_TEST_ISOLATED: "1", NEXT_TELEMETRY_DISABLED: "1",
+  BETTER_AUTH_SECRET: randomBytes(32).toString("hex"), BETTER_AUTH_URL: baseUrl,
 };
 delete env.DATABASE_AUTH_TOKEN;
 let serverOutput = "";
@@ -46,7 +47,8 @@ try {
   }
   assert.ok(ready, `The isolated server did not become ready: ${serverOutput}`);
   const suites = process.argv.slice(2);
-  for (const suite of suites.length ? suites : ["tests/api-integration.mjs", "tests/practice-api-integration.mjs", "tests/shared-catalog-api-integration.mjs", "tests/room-recovery-api-integration.mjs", "tests/historic-teams-api-integration.mjs", "tests/lobby-catalog-api-integration.mjs", "tests/room-access-api-integration.mjs", "tests/lineup-api-integration.mjs", "tests/auction-interactions-api-integration.mjs", "tests/target-picks-api-integration.mjs", "tests/unlock-api-integration.mjs", "tests/auction-completion-api.mjs", "tests/auction-exports-api.mjs", "tests/private-budgets-api.mjs", "tests/franchise-posters-api.mjs", "tests/auction-awards-api.mjs"]) {
+  if (!suites.length) suites.push("tests/api-integration.mjs", "tests/practice-api-integration.mjs", "tests/shared-catalog-api-integration.mjs", "tests/room-recovery-api-integration.mjs", "tests/historic-teams-api-integration.mjs", "tests/lobby-catalog-api-integration.mjs", "tests/room-access-api-integration.mjs", "tests/lineup-api-integration.mjs", "tests/auction-interactions-api-integration.mjs", "tests/auction-pause-api.mjs", "tests/accounts-api.mjs", "tests/target-picks-api-integration.mjs", "tests/unlock-api-integration.mjs", "tests/auction-completion-api.mjs", "tests/auction-exports-api.mjs", "tests/private-budgets-api.mjs", "tests/franchise-posters-api.mjs", "tests/auction-awards-api.mjs");
+  for (const suite of suites) {
     const child = spawn(process.execPath, [suite], { env, windowsHide: true, stdio: "inherit" });
     const [code] = await once(child, "exit");
     assert.equal(code, 0, `${suite} failed. Server output: ${serverOutput}`);
@@ -65,6 +67,13 @@ try {
     return response.json();
   };
   const accessBeforeRestart = await privateAccess(roomBeforeRestart);
+  const pauseResponse = await fetch(`${baseUrl}/api/rooms/${roomBeforeRestart.state.code}/action`, {
+    method: "POST", headers: { Authorization: `Bearer ${roomBeforeRestart.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ action: { type: "pause_auction" } }),
+  });
+  assert.equal(pauseResponse.status, 200);
+  const pausedBeforeRestart = (await pauseResponse.json()).state;
+  assert.ok(pausedBeforeRestart.auctionPausedAt);
   const deletedCreation = { name: "Deleted before restart", hostName: "Deletion host", creationKey: randomBytes(32).toString("hex") };
   const createDeleted = () => fetch(`${baseUrl}/api/rooms`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(deletedCreation) });
   const deletedResponse = await createDeleted();
@@ -89,6 +98,16 @@ try {
   assert.equal(recoveredRoom.state.code, roomBeforeRestart.state.code, "a lost creation response is recoverable after server restart");
   assert.equal(recoveredRoom.memberId, roomBeforeRestart.memberId);
   assert.equal(recoveredRoom.token, recoveryBody.creationKey);
+  assert.equal(recoveredRoom.state.auctionPausedAt, pausedBeforeRestart.auctionPausedAt, "the whole-auction break survives a complete process restart");
+  assert.equal(recoveredRoom.state.phase, pausedBeforeRestart.phase);
+  assert.equal(recoveredRoom.state.currentPlayerId, pausedBeforeRestart.currentPlayerId);
+  assert.deepEqual(recoveredRoom.state.teams, pausedBeforeRestart.teams);
+  const resumeResponse = await fetch(`${baseUrl}/api/rooms/${recoveredRoom.state.code}/action`, {
+    method: "POST", headers: { Authorization: `Bearer ${recoveredRoom.token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ action: { type: "resume_auction" } }),
+  });
+  assert.equal(resumeResponse.status, 200);
+  assert.equal((await resumeResponse.json()).state.auctionPausedAt, undefined, "the original creator can resume after restart");
   assert.deepEqual(await privateAccess(recoveredRoom), accessBeforeRestart, "the private team password survives server restart");
   const deletedRetry = await createDeleted();
   assert.equal(deletedRetry.status, 410, "a deleted creation key must stay revoked across server restart");
@@ -100,6 +119,7 @@ try {
   assert.equal(fresh.state.sharedCatalogVersion, beforeRestart.version);
   console.log("PASS: the entire shared catalog and its version survive a server restart and are used by a fresh browser session.");
   console.log("PASS: the same private creation key recovers the same room and host membership after a server restart.");
+  console.log("PASS: the saved whole-auction break survives server restart and the original creator can resume it.");
   console.log("PASS: private team passwords and deleted-room tombstones survive a server restart; old creation keys cannot recreate deleted rooms.");
   console.log("PASS: API suites used an isolated database; the user's rooms and common catalog were untouched.");
 } finally {

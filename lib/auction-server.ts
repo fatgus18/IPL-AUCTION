@@ -469,6 +469,15 @@ export async function getRoom(rawCode: string, request: Request): Promise<RoomSt
   return snapshot(room, member.id);
 }
 
+/** Recover a saved seat without replacing its stable creator/member capability. */
+export async function recoverAccountRoom(rawCode: string, token: string, expectedMemberId: string): Promise<SessionResponse> {
+  if (!/^[a-f0-9]{64}$/i.test(token)) throw new AuctionError("This saved room credential is invalid.", 401, "UNAUTHORIZED");
+  const room = await readStoredRoom(normalizeCode(rawCode));
+  const member = identifyMember(room, await hashToken(token));
+  if (member.id !== expectedMemberId) throw new AuctionError("This room credential does not belong to that participant.", 403, "FORBIDDEN");
+  return { state: snapshot(room, member.id), token, memberId: member.id };
+}
+
 /** A stable poll reads only two indexed integers after authentication. A catalog
  * edit or membership change invalidates the fast path before any response. */
 export async function pollRoom(rawCode: string, request: Request): Promise<{ state: RoomState } | { unchanged: true; version: number; serverTime: number }> {

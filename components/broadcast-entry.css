@@ -14,10 +14,8 @@
   white-space: nowrap;
 }
 .app-shell .broadcast-entry:hover { background: var(--desk-raised); border-color: var(--desk-accent); }
-/* The normal dock stays mounted to preserve drafts, but does not size this view's scrollbar. */
-html[data-broadcast="true"] .auction-scrollbar { display: none; }
-html[data-broadcast="true"].auction-scrollbar-ready { scrollbar-width: thin; scrollbar-color: #61718b #080e18; }
-html[data-broadcast="true"].auction-scrollbar-ready::-webkit-scrollbar { display: block; width: 6px; }
+/* The hidden room dock must not shorten the broadcast's paddle scrollbar. */
+html[data-broadcast="true"] .auction-scrollbar:not([hidden]) { bottom: 16px; }
 @media (max-width: 760px) {
   .app-shell .broadcast-entry { min-width: 44px; padding: 10px; }
   .app-shell .broadcast-entry span { display: none; }

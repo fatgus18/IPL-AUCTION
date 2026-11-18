@@ -32,6 +32,7 @@ function statValue(value: number | null | undefined, decimals = false) {
 
 export function BroadcastMode({ state, connected, onExit, sound }: BroadcastModeProps) {
   const root = useRef<HTMLElement>(null);
+  const ownsFullscreen = useRef(false);
   const fullscreenButton = useRef<HTMLButtonElement>(null);
   const exitButton = useRef<HTMLButtonElement>(null);
   const [fullscreen, setFullscreen] = useState(false);
@@ -53,9 +54,11 @@ export function BroadcastMode({ state, connected, onExit, sound }: BroadcastMode
   const accent = !completed && leader ? leader.color : "#e6c48a";
 
   useEffect(() => {
-    const element = root.current;
+    const element = document.documentElement;
     const syncFullscreen = () => {
-      setFullscreen(document.fullscreenElement === element);
+      const active = ownsFullscreen.current && document.fullscreenElement === element;
+      if (!active) ownsFullscreen.current = false;
+      setFullscreen(active);
       fullscreenButton.current?.focus({ preventScroll: true });
     };
     document.addEventListener("fullscreenchange", syncFullscreen);
@@ -63,15 +66,16 @@ export function BroadcastMode({ state, connected, onExit, sound }: BroadcastMode
     return () => {
       document.removeEventListener("fullscreenchange", syncFullscreen);
       // Never close a fullscreen session belonging to another element.
-      if (element && document.fullscreenElement === element) void document.exitFullscreen().catch(() => {});
+      if (ownsFullscreen.current && document.fullscreenElement === element) void document.exitFullscreen().catch(() => {});
     };
   }, []);
 
   const toggleFullscreen = async () => {
-    const element = root.current;
-    if (!element) return;
+    if (!root.current) return;
+    // Include the shared document scrollbar in the fullscreen display too.
+    const element = document.documentElement;
     setDisplayMessage("");
-    if (document.fullscreenElement === element) {
+    if (ownsFullscreen.current && document.fullscreenElement === element) {
       try { await document.exitFullscreen(); }
       catch { setDisplayMessage("Press Escape to leave fullscreen."); }
       return;
@@ -80,13 +84,14 @@ export function BroadcastMode({ state, connected, onExit, sound }: BroadcastMode
       setDisplayMessage("Fullscreen isn’t available in this browser. Broadcast mode still fills this page.");
       return;
     }
+    ownsFullscreen.current = true;
     try { await element.requestFullscreen(); }
-    catch { setDisplayMessage("Fullscreen couldn’t start. You can keep watching in this page."); }
+    catch { ownsFullscreen.current = false; setDisplayMessage("Fullscreen couldn’t start. You can keep watching in this page."); }
   };
 
   const exitBroadcast = async () => {
-    if (root.current && document.fullscreenElement === root.current) {
-      try { await document.exitFullscreen(); } catch { /* Unmount also releases this fullscreen element. */ }
+    if (ownsFullscreen.current && document.fullscreenElement === document.documentElement) {
+      try { await document.exitFullscreen(); } catch { /* Cleanup retries if fullscreen is still ours. */ }
     }
     onExit();
   };

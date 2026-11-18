@@ -14,7 +14,6 @@
   color-scheme: dark;
   isolation: isolate;
 }
-.broadcast-room:fullscreen { height: 100dvh; overflow: auto; }
 .broadcast-room *, .broadcast-room *::before, .broadcast-room *::after { box-sizing: border-box; }
 .broadcast-room :is(h1, h2, h3, p, dl, dd, ol, ul) { margin: 0; }
 .broadcast-room :is(ol, ul) { padding: 0; list-style: none; }

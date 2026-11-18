@@ -5,7 +5,7 @@ import { canBuildXI, canViewMySquad, canViewTargets, normalizeRoomView, parseRoo
 const host = { role: "auctioneer", teamId: null } as const;
 const owner = { role: "bidder", teamId: "rcb" } as const;
 const spectator = { role: "spectator", teamId: null } as const;
-const sharedViews: RoomView[] = ["room", "players", "squads", "settings"];
+const sharedViews: RoomView[] = ["room", "players", "squads", "settings", "broadcast"];
 
 test("legacy and malformed room views cannot open an unknown page", () => {
   for (const raw of [null, "", "practice", "home", "lineup", "build-XI", "my-squad/settings", "<script>"]) {

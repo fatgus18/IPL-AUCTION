@@ -9,6 +9,7 @@ type InvitePanelProps = {
   code: string;
   token?: string;
   isCreator: boolean;
+  ended?: boolean;
   onManagePassword?: () => void;
 };
 
@@ -16,10 +17,10 @@ type CopyStatus = "idle" | "copying" | "copied" | "failed";
 
 export function InvitePanel(props: InvitePanelProps) {
   // A different room or credential must never inherit a previous copy state or secret.
-  return <RoomInvitation key={`${props.code}:${props.token ?? ""}:${props.isCreator}`} {...props} />;
+  return <RoomInvitation key={`${props.code}:${props.token ?? ""}:${props.isCreator}:${!!props.ended}`} {...props} />;
 }
 
-function RoomInvitation({ code, token, isCreator, onManagePassword }: InvitePanelProps) {
+function RoomInvitation({ code, token, isCreator, ended = false, onManagePassword }: InvitePanelProps) {
   const [linkStatus, setLinkStatus] = useState<CopyStatus>("idle");
   const active = useRef(true);
   const titleId = useId();
@@ -48,7 +49,7 @@ function RoomInvitation({ code, token, isCreator, onManagePassword }: InvitePane
       <span className="invitation-emblem" aria-hidden="true"><Users size={25} strokeWidth={1.5} /></span>
       <span className="invitation-overline">ROOM INVITATION</span>
       <h2 id={titleId}>Invite your league.</h2>
-      <p>Bring everyone to the auction table.</p>
+      <p>{ended ? "Share the completed auction and final squads." : "Bring everyone to the auction table."}</p>
     </header>
 
     <div className="invitation-pass">
@@ -66,7 +67,7 @@ function RoomInvitation({ code, token, isCreator, onManagePassword }: InvitePane
       </p>
     </div>
 
-    {isCreator && token ? <PrivatePasswordCopy code={code} token={token} onManagePassword={onManagePassword} /> : <p className="invitation-spectator-note"><ShieldCheck size={17} aria-hidden="true" />Team managers also need the room creator’s password.</p>}
+    {!ended && isCreator && token ? <PrivatePasswordCopy code={code} token={token} onManagePassword={onManagePassword} /> : <p className="invitation-spectator-note"><ShieldCheck size={17} aria-hidden="true" />{ended ? "Bidding has ended. New guests can view the results as spectators." : "Team managers also need the room creator’s password."}</p>}
   </section>;
 }
 

@@ -49,6 +49,12 @@ export type Activity = {
   id: string; type: string; text: string; at: number; memberId?: string;
   senderName?: string; senderTeamId?: string | null;
 };
+export type SaleCorrection = {
+  id: string; at: number; actorId: string; actorName: string;
+  playerId: string; playerName: string; reason: string; revision: number;
+  before: { teamId: string; teamName: string; amount: number };
+  after: { teamId: string; teamName: string; amount: number } | null;
+};
 export type RoomSettings = {
   purse: number; maxSquadSize: number; maxOverseas: number;
   bidCooldownMs: number; bidIncrement: number; callUrl: string;
@@ -69,6 +75,13 @@ export type RoomState = {
   teamCatalogVersion?: number;
   /** Response-only projection for this manager. Other members never receive it. */
   myTargetPicks?: TargetPicks;
+  /** Completed rooms remain readable; corrections and lineups can still be saved. */
+  endedAt?: number;
+  endedBy?: string;
+  resultsRevision?: number;
+  completedManagers?: Record<string, { id: string; name: string }>;
+  /** Durable audit history, independent of the rolling activity feed. */
+  saleCorrections?: SaleCorrection[];
 };
 export type PlayerInput = Omit<Player, "id" | "status" | "soldTo" | "soldFor"> & { id?: string };
 export type AuctionAction =
@@ -83,6 +96,8 @@ export type AuctionAction =
   | { type: "chat"; text: string }
   | { type: "set_lineup"; teamId: string; lineup: TeamLineupInput; expectedRevision: number }
   | { type: "set_target_picks"; teamId: string; playerIds: string[]; expectedRevision: number }
+  | { type: "end_auction"; expectedResultsRevision: number }
+  | { type: "correct_sale"; playerId: string; expectedTeamId: string; expectedAmount: number; expectedResultsRevision: number; teamId: string | null; amount?: number; reason: string }
   | { type: "claim_team"; teamId: string | null; teamPassword?: string };
 
 export const DEFAULT_SETTINGS: RoomSettings = {
@@ -133,6 +148,7 @@ export function createPlayerPool(): Player[] {
 
 /** Append new catalog identities once; never reset sales, bids, purses, or manual edits. */
 export function upgradeRoomCatalog(source: RoomState, now = Date.now()): RoomState {
+  if (source.endedAt !== undefined) return source;
   if (source.catalogVersion === CATALOG_VERSION && source.catalogDataRevision === CATALOG_DATA_REVISION) return source;
   const state = structuredClone(source);
   const canonical = createPlayerPool();
@@ -179,6 +195,7 @@ export function upgradeRoomCatalog(source: RoomState, now = Date.now()): RoomSta
 
 /** Append franchise choices once without rewriting existing teams or auction records. */
 export function upgradeRoomTeams(source: RoomState, now = Date.now()): RoomState {
+  if (source.endedAt !== undefined) return source;
   if (source.teamCatalogVersion === TEAM_CATALOG_VERSION) return source;
   const existingIds = new Set(source.teams.map(team => team.id));
   const added = TEAM_SEEDS.filter(team => !existingIds.has(team.id));
@@ -205,7 +222,7 @@ export function createRoomState(code: string, name: string, host: Member, now = 
     currentPlayerId: null, currentBid: 0, leadingTeamId: null, phase: "waiting", lastBidAt: null,
     bidHistory: [], activity: [{ id: `created-${now}`, type: "room", text: `${host.name} opened the auction room.`, at: now }],
     settings: { ...DEFAULT_SETTINGS }, catalogVersion: CATALOG_VERSION, catalogDataRevision: CATALOG_DATA_REVISION,
-    teamCatalogVersion: TEAM_CATALOG_VERSION,
+    teamCatalogVersion: TEAM_CATALOG_VERSION, resultsRevision: 0, saleCorrections: [],
   };
 }
 
@@ -342,13 +359,19 @@ export function applyAction(source: RoomState, action: AuctionAction, memberId: 
   const state = structuredClone(source);
   const member = state.members.find((entry) => entry.id === memberId);
   requireCondition(member, "Join this room to continue.", 401, "UNAUTHORIZED");
-  const hostActions = ["select_player", "start", "pause", "resume", "lock", "unlock", "sell", "unsold", "add_player", "update_player", "delete_player", "update_settings"];
+  const hostActions = ["select_player", "start", "pause", "resume", "lock", "unlock", "sell", "unsold", "add_player", "update_player", "delete_player", "update_settings", "end_auction", "correct_sale"];
   if (hostActions.includes(action.type)) requireCondition(member.id === state.hostId && member.role === "auctioneer", "Only the auctioneer can do that.", 403, "FORBIDDEN");
+  if (state.endedAt !== undefined && !["end_auction", "correct_sale", "set_lineup", "chat", "ping", "leave"].includes(action.type)) {
+    throw new AuctionError("This auction has ended. Its results remain available in the recap.", 409, "AUCTION_ENDED");
+  }
   const player = state.players.find((entry) => entry.id === state.currentPlayerId);
   const log = (type: string, text: string) => state.activity.push({
     id: `${state.version + 1}-${now}-${state.activity.length}`, type, text, at: now, memberId,
     ...(type === "chat" ? { senderName: member.name, senderTeamId: member.teamId } : {}),
   });
+  const requireResultsRevision = (expected: number) => {
+    requireCondition(Number.isSafeInteger(expected) && expected >= 0 && expected < Number.MAX_SAFE_INTEGER && expected === (state.resultsRevision ?? 0), "The auction results changed. Review the latest results before confirming.", 409, "RESULTS_CONFLICT");
+  };
   switch (action.type) {
     case "select_player": {
       requireCondition(["waiting", "sold", "unsold"].includes(state.phase), "Close the current auction before selecting another player.", 409);
@@ -385,11 +408,79 @@ export function applyAction(source: RoomState, action: AuctionAction, memberId: 
       validateTeamBid(state, team, player, state.currentBid);
       team.purse -= state.currentBid; team.squad.push({ playerId: player.id, amount: state.currentBid });
       player.status = "sold"; player.soldTo = team.id; player.soldFor = state.currentBid;
+      state.resultsRevision = (state.resultsRevision ?? 0) + 1;
       state.phase = "sold"; log("sold", `${player.name} sold to ${team.shortName} for ${formatMoney(state.currentBid)}.`); break;
     }
     case "unsold":
       requireCondition(player && state.phase === "locked" && !state.leadingTeamId, "Lock bidding with no bids before marking a player unsold.", 409);
       player.status = "unsold"; state.phase = "unsold"; log("unsold", `${player.name} goes unsold.`); break;
+    case "end_auction": {
+      requireCondition(state.endedAt === undefined, "This auction has already ended.", 409, "AUCTION_ALREADY_ENDED");
+      requireResultsRevision(action.expectedResultsRevision);
+      requireCondition(!["live", "paused", "locked"].includes(state.phase), "Settle the current player before ending the auction.", 409, "ROUND_UNSETTLED");
+      state.endedAt = now; state.endedBy = member.id;
+      state.resultsRevision = (state.resultsRevision ?? 0) + 1;
+      state.completedManagers = Object.fromEntries(state.members.filter(entry => entry.role === "bidder" && entry.teamId).map(entry => [entry.teamId!, { id: entry.id, name: entry.name }]));
+      log("auction_ended", `${member.name} ended the auction. The recap and squads are available.`);
+      break;
+    }
+    case "correct_sale": {
+      requireResultsRevision(action.expectedResultsRevision);
+      requireCondition(!["live", "paused", "locked"].includes(state.phase), "Settle the current player before correcting a sale.", 409, "ROUND_UNSETTLED");
+      const target = state.players.find(entry => entry.id === action.playerId);
+      requireCondition(target?.status === "sold" && target.soldTo && target.soldFor !== undefined, "This player no longer has a sale to correct.", 409, "SALE_CONFLICT");
+      requireCondition(action.expectedTeamId === target.soldTo && action.expectedAmount === target.soldFor, "This sale changed. Review the latest team and price before correcting it.", 409, "SALE_CONFLICT");
+      const reason = cleanText(action.reason, "Correction reason", 500);
+      const previousTeam = state.teams.find(entry => entry.id === target.soldTo);
+      const previousSale = previousTeam?.squad.find(entry => entry.playerId === target.id);
+      requireCondition(previousTeam && previousSale?.amount === target.soldFor, "This sale's squad record needs review before it can be corrected.", 409, "SALE_CONFLICT");
+      requireCondition(action.teamId === null || (typeof action.teamId === "string" && state.teams.some(entry => entry.id === action.teamId)), "Choose a valid receiving team or cancel the sale.");
+      const nextTeam = action.teamId === null ? undefined : state.teams.find(entry => entry.id === action.teamId)!;
+      const amount = nextTeam ? numberInRange(action.amount, "Sale price in lakhs", target.basePrice, 100000) : 0;
+      requireCondition(!nextTeam || nextTeam.id !== previousTeam.id || amount !== previousSale.amount, "Change the team or price, or cancel this sale.", 400, "NO_CORRECTION_CHANGE");
+      const before = { teamId: previousTeam.id, teamName: previousTeam.name, amount: previousSale.amount };
+      // Work on the cloned state: any failed validation leaves every purse and lineup intact.
+      previousTeam.purse += previousSale.amount;
+      previousTeam.squad = previousTeam.squad.filter(entry => entry.playerId !== target.id);
+      if (nextTeam) {
+        requireCondition(!nextTeam.squad.some(entry => entry.playerId === target.id), "The receiving squad already contains this player.", 409, "SALE_CONFLICT");
+        validateTeamBid(state, nextTeam, target, amount);
+        nextTeam.purse -= amount;
+        if (nextTeam.id === previousTeam.id) {
+          const oldIndex = source.teams.find(entry => entry.id === previousTeam.id)!.squad.findIndex(entry => entry.playerId === target.id);
+          nextTeam.squad.splice(oldIndex, 0, { playerId: target.id, amount });
+        } else nextTeam.squad.push({ playerId: target.id, amount });
+        target.soldTo = nextTeam.id; target.soldFor = amount;
+      } else {
+        target.status = "available"; delete target.soldTo; delete target.soldFor;
+      }
+      if (nextTeam?.id !== previousTeam.id && previousTeam.lineup) {
+        const lineup = previousTeam.lineup;
+        if (lineup.playingXI.includes(target.id) || lineup.substitutes.includes(target.id) || lineup.captainId === target.id || lineup.viceCaptainId === target.id) {
+          previousTeam.lineup = {
+            playingXI: lineup.playingXI.map(id => id === target.id ? null : id),
+            substitutes: lineup.substitutes.map(id => id === target.id ? null : id),
+            captainId: lineup.captainId === target.id ? null : lineup.captainId,
+            viceCaptainId: lineup.viceCaptainId === target.id ? null : lineup.viceCaptainId,
+            revision: lineup.revision + 1,
+          };
+        }
+      }
+      if (state.currentPlayerId === target.id) {
+        state.currentBid = amount; state.leadingTeamId = nextTeam?.id ?? null;
+        state.phase = nextTeam ? "sold" : "waiting";
+        if (!nextTeam) state.lastBidAt = null;
+      }
+      const revision = (state.resultsRevision ?? 0) + 1;
+      state.resultsRevision = revision;
+      state.saleCorrections = [...(state.saleCorrections ?? []), {
+        id: `correction-${revision}-${now}`, at: now, actorId: member.id, actorName: member.name,
+        playerId: target.id, playerName: target.name, reason, revision, before,
+        after: nextTeam ? { teamId: nextTeam.id, teamName: nextTeam.name, amount } : null,
+      }];
+      log("sale_corrected", nextTeam ? `${member.name} corrected ${target.name}'s sale to ${nextTeam.shortName} for ${formatMoney(amount)}.` : `${member.name} cancelled ${target.name}'s sale and refunded ${previousTeam.shortName}.`);
+      break;
+    }
     case "bid": {
       requireCondition(player && state.phase === "live", "Bidding is closed. Wait for the auctioneer to open it.", 409, "BIDDING_CLOSED");
       requireCondition(action.expectedPlayerId === player.id, "The auctioneer has moved to another player. Review the current lot before bidding.", 409, "STALE_PLAYER");

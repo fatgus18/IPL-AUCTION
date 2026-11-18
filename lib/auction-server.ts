@@ -380,6 +380,7 @@ export async function joinRoom(rawCode: string, body: Record<string, unknown>): 
     const now = Date.now();
     if (room.state.members.length >= ROOM_CAPACITY) throw new AuctionError("This room has reached its 50-person capacity.", 409, "ROOM_FULL");
     if (teamId && !room.state.teams.some((team) => team.id === teamId)) throw new AuctionError("Choose a valid team.");
+    if (teamId && room.state.endedAt !== undefined) throw new AuctionError("This auction has ended. You can still join as a spectator to view its recap.", 409, "AUCTION_ENDED");
     if (teamId) requireTeamPassword(room, body.teamPassword);
     if (teamId && room.state.members.some((member) => member.teamId === teamId)) throw new AuctionError("This team already has a manager. Choose another team or join as a spectator.", 409, "TEAM_TAKEN");
     room.state.members.push({ id, name, role: teamId ? "bidder" : "spectator", teamId, joinedAt: now, lastSeenAt: now, flagRaisedAt: null });
@@ -508,6 +509,7 @@ export async function actInRoom(
     if (options.memberId !== undefined || options.resetPractice !== undefined) requirePracticeHost(room, member);
     if (options.resetPractice !== undefined && options.resetPractice !== true) throw new AuctionError("Invalid practice reset request.");
     if (options.resetPractice === true) {
+      if (room.state.endedAt !== undefined) throw new AuctionError("This auction has ended. Create a new room to begin another auction.", 409, "AUCTION_ENDED");
       if (options.memberId !== undefined || action !== undefined) throw new AuctionError("Reset practice separately from other actions.");
       const previous = room.state;
       const reset = createDemoState({ hostName: member.name });
@@ -538,6 +540,9 @@ export async function actInRoom(
         throw new AuctionError("Choose an available practice seat.");
       }
       const actorId = typeof options.memberId === "string" ? options.memberId : member.id;
+      if (room.state.endedAt !== undefined && action?.type === "set_target_picks") {
+        throw new AuctionError("This auction has ended. Your saved targets remain available to view.", 409, "AUCTION_ENDED");
+      }
       if (action?.type === "set_target_picks") {
         // Always authenticate as the bearer, never a practice impersonation.
         const picks = validateTargetPicks(room.state, member, action, room.privateTargetPicks);
@@ -547,6 +552,7 @@ export async function actInRoom(
         continue;
       }
       if (room.state.mode !== "practice" && action?.type === "claim_team" && action.teamId !== null && action.teamId !== member.teamId) {
+        if (room.state.endedAt !== undefined) throw new AuctionError("This auction has ended. Team ownership is preserved in its recap.", 409, "AUCTION_ENDED");
         requireTeamPassword(room, action.teamPassword);
       }
       const removedHistory = action?.type === "delete_player" && room.state.bidHistory.some(bid => bid.playerId === action.playerId)

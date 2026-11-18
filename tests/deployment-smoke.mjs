@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
+import ExcelJS from "exceljs";
 
 // Explicitly opt in to a deployment. This script creates and deletes ONLY its
 // own private room. It does not write to the common player catalog or use SQL.
@@ -202,6 +203,42 @@ try {
   assert.deepEqual(chatRead.activity.find(entry => entry.id === chat.id), chat, "Chat names persist across participant sessions.");
   expectStatus(await request(`${roomPath()}/delete`, { token: spectator.token, body: { confirmationCode: host.state.code } }), 403, "Only the creator may delete the room");
   console.log("PASS: number-seven lineup, captaincy, independent-session persistence and authenticated chat names.");
+
+  const correction = { type: "correct_sale", playerId: player.id, expectedTeamId: winner.teamId, expectedAmount: player.basePrice, expectedResultsRevision: chatRead.resultsRevision ?? 0, teamId: winner.teamId, amount: player.basePrice + 25, reason: "Deployment verification of an audited price correction." };
+  expectStatus(await act(other, correction), 403, "Only the creator can correct a sale");
+  const corrected = expectStatus(await act(host, correction), 200, "Correct test sale with audit").state;
+  expectStatus(await act(host, correction), 409, "A stale correction cannot charge twice");
+  assert.equal(corrected.teams.find(team => team.id === winner.teamId).purse, winningTeam.purse - 25);
+  assert.deepEqual(corrected.teams.find(team => team.id === winner.teamId).lineup, afterLineup.lineup);
+  assert.equal(corrected.saleCorrections.length, 1);
+  expectStatus(await request(`${roomPath()}/export?format=xlsx`, { token: winner.token }), 409, "Exports require a completed auction");
+  const finish = { type: "end_auction", expectedResultsRevision: corrected.resultsRevision };
+  expectStatus(await act(other, finish), 403, "Only the creator can end bidding");
+  const completed = expectStatus(await act(host, finish), 200, "End the smoke auction").state;
+  assert.ok(completed.endedAt);
+  assert.equal(completed.code, host.state.code);
+  assert.equal(completed.completedManagers[winner.teamId].name, managerNames[winner.teamId]);
+  expectStatus(await act(host, { type: "select_player", playerId: player.id }), 409, "Completed rooms reject new nominations");
+  expectStatus(await act(winner, { ...save, expectedRevision: afterLineup.lineup.revision }), 200, "Managers can save their XI after bidding ends");
+  for (const format of ["xlsx", "pdf"]) {
+    const exported = await fetch(`${baseUrl}${roomPath()}/export?format=${format}`, { headers: { Authorization: `Bearer ${spectator.token}` }, signal: AbortSignal.timeout(60000) });
+    assert.equal(exported.status, 200, `The live ${format} export must succeed.`);
+    assert.match(exported.headers.get("cache-control") || "", /no-store/);
+    const bytes = Buffer.from(await exported.arrayBuffer());
+    if (format === "pdf") { assert.equal(bytes.subarray(0, 5).toString(), "%PDF-"); assert.ok(bytes.length > 1000); }
+    else {
+      const workbook = new ExcelJS.Workbook(); await workbook.xlsx.load(bytes);
+      assert.ok(workbook.getWorksheet("THE TEAMS")); assert.ok(workbook.getWorksheet("POINTS"));
+      const row = workbook.getWorksheet("All players").getRow(5);
+      assert.equal(row.getCell(3).value, player.name);
+      assert.equal(row.getCell(2).value, managerNames[winner.teamId]);
+      assert.equal(row.getCell(8).value, 7);
+      assert.equal(row.getCell(9).value, "Yes");
+      assert.equal(row.getCell(11).value, player.basePrice + 25);
+      assert.equal(workbook.getWorksheet("Audit").rowCount, 5);
+    }
+  }
+  console.log("PASS: creator-only audited corrections and completion; preserved room, post-auction XI saving, and real PDF/Excel downloads with current managers, captaincy and spending.");
 } catch (error) {
   failure = error;
 } finally {

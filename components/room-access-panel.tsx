@@ -5,16 +5,16 @@ import { Check, Copy, Eye, EyeOff, KeyRound, ShieldCheck, Trash2, X } from "luci
 import { AuctionRequestError, requestAuction } from "@/lib/auction-client";
 import "./room-access-panel.css";
 
-type RoomAccessProps = { code: string; token: string; onDeleted: () => void };
+type RoomAccessProps = { code: string; token: string; ended?: boolean; onDeleted: () => void };
 type PasswordState = { status: "loading" } | { status: "ready"; password: string } | { status: "error"; message: string };
 
 /** The server independently verifies creator access for both private endpoints. */
 export function RoomAccessPanel(props: RoomAccessProps) {
   // A different room or identity must never inherit a previously revealed secret.
-  return <CreatorControls key={`${props.code}:${props.token}`} {...props} />;
+  return <CreatorControls key={`${props.code}:${props.token}:${!!props.ended}`} {...props} />;
 }
 
-function CreatorControls({ code, token, onDeleted }: RoomAccessProps) {
+function CreatorControls({ code, token, ended = false, onDeleted }: RoomAccessProps) {
   const [passwordState, setPasswordState] = useState<PasswordState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -25,6 +25,7 @@ function CreatorControls({ code, token, onDeleted }: RoomAccessProps) {
   const helpId = useId();
 
   useEffect(() => {
+    if (ended) return;
     const controller = new AbortController();
     requestAuction<{ teamPassword: string }>(`/api/rooms/${code}/access`, {}, token, { signal: controller.signal })
       .then((response) => {
@@ -40,7 +41,7 @@ function CreatorControls({ code, token, onDeleted }: RoomAccessProps) {
         setPasswordState({ status: "error", message: cause instanceof Error ? cause.message : "The team password could not be loaded. Try again." });
       });
     return () => controller.abort();
-  }, [code, token, attempt]);
+  }, [code, token, attempt, ended]);
 
   async function copyPassword() {
     if (passwordState.status !== "ready") return;
@@ -58,7 +59,7 @@ function CreatorControls({ code, token, onDeleted }: RoomAccessProps) {
       <div className="room-access-icon"><ShieldCheck size={22} aria-hidden="true" /></div>
       <div><h2 id={titleId}>Room access</h2><p>Only you, the room creator, can view these controls.</p></div>
     </div>
-    <div className="room-access-content">
+    <div className="room-access-content">{ended ? <p>Team ownership is final. The room link still welcomes spectators to view the recap.</p> : <>
       <div className="room-access-description">
         <h3><KeyRound size={18} aria-hidden="true" />Team join password</h3>
         <p id={helpId}>Anyone with the room code can watch as a spectator. Share this password privately with people you want to claim a team.</p>
@@ -82,7 +83,7 @@ function CreatorControls({ code, token, onDeleted }: RoomAccessProps) {
           <p className="room-access-copy-status" role="status">{copyStatus === "failed" ? "Copy is unavailable. Reveal the password, then select and copy it manually." : copyStatus === "copied" ? "Copied. Share it only with your team owners." : ""}</p>
         </>}
       </div>
-    </div>
+    </>} </div>
     <div className="room-access-delete">
       <div><h3>Delete this auction room</h3><p>Permanently remove this room and its auction history. Your common player pool will stay intact.</p></div>
       <button type="button" className="manage-button room-access-delete-button" onClick={() => setDeleting(true)}><Trash2 size={17} />Delete room</button>

@@ -45,6 +45,12 @@ export function hasProtectedReference(state: RoomState, playerId: string): boole
 
 /** Reconcile shared facts without transporting another room's bidding or accounting. */
 export function syncRoomPlayerCatalog(source: RoomState, catalog: SharedPlayerCatalog, now = Date.now(), force = false): RoomState {
+  // Completed auction facts and pool size belong to its historical snapshot.
+  // Still acknowledge the current catalog version so polling and atomic writes
+  // can proceed without repeatedly migrating an otherwise frozen room.
+  if (source.endedAt !== undefined) return source.sharedCatalogVersion === catalog.version ? source : {
+    ...source, sharedCatalogVersion: catalog.version, version: source.version + 1, serverTime: now,
+  };
   if (!force && source.sharedCatalogVersion === catalog.version && source.catalogCount === catalog.players.length) return source;
   const previous = new Map(source.players.map(player => [player.id, player]));
   const sharedIds = new Set(catalog.players.map(player => player.id));

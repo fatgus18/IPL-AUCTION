@@ -1,21 +1,24 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
-import { ArrowUpRight, Globe2, Users, X } from "lucide-react";
+import { ArrowUpRight, Globe2, LayoutGrid, Scale, Users, X } from "lucide-react";
 import type { RoomState, Team } from "@/lib/auction";
 import { formatMoney } from "@/lib/auction-display";
 import { countPlayingRoles, getPlayingRole } from "@/lib/player-roles";
+import { getSquadManager } from "@/lib/squad-summary";
 import { PlayerImage, TeamCrest } from "./ipl-visuals";
+import { SquadComparison } from "./squad-comparison";
 import "./team-squads.css";
 
 export function TeamSquads({ state }: { state: RoomState }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [view, setView] = useState<"squads" | "compare">("squads");
   const selected = state.teams.find(team => team.id === selectedId);
   return <section className="team-squads" aria-labelledby="team-squads-title">
-    <div className="team-squads-heading"><h2 id="team-squads-title">Team squads</h2><p>Select a team to view its full squad.</p></div>
-    <div className="team-squad-overview">
+    <div className="team-squads-heading"><div><h2 id="team-squads-title">Team squads</h2><p>{view === "compare" ? "Compare spending, role balance and matchday selections." : "Select a team to view its full squad."}</p></div><div className="team-squads-view-switch" role="group" aria-label="Team squads view"><button type="button" aria-pressed={view === "squads"} onClick={() => setView("squads")}><LayoutGrid size={17}/>Squads</button><button type="button" aria-pressed={view === "compare"} onClick={() => setView("compare")}><Scale size={17}/>Compare squads</button></div></div>
+    {view === "compare" ? <SquadComparison state={state} onViewSquad={setSelectedId}/> : <div className="team-squad-overview">
       {state.teams.map(team => {
-        const owner = state.members.find(member => member.teamId === team.id && member.role === "bidder");
+        const owner = getSquadManager(state, team.id);
         return <button className="team-squad-summary" type="button" key={team.id} aria-label={`View ${team.name} squad`} aria-haspopup="dialog" onClick={() => setSelectedId(team.id)} style={{ "--summary-team-color": team.color } as CSSProperties}>
           <span className="team-squad-summary-identity">
             <span className="team-squad-summary-crest"><TeamCrest team={team}/></span>
@@ -25,7 +28,7 @@ export function TeamSquads({ state }: { state: RoomState }) {
           <span className="team-squad-summary-stats"><span>Purse remaining<strong>{formatMoney(team.purse)}</strong></span><span>Spots filled<strong>{team.squad.length}<small> / {state.settings.maxSquadSize}</small></strong></span></span>
         </button>;
       })}
-    </div>
+    </div>}
     {selected && <SquadDialog key={`${state.code}:${selected.id}`} state={state} team={selected} onClose={() => setSelectedId(null)}/>}
   </section>;
 }
@@ -34,7 +37,7 @@ function SquadDialog({ state, team, onClose }: { state: RoomState; team: Team; o
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const playerMap = new Map(state.players.map(player => [player.id, player]));
-  const owner = state.members.find(member => member.teamId === team.id && member.role === "bidder");
+  const owner = getSquadManager(state, team.id);
   const spent = team.squad.reduce((total, purchase) => total + purchase.amount, 0);
   const overseas = team.squad.filter(purchase => playerMap.get(purchase.playerId)?.isOverseas).length;
   const roles = countPlayingRoles(team.squad.map(purchase => playerMap.get(purchase.playerId)));
@@ -63,7 +66,7 @@ function SquadDialog({ state, team, onClose }: { state: RoomState; team: Team; o
             </div>
           </li>;
         })}
-      </ul> : <div className="squad-detail-empty"><Users size={32}/><h3>{owner ? "No signings yet" : "No manager has taken charge"}</h3><p>{owner ? "Confirmed purchases will appear here." : "This franchise is available to manage."}</p></div>}
+      </ul> : <div className="squad-detail-empty"><Users size={32}/><h3>{owner ? (state.endedAt !== undefined ? "No players signed" : "No signings yet") : "No manager has taken charge"}</h3><p>{owner ? (state.endedAt !== undefined ? "This franchise finished without a purchase." : "Confirmed purchases will appear here.") : (state.endedAt !== undefined ? "This franchise finished without a manager." : "This franchise is available to manage.")}</p></div>}
     </div>
   </dialog>;
 }

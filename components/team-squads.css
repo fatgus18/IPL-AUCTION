@@ -1,4 +1,9 @@
-.team-squads-heading { margin-bottom: 24px; }
+.team-squads-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 22px; margin-bottom: 24px; }
+.team-squads-view-switch { display: flex; padding: 4px; gap: 3px; border: 1px solid #ffffff1b; border-radius: 9px; background: var(--desk-base, #0d141e); }
+.team-squads-view-switch button { display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 10px 16px; border-radius: 6px; color: #aebdce; font-size: 14px; font-weight: 500; }
+.team-squads-view-switch button[aria-pressed="true"] { color: #f3e4c6; background: #ffffff0d; box-shadow: inset 0 0 0 1px #ffffff17; }
+.team-squads-view-switch button:focus-visible { outline: 2px solid var(--franchise-accent, #d6b674); outline-offset: 2px; }
+.team-squads-view-switch button:hover { color: #f3e4c6; }
 .team-squads-heading h2 { font: 700 40px/1.1 var(--font-display), sans-serif; color: #f2eee6; }
 .team-squads-heading p { color: #aeb9c9; font-size: 15px; margin-top: 10px; }
 .team-squad-overview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
@@ -64,4 +69,6 @@
 @media(max-width: 650px) { .team-squad-overview { grid-template-columns: 1fr; } .team-squad-summary { padding: 20px; } .team-squad-summary-name > strong { font-size: 17px; } .squad-detail-header { padding: 17px; gap: 12px; } .squad-detail-header h2 { font-size: 25px; } .squad-detail-crest { flex-basis: 48px; height: 48px; } .squad-detail-crest img { width: 46px; height: 46px; } .squad-detail-content { padding: 18px; } .squad-detail-totals { grid-template-columns: 1fr 1fr; } .squad-detail-roster { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .squad-detail-price { align-items: flex-start; flex-direction: column; } .squad-detail-portrait { height: 135px; } }
 @media(max-width: 650px) {
   .team-squad-summary-stats strong { font-size: clamp(22px, 6.5vw, 28px); }
+  .team-squads-view-switch { width: 100%; }
+  .team-squads-view-switch button { flex: 1; padding-inline: 10px; }
 }

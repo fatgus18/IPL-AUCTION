@@ -38,7 +38,7 @@ function TargetPicksStudio({ state, team, onAction, connected }: Omit<Props, "me
   const saved = state.myTargetPicks?.teamId === team.id ? state.myTargetPicks.playerIds : [];
   const savedRevision = state.myTargetPicks?.teamId === team.id ? state.myTargetPicks.revision : 0;
   const acknowledged = Boolean(local && savedRevision > local.revision && samePicks(local.playerIds, saved));
-  const activeDraft = local && !samePicks(local.playerIds, local.baseline) && !acknowledged ? local : null;
+  const activeDraft = !state.endedAt && local && !samePicks(local.playerIds, local.baseline) && !acknowledged ? local : null;
   const draft = activeDraft?.playerIds ?? saved;
   const revision = activeDraft?.revision ?? savedRevision;
   const dirty = Boolean(activeDraft);
@@ -47,7 +47,7 @@ function TargetPicksStudio({ state, team, onAction, connected }: Omit<Props, "me
   const selected = new Set(draft);
   const playerMap = new Map(state.players.map((player) => [player.id, player]));
   const teamMap = new Map(state.teams.map((entry) => [entry.id, entry]));
-  const liveId = !["sold", "unsold"].includes(state.phase) ? state.currentPlayerId : null;
+  const liveId = !state.endedAt && !["sold", "unsold"].includes(state.phase) ? state.currentPlayerId : null;
   const pool = state.players.filter((player) => !player.catalogArchived);
   const query = search.trim().toLowerCase();
   const filtered = pool.filter((player) => {
@@ -69,7 +69,7 @@ function TargetPicksStudio({ state, team, onAction, connected }: Omit<Props, "me
   }
 
   function edit(playerId: string, remove = false) {
-    if (savingRef.current) return;
+    if (savingRef.current || state.endedAt) return;
     const player = playerMap.get(playerId);
     if (!selected.has(playerId) && (!player || player.catalogArchived || player.status === "sold")) return;
     const next = selected.has(playerId) || remove ? draft.filter((id) => id !== playerId) : [...draft, playerId];
@@ -80,7 +80,7 @@ function TargetPicksStudio({ state, team, onAction, connected }: Omit<Props, "me
   }
 
   async function save() {
-    if (savingRef.current || !dirty || !connected || remoteChanged || unresolvedConflict) return;
+    if (state.endedAt || savingRef.current || !dirty || !connected || remoteChanged || unresolvedConflict) return;
     savingRef.current = true;
     setSaving(true);
     setError("");
@@ -115,8 +115,8 @@ function TargetPicksStudio({ state, team, onAction, connected }: Omit<Props, "me
     </header>
 
     <div className="target-save-bar">
-      <p className={`target-save-status ${dirty ? "is-dirty" : ""}`} role="status" aria-live="polite">{!connected ? "Reconnecting · Selections kept" : dirty ? `${draft.length} selected · Unsaved changes` : acknowledged ? "Targets saved. You’ll be notified when they come up." : notice || `${saved.length} saved targets · Edit anytime`}</p>
-      <div>{(dirty || unresolvedConflict) && <button type="button" className="target-reload" onClick={reload} disabled={saving}><RotateCcw size={16} /><span>Reload saved targets</span></button>}<button type="button" className="target-save" disabled={!dirty || saving || !connected || remoteChanged || unresolvedConflict} onClick={save}>{saving ? <span className="target-spinner" /> : <Save size={17} />}{saving ? "Saving targets…" : "Save targets"}</button></div>
+      <p className={`target-save-status ${dirty ? "is-dirty" : ""}`} role="status" aria-live="polite">{state.endedAt ? "Auction complete · Saved target list" : !connected ? "Reconnecting · Selections kept" : dirty ? `${draft.length} selected · Unsaved changes` : acknowledged ? "Targets saved. You’ll be notified when they come up." : notice || `${saved.length} saved targets · Edit anytime`}</p>
+      <div>{(dirty || unresolvedConflict) && <button type="button" className="target-reload" onClick={reload} disabled={saving}><RotateCcw size={16} /><span>Reload saved targets</span></button>}<button type="button" className="target-save" disabled={!!state.endedAt || !dirty || saving || !connected || remoteChanged || unresolvedConflict} onClick={save}>{saving ? <span className="target-spinner" /> : <Save size={17} />}{saving ? "Saving targets…" : "Save targets"}</button></div>
     </div>
     {(remoteChanged || unresolvedConflict) && <p className="target-warning" role="alert">A newer target list was saved in another tab. Your selections are preserved here. Reload saved targets to use the latest list.</p>}
     {error && !acknowledged && <p className="target-warning" role="alert">{error}</p>}
@@ -135,7 +135,7 @@ function TargetPicksStudio({ state, team, onAction, connected }: Omit<Props, "me
             const unavailable = player.status === "sold" && !isSelected;
             return <li className={`target-player-card ${isSelected ? "is-selected" : ""}`} key={player.id} data-player-id={player.id}>
               <div className="target-player-art"><span className={`target-player-status tone-${status.tone}`}>{status.tone === "live" && <Radio size={12} />}{status.tone === "won" && <Check size={12} />}{status.label}</span><PlayerImage player={player} className="target-portrait" /><span className="target-art-ring" aria-hidden="true" /></div>
-              <div className="target-player-copy"><h4>{player.name}</h4><p>{getPlayingRole(player) ?? "Role unavailable"}<span aria-hidden="true">·</span>{player.country}</p><div className="target-player-bottom"><span>Base<strong>{formatMoney(player.basePrice)}</strong></span><button type="button" className="target-toggle" role="checkbox" aria-checked={isSelected} aria-label={`Target ${player.name}`} disabled={saving || unavailable} onClick={() => edit(player.id)}>{isSelected ? <Check size={17} /> : <Plus size={17} />}<span>{isSelected ? "Targeted" : unavailable ? "Sold" : "Target"}</span></button></div></div>
+              <div className="target-player-copy"><h4>{player.name}</h4><p>{getPlayingRole(player) ?? "Role unavailable"}<span aria-hidden="true">·</span>{player.country}</p><div className="target-player-bottom"><span>Base<strong>{formatMoney(player.basePrice)}</strong></span><button type="button" className="target-toggle" role="checkbox" aria-checked={isSelected} aria-label={`Target ${player.name}`} disabled={!!state.endedAt || saving || unavailable} onClick={() => edit(player.id)}>{isSelected ? <Check size={17} /> : <Plus size={17} />}<span>{isSelected ? "Targeted" : unavailable ? "Sold" : "Target"}</span></button></div></div>
             </li>;
           })}
         </ul>
@@ -150,7 +150,7 @@ function TargetPicksStudio({ state, team, onAction, connected }: Omit<Props, "me
           {draft.map((id, index) => {
             const player = playerMap.get(id);
             const status = statusFor(player);
-            return <li key={id} data-player-id={id}><span className="target-shortlist-number">{String(index + 1).padStart(2, "0")}</span><span className="target-shortlist-photo">{player ? <PlayerImage player={player} /> : <Target size={23} />}</span><div className="target-shortlist-copy"><strong>{player?.name ?? "Unavailable player"}</strong><span className={`tone-${status.tone}`}>{status.label}</span></div><button type="button" aria-label={`Remove ${player?.name ?? "unavailable player"} from targets`} disabled={saving} onClick={() => edit(id, true)}><X size={16} /></button></li>;
+            return <li key={id} data-player-id={id}><span className="target-shortlist-number">{String(index + 1).padStart(2, "0")}</span><span className="target-shortlist-photo">{player ? <PlayerImage player={player} /> : <Target size={23} />}</span><div className="target-shortlist-copy"><strong>{player?.name ?? "Unavailable player"}</strong><span className={`tone-${status.tone}`}>{status.label}</span></div><button type="button" aria-label={`Remove ${player?.name ?? "unavailable player"} from targets`} disabled={!!state.endedAt || saving} onClick={() => edit(id, true)}><X size={16} /></button></li>;
           })}
         </ul> : <div className="target-shortlist-empty"><span><Target size={35} strokeWidth={1.3} /></span><h4>Who’s on your radar?</h4><p>Choose players from the pool. Add a few now and more as the auction unfolds.</p></div>}
         <div className="target-board-foot"><LockKeyhole size={14} /><span>Your targets stay private.</span>{dirty && <span className="target-board-unsaved">Unsaved</span>}</div>

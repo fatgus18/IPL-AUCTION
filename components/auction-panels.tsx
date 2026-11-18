@@ -143,7 +143,7 @@ export function PlayerPool({ state: roomState, isHost, onAction, inRoom = true, 
     {error && <ErrorMessage>{error}</ErrorMessage>}
     <div className="manage-player-table-wrap" ref={tableRef}><table className="manage-player-table"><thead><tr><th>Player / profile</th><th>Category</th><th>Base price</th>{inRoom && <th>In this room</th>}{isHost && <th><span className="manage-sr-only">Actions</span></th>}</tr></thead><tbody>{visiblePlayers.map((player) => {
       const current = inRoom && state.currentPlayerId === player.id;
-      const onBlock = current && !["sold", "unsold"].includes(state.phase);
+      const onBlock = !state.endedAt && current && !["sold", "unsold"].includes(state.phase);
       const locked = inRoom && (player.status === "sold" || (current && (state.phase !== "waiting" || state.leadingTeamId !== null)));
       const team = state.teams.find((item) => item.id === player.soldTo);
       const sourced = Boolean(player.profileUrl && player.dataSources?.length && player.eligibilityVerified !== false);
@@ -154,8 +154,8 @@ export function PlayerPool({ state: roomState, isHost, onAction, inRoom = true, 
     {filtered.length === 0 && <div className="manage-empty"><Search size={28} /><h3>No players found</h3><p>{hasFilters ? "Try another search or adjust your filters." : "Add your first player to start building the pool."}</p>{hasFilters && <button className="manage-button" onClick={clearFilters}>Clear filters</button>}</div>}
     <div className="pool-pagination"><span>Showing {filtered.length ? pageStart + 1 : 0}–{Math.min(pageStart + pageSize, filtered.length)} of {filtered.length} players{hasFilters ? ` · ${state.players.length} in pool` : ""}</span><nav aria-label="Player pool pages"><button type="button" aria-label="Previous player page" disabled={currentPage <= 1} onClick={() => movePage(currentPage - 1)}><ChevronLeft size={17} /></button><span>Page {currentPage} of {pageCount}</span><button type="button" aria-label="Next player page" disabled={currentPage >= pageCount} onClick={() => movePage(currentPage + 1)}><ChevronRight size={17} /></button></nav></div>
     {importing && <PlayerImporter state={state} isHost={isHost} existingPlayer={importing === "new" ? undefined : state.players.find(player => player.id === importing)} initialQuery={importing === "new" ? query : undefined} onClose={() => setImporting(null)} onAction={onAction} onManual={player => { setImporting(null); setEditing(player ?? "new"); }} />}
-    {editing && <PlayerEditor player={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} onAction={onAction} />}
-    {deleting && <DeletePlayer player={deleting} onClose={() => setDeleting(null)} onAction={onAction} />}
+    {isHost && editing && <PlayerEditor player={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} onAction={onAction} />}
+    {isHost && deleting && <DeletePlayer player={deleting} onClose={() => setDeleting(null)} onAction={onAction} />}
   </section>;
 }
 

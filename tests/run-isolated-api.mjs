@@ -46,7 +46,7 @@ try {
   }
   assert.ok(ready, `The isolated server did not become ready: ${serverOutput}`);
   const suites = process.argv.slice(2);
-  for (const suite of suites.length ? suites : ["tests/api-integration.mjs", "tests/practice-api-integration.mjs", "tests/shared-catalog-api-integration.mjs", "tests/room-recovery-api-integration.mjs", "tests/historic-teams-api-integration.mjs", "tests/lobby-catalog-api-integration.mjs", "tests/room-access-api-integration.mjs", "tests/lineup-api-integration.mjs", "tests/auction-interactions-api-integration.mjs", "tests/target-picks-api-integration.mjs", "tests/unlock-api-integration.mjs"]) {
+  for (const suite of suites.length ? suites : ["tests/api-integration.mjs", "tests/practice-api-integration.mjs", "tests/shared-catalog-api-integration.mjs", "tests/room-recovery-api-integration.mjs", "tests/historic-teams-api-integration.mjs", "tests/lobby-catalog-api-integration.mjs", "tests/room-access-api-integration.mjs", "tests/lineup-api-integration.mjs", "tests/auction-interactions-api-integration.mjs", "tests/target-picks-api-integration.mjs", "tests/unlock-api-integration.mjs", "tests/auction-completion-api.mjs", "tests/auction-exports-api.mjs"]) {
     const child = spawn(process.execPath, [suite], { env, windowsHide: true, stdio: "inherit" });
     const [code] = await once(child, "exit");
     assert.equal(code, 0, `${suite} failed. Server output: ${serverOutput}`);

@@ -1,0 +1,81 @@
+.squad-comparison { --compare-line: #ffffff12; --compare-muted: #b0bdcd; color: #f1eee7; border: 1px solid #ffffff1a; border-radius: 16px; overflow: hidden; background: var(--desk-base, #0c121b); }
+.squad-compare-selectors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.squad-compare-franchise { min-width: 0; padding: 30px; background: radial-gradient(ellipse at 0 0, color-mix(in srgb, var(--compare-accent) 10%, transparent), transparent 80%); border-top: 3px solid var(--compare-accent); }
+.squad-compare-franchise + .squad-compare-franchise { border-left: 1px solid var(--compare-line); }
+.squad-compare-selector { display: flex; align-items: center; gap: 17px; }
+.squad-compare-crest { display: grid; place-items: center; flex: 0 0 66px; height: 66px; }
+.squad-compare-crest img { width: 64px; height: 64px; object-fit: contain; }
+.squad-compare-selector > div { min-width: 0; flex: 1; }
+.squad-compare-selector label { display: block; font-size: 14px; color: var(--compare-muted); margin-bottom: 5px; }
+.squad-compare-select-wrap { display: block; position: relative; }
+.squad-compare-select-wrap select { appearance: none; display: block; width: 100%; min-height: 46px; color: #f2eee7; background: #0b111ab8; padding: 10px 36px 10px 12px; border: 1px solid #ffffff25; border-radius: 7px; font: 600 15px/1.4 var(--font-body), sans-serif; text-overflow: ellipsis; cursor: pointer; }
+.squad-compare-select-wrap option { color: #f2eee7; background: #141c27; }
+.squad-compare-select-wrap > svg { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--compare-accent); }
+.squad-compare-select-wrap select:focus-visible, .squad-compare-actions button:focus-visible { outline: 2px solid var(--compare-accent); outline-offset: 3px; }
+.squad-compare-manager { min-height: 44px; font-size: 14px; line-height: 1.6; color: var(--compare-muted); margin: 18px 0 23px; overflow-wrap: anywhere; }
+.squad-compare-manager strong { font-weight: 500; color: #f2eee7; }
+.squad-compare-purse { display: flex; flex-direction: column; gap: 7px; }
+.squad-compare-purse > span { color: var(--compare-muted); font-size: 14px; }
+.squad-compare-purse > strong { font: 650 clamp(28px, 3.5vw, 46px)/1.15 var(--font-body), sans-serif; font-variant-numeric: tabular-nums; letter-spacing: -.045em; }
+.squad-compare-budget { height: 5px; overflow: hidden; border-radius: 3px; background: #ffffff20; margin-top: 23px; }
+.squad-compare-budget > span { display: block; height: 100%; background: var(--compare-accent); border-radius: inherit; }
+.squad-compare-budget-key { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; font-size: 14px; color: var(--compare-muted); }
+.squad-compare-budget-key > span { display: flex; align-items: center; gap: 6px; }
+.squad-compare-budget-key i { width: 6px; height: 6px; background: var(--compare-accent); border-radius: 2px; }
+.squad-compare-budget-key > span + span i { background: #ffffff40; }
+.squad-compare-matrix { border-top: 1px solid var(--compare-line); }
+.squad-compare-row { display: grid; grid-template-columns: minmax(150px, .85fr) repeat(2, minmax(0, 1fr)); align-items: stretch; }
+.squad-compare-column-headings { color: var(--compare-muted); background: #ffffff04; font-size: 14px; }
+.squad-compare-column-headings > * { padding: 16px 24px; }
+.squad-compare-column-headings > strong { text-align: center; letter-spacing: .06em; }
+.squad-compare-column-headings > strong:nth-child(2) { color: var(--compare-left); }
+.squad-compare-column-headings > strong:nth-child(3) { color: var(--compare-right); }
+.squad-compare-section { padding: 18px 24px; border-block: 1px solid var(--compare-line); background: #ffffff03; }
+.squad-compare-section > div { display: flex; align-items: center; gap: 10px; }
+.squad-compare-section svg { color: #b8c3d0; }
+.squad-compare-section h3 { font: 600 15px/1.4 var(--font-body), sans-serif; letter-spacing: 0; }
+.squad-compare-label { font-size: 14px; color: var(--compare-muted); padding: 19px 24px; align-self: center; }
+.squad-compare-value { min-width: 0; padding: 16px 24px; display: flex; justify-content: center; align-items: center; text-align: center; border-left: 1px solid var(--compare-line); font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.squad-compare-row + .squad-compare-row { border-top: 1px solid #ffffff08; }
+.squad-compare-value small { font-size: 14px; color: #96a5b8; font-weight: 400; }
+.squad-compare-role { display: flex; align-items: center; justify-content: center; gap: 16px; width: 100%; max-width: 180px; }
+.squad-compare-role > strong { font-size: 20px; min-width: 24px; font-weight: 600; }
+.squad-compare-role-track { height: 5px; background: #ffffff12; border-radius: 3px; width: 100%; max-width: 115px; overflow: hidden; }
+.squad-compare-role-track i { display: block; height: 100%; background: var(--compare-left); border-radius: inherit; }
+.squad-compare-value-1 .squad-compare-role-track i { background: var(--compare-right); }
+.squad-compare-leader-row .squad-compare-value { font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+.squad-compare-unassigned { color: #9dabbc; font-weight: 400; font-size: 14px; }
+.squad-compare-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; padding: 24px; border-top: 1px solid var(--compare-line); }
+.squad-compare-actions button { min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 12px; border: 1px solid #ffffff25; border-radius: 7px; background: #ffffff04; font-size: 14px; font-weight: 600; color: #f2eee7; }
+.squad-compare-actions button:hover { border-color: var(--compare-accent); background: color-mix(in srgb, var(--compare-accent) 9%, transparent); }
+.squad-compare-actions svg { color: var(--compare-accent); flex-shrink: 0; }
+.squad-compare-empty { padding: 40px; display: flex; justify-content: center; align-items: center; gap: 15px; color: #b0bdcd; }
+@media (max-width: 700px) {
+  .squad-compare-franchise { padding: 20px 16px; }
+  .squad-compare-selector { display: block; }
+  .squad-compare-crest { width: 54px; height: 54px; margin-bottom: 14px; }
+  .squad-compare-crest img { width: 52px; height: 52px; }
+  .squad-compare-select-wrap select { padding-left: 8px; padding-right: 27px; font-size: 14px; }
+  .squad-compare-select-wrap > svg { right: 7px; }
+  .squad-compare-manager { min-height: 68px; font-size: 14px; margin: 14px 0 20px; }
+  .squad-compare-purse > strong { font-size: clamp(21px, 4.8vw, 32px); }
+  .squad-compare-budget-key { flex-direction: column; gap: 5px; }
+  .squad-compare-row { grid-template-columns: minmax(100px, .85fr) repeat(2, minmax(0, 1fr)); }
+  .squad-compare-column-headings > *, .squad-compare-label { padding: 16px 12px; }
+  .squad-compare-value { padding: 15px 10px; font-size: 18px; }
+  .squad-compare-section { padding: 16px 14px; }
+  .squad-compare-role { gap: 8px; }
+  .squad-compare-actions { padding: 18px 14px; gap: 12px; }
+}
+@media (max-width: 420px) {
+  .squad-compare-franchise { padding: 18px 12px; }
+  .squad-compare-selector label { font-size: 14px; }
+  .squad-compare-purse > strong { font-size: 23px; }
+  .squad-compare-row { grid-template-columns: minmax(90px, .85fr) repeat(2, minmax(0, 1fr)); }
+  .squad-compare-label, .squad-compare-column-headings > * { padding: 14px 9px; }
+  .squad-compare-value { padding: 13px 6px; font-size: 16px; }
+  .squad-compare-leader-row .squad-compare-value { font-size: 14px; }
+  .squad-compare-role { flex-direction: column; gap: 6px; }
+  .squad-compare-role-track { width: 42px; }
+  .squad-compare-actions button { gap: 5px; padding-inline: 6px; }
+}

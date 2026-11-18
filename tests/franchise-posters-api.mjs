@@ -39,6 +39,6 @@ try {
   assert.equal((await request(`${room}/poster?team=..%2F..%2F.env.local`, viewer.token)).status, 404);
   const other = await request("/api/rooms", undefined, { name: "Unrelated poster room", hostName: "Other creator" }).then(json);
   try { assert.equal((await request(`${room}/poster?team=rcb`, other.token)).status, 401); }
-  finally { await request(`/api/rooms/${other.state.code}/delete`, other.token, {}); }
+  finally { await request(`/api/rooms/${other.state.code}/delete`, other.token, { confirmationCode: other.state.code }); }
   console.log("Franchise posters API: completion gate, authenticated host/manager/spectator downloads, PNG dimensions, headers, privacy, empty squad and cross-room isolation passed.");
-} finally { if (host) await request(`/api/rooms/${host.state.code}/delete`, host.token, {}); }
+} finally { if (host) await request(`/api/rooms/${host.state.code}/delete`, host.token, { confirmationCode: host.state.code }); }

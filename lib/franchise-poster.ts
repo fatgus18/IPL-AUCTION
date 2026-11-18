@@ -1,4 +1,3 @@
-import { createElement, type CSSProperties, type ReactNode } from "react";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
@@ -7,6 +6,7 @@ import sharp from "sharp";
 import { AuctionError, type RoomState } from "./auction.ts";
 import { getPlayingRole } from "./player-roles.ts";
 import { PLAYER_IMAGES, TEAM_LOGOS } from "./visual-assets.ts";
+import { createPosterComposition } from "./poster-composition.ts";
 
 export const POSTER_WIDTH = 1440;
 export const POSTER_HEIGHT = 1800;
@@ -55,7 +55,8 @@ export function buildFranchisePoster(state: RoomState, teamId: string): Franchis
   };
 }
 
-const allowedAssets = new Set([...Object.values(PLAYER_IMAGES), ...Object.values(TEAM_LOGOS)]);
+const portraitAssets = new Set(Object.values(PLAYER_IMAGES));
+const allowedAssets = new Set([...portraitAssets, ...Object.values(TEAM_LOGOS)]);
 const assetCache = new Map<string, Promise<string | null>>();
 /** Accept only catalogued repository assets. Player-provided image URLs never reach disk or the network. */
 export async function loadPosterAsset(asset: string | null): Promise<string | null> {
@@ -63,7 +64,14 @@ export async function loadPosterAsset(asset: string | null): Promise<string | nu
   let cached = assetCache.get(asset);
   if (!cached) {
     cached = readFile(path.join(process.cwd(), "public", asset.slice(1)))
-      .then(bytes => sharp(bytes, { limitInputPixels: 16_000_000 }).resize(384, 480, { fit: "inside", withoutEnlargement: true }).png().toBuffer())
+      .then(async bytes => {
+        const input = sharp(bytes, { limitInputPixels: 16_000_000 });
+        const metadata = await input.metadata();
+        if (portraitAssets.has(asset) && metadata.hasAlpha) input.trim({ background: "#00000000", threshold: 12 });
+        return input.resize(portraitAssets.has(asset)
+          ? { width: 512, height: 768, fit: "inside", withoutEnlargement: true }
+          : { width: 384, height: 480, fit: "inside", withoutEnlargement: true }).png().toBuffer();
+      })
       .then(bytes => `data:image/png;base64,${bytes.toString("base64")}`)
       .catch(() => { assetCache.delete(asset); return null; });
     assetCache.set(asset, cached);
@@ -71,66 +79,28 @@ export async function loadPosterAsset(asset: string | null): Promise<string | nu
   return cached;
 }
 
-let fontPromise: Promise<[Buffer, Buffer]> | undefined;
+let fontPromise: Promise<[Buffer, Buffer, Buffer]> | undefined;
 const fonts = () => fontPromise ??= Promise.all([
   readFile(path.join(process.cwd(), "lib/export-assets/NotoSans-Regular.ttf")),
   readFile(path.join(process.cwd(), "lib/export-assets/NotoSans-Bold.ttf")),
+  readFile(path.join(process.cwd(), "public/fonts/barlow-condensed-800.woff2")),
 ]).catch(error => { fontPromise = undefined; throw error; });
-const box = (style: CSSProperties, ...children: ReactNode[]) => createElement("div", { style: { display: "flex", boxSizing: "border-box", flexShrink: 0, ...style } }, ...children);
-const label = (text: string, style: CSSProperties = {}) => box({ fontSize: 22, color: "#cad0d8", ...style }, text);
-
-function playerCard(player: PosterPlayer, image: string | null, width: number, height: number, accent: string) {
-  const dense = height < 240;
-  const fontSize = dense ? 21 : width < 300 ? 25 : 29;
-  const imageHeight = height - (dense ? 82 : 102);
-  const portrait = image ? createElement("img", { src: image, width: width - 26, height: imageHeight, style: { objectFit: "contain", objectPosition: "center bottom" } })
-    : box({ width: width - 26, height: imageHeight, alignItems: "center", justifyContent: "center", fontSize: Math.min(90, imageHeight / 2), fontWeight: 700, color: `${accent}aa` }, player.name.split(/\s+/).slice(0, 2).map(part => part[0]).join(""));
-  return box({ width, height, position: "relative", flexDirection: "column", alignItems: "center", borderRadius: 15, overflow: "hidden", background: "linear-gradient(150deg, #ffffff0d, #ffffff02)", border: `1px solid ${player.captain || player.viceCaptain ? `${accent}a0` : "#ffffff1c"}` },
-    box({ position: "absolute", top: 13, left: 15, fontSize: dense ? 14 : 17, letterSpacing: 1.4, color: "#cbd2dc" }, player.selection),
-    player.captain || player.viceCaptain ? box({ position: "absolute", right: 12, top: 10, width: dense ? 32 : 40, height: dense ? 32 : 40, borderRadius: 20, background: accent, color: "#10151c", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 700 }, player.captain ? "C" : "VC") : null,
-    box({ height: imageHeight, alignItems: "flex-end", justifyContent: "center", marginTop: 7 }, portrait),
-    box({ width: "100%", flex: 1, padding: dense ? "4px 12px 10px" : "8px 12px 15px", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#080e15aa" },
-      box({ fontSize: player.name.length > 50 ? 14 : player.name.length > 35 ? 16 : player.name.length > 26 ? fontSize - 3 : fontSize, wordBreak: player.name.split(/\s+/).some(part => part.length > 20) ? "break-all" : "normal", fontWeight: 700, textAlign: "center", lineHeight: 1.13, color: "#fff9ee" }, player.name),
-      label(player.role, { fontSize: dense ? 15 : 18, marginTop: 5, color: "#bac2cc" }),
-    ),
-  );
+let stadiumPromise: Promise<string> | undefined;
+function stadiumBackdrop(): Promise<string> {
+  return stadiumPromise ??= readFile(path.join(process.cwd(), "public/cinematic/stadium-poster.webp"))
+    // JPEG is reliably decoded when embedded in SVG on every deployment platform.
+    .then(bytes => sharp(bytes).resize(1440, 1800, { fit: "cover" }).jpeg({ quality: 72 }).toBuffer())
+    .then(bytes => "data:image/jpeg;base64," + bytes.toString("base64"))
+    .catch(error => { stadiumPromise = undefined; throw error; });
 }
 
-/** Returns self-contained SVG with embedded image data and text converted into font paths. */
+/** Balanced vertical cutout formation with only packaged assets. */
 export async function renderFranchisePosterSvg(poster: FranchisePoster): Promise<string> {
-  const [fontData, logo] = await Promise.all([fonts(), loadPosterAsset(poster.logo)]);
-  // Bound image decoding concurrency, even for a 30-player squad.
+  const [fontData, logo, stadium] = await Promise.all([fonts(), loadPosterAsset(poster.logo), stadiumBackdrop()]);
   const images: (string | null)[] = [];
   for (let index = 0; index < poster.players.length; index += 4) images.push(...await Promise.all(poster.players.slice(index, index + 4).map(player => loadPosterAsset(player.portrait))));
-  const count = poster.players.length;
-  const columns = count <= 2 ? count : count <= 9 ? 3 : count <= 16 ? 4 : 5;
-  const rows = Math.ceil(count / columns);
-  const gap = count > 16 ? 18 : 23;
-  const cardWidth = Math.min(570, Math.floor((1304 - gap * (columns - 1)) / columns));
-  const cardHeight = Math.min(Math.floor(cardWidth * 1.5), 900, Math.floor((1170 - gap * (rows - 1)) / rows));
-  const date = new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }).format(poster.endedAt).toUpperCase();
-  const gridRows = Array.from({ length: rows }, (_, row) => box({ gap, justifyContent: "center", width: "100%" }, ...poster.players.slice(row * columns, (row + 1) * columns).map((player, column) => playerCard(player, images[row * columns + column], cardWidth, cardHeight, poster.accent))));
-  const element = box({ position: "relative", width: POSTER_WIDTH, height: POSTER_HEIGHT, background: `linear-gradient(145deg, ${poster.background}, #070c13 82%)`, color: "#fff9ee", fontFamily: "Pavilion", flexDirection: "column", overflow: "hidden" },
-    box({ position: "absolute", right: -100, top: -200, width: 850, height: 850, borderRadius: 425, border: `1px solid ${poster.accent}40` }),
-    box({ position: "absolute", right: -45, top: -140, width: 735, height: 735, borderRadius: 370, border: `1px solid ${poster.accent}22` }),
-    box({ position: "absolute", top: 0, left: 0, width: POSTER_WIDTH, height: 9, background: poster.accent }),
-    box({ position: "absolute", left: 68, top: 56, width: 1304, height: 1702, flexDirection: "column" },
-    box({ height: 38, justifyContent: "space-between", alignItems: "center" }, label("PAVILION / FRANCHISE EDITION", { color: poster.accent, letterSpacing: 3, fontSize: 19, fontWeight: 700 }), label(date, { fontSize: 18, letterSpacing: 2 })),
-    box({ height: 212, alignItems: "center", justifyContent: "space-between" },
-      box({ flexDirection: "column", maxWidth: 1080 }, label("THE SQUAD", { fontWeight: 700, fontSize: 89, letterSpacing: -4, lineHeight: 1.03, color: "#fff9ee" }), label(poster.teamName.toUpperCase(), { fontWeight: 700, fontSize: poster.teamName.length > 25 ? 32 : 38, color: poster.accent, marginTop: 13, letterSpacing: 1 })),
-      logo ? createElement("img", { src: logo, width: 170, height: 170, style: { objectFit: "contain" } }) : label(poster.shortName, { color: poster.accent, fontWeight: 700, fontSize: 50 }),
-    ),
-    box({ height: 83, alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #ffffff22", borderBottom: "1px solid #ffffff22", marginBottom: 32 },
-      box({ width: 840, maxWidth: 840, flexShrink: 1, alignItems: "center", gap: 13 }, label("MANAGER", { fontSize: 17, letterSpacing: 2, color: "#a8b1c0" }), label(poster.manager, { maxWidth: 660, flexShrink: 1, wordBreak: poster.manager.split(/\s+/).some(part => part.length > 20) ? "break-all" : "normal", lineHeight: 1.15, fontSize: poster.manager.length > 35 ? 22 : 27, color: "#fff9ee", fontWeight: 700 })),
-      box({ gap: 27, alignItems: "center" }, label(`${count} SIGNINGS`, { color: poster.accent, fontSize: 19, fontWeight: 700 }), label(`₹${(poster.spentLakhs / 100).toFixed(2)} Cr`, { fontSize: 30, fontWeight: 700, color: "#fff9ee" })),
-    ),
-    box({ height: 1170, flexDirection: "column", gap, justifyContent: "center" }, ...gridRows),
-    box({ flex: 1, minHeight: 100, flexDirection: "column", justifyContent: "flex-end" },
-      box({ justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #ffffff22", paddingTop: 22 }, label(poster.auctionName, { maxWidth: 980, flexShrink: 1, wordBreak: poster.auctionName.split(/\s+/).some(part => part.length > 30) ? "break-all" : "normal", lineHeight: 1.2, fontSize: poster.auctionName.length > 55 ? 19 : 23, color: "#e0e3e7" }), label(`RESULTS / ${String(poster.revision).padStart(2, "0")}`, { fontSize: 16, letterSpacing: 2, color: poster.accent })),
-      label("C CAPTAIN  ·  VC VICE CAPTAIN  ·  XI PLAYING ELEVEN  ·  SUB SUBSTITUTE", { fontSize: 18, color: "#9da8b8", letterSpacing: 1, marginTop: 17 }),
-    )),
-  );
-  return satori(element, { width: POSTER_WIDTH, height: POSTER_HEIGHT, fonts: [{ name: "Pavilion", data: fontData[0], weight: 400 }, { name: "Pavilion", data: fontData[1], weight: 700 }], embedFont: true });
+  const element = createPosterComposition(poster, images, logo, stadium);
+  return satori(element, { width: POSTER_WIDTH, height: POSTER_HEIGHT, fonts: [{ name: "Pavilion", data: fontData[0], weight: 400 }, { name: "Pavilion", data: fontData[1], weight: 700 }, { name: "PosterDisplay", data: fontData[2], weight: 800 }], embedFont: true });
 }
 
 const renderedPosters = new Map<string, { bytes: Buffer; expiresAt: number }>();

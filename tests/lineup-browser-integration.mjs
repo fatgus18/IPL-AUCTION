@@ -40,12 +40,26 @@ const clickNav = async (page, name) => {
 };
 const overflow = page => page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
 const navigationGeometry = async page => {
-  for (const width of [1051, 1100, 1280, 1281, 1440, 1441, 1600]) {
+  for (const width of [1051, 1100, 1279]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.evaluate(() => { window.scrollTo({ top: 0, behavior: "instant" }); });
+    await page.getByRole("button", { name: "Open navigation", exact: true }).click();
+    const items = page.getByRole("navigation", { name: "Main navigation" }).getByRole("button");
+    assert.equal(await items.count(), 7);
+    for (const item of await items.all()) {
+      assert.equal(await item.isVisible(), true, `all seven destinations must be reachable in the ${width}px drawer`);
+      const box = await item.boundingBox();
+      assert.ok(box && box.x >= 0 && box.x + box.width <= width + 0.5 && box.y >= 0 && box.y + box.height <= 1000);
+    }
+    await nav(page, "Build my XI").click();
+    assert.equal(await overflow(page), false);
+  }
+  for (const width of [1280, 1281, 1440, 1441, 1600, 1680]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.evaluate(() => { window.scrollTo({ top: 0, behavior: "instant" }); });
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
     const items = page.getByRole("navigation", { name: "Main navigation" }).getByRole("button");
-    assert.equal(await items.count(), 6, `all participant destinations should be present at ${width}px`);
+    assert.equal(await items.count(), 7, `all participant destinations should be present at ${width}px`);
     const boxes = [];
     for (const item of await items.all()) {
       assert.equal(await item.isVisible(), true, `desktop navigation must remain visible at ${width}px`);

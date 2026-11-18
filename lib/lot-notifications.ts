@@ -4,8 +4,8 @@ export type LotNotificationSnapshot = Pick<RoomState,
   "id" | "code" | "version" | "currentPlayerId" | "phase" | "activity"
 >;
 
-export type LotNotification = { key: string; playerId: string };
-export type LotNotificationOptions = { connected: boolean; away: boolean };
+export type LotNotification = { key: string; playerId: string; isTarget?: boolean };
+export type LotNotificationOptions = { connected: boolean; away: boolean; targetPlayerIds?: readonly string[] };
 
 /**
  * Tracks accepted room snapshots, not renders or navigation events. Keep one
@@ -68,13 +68,15 @@ export class LotNotificationTracker {
 
     // A selection may already have been settled while this page was offline.
     // Consume it above, but never invite someone to a completed auction lot.
-    if (firstSnapshot || !options.away || !snapshot.currentPlayerId
+    const isTarget = !!snapshot.currentPlayerId && !!options.targetPlayerIds?.includes(snapshot.currentPlayerId);
+    if (firstSnapshot || (!options.away && !isTarget) || !snapshot.currentPlayerId
       || snapshot.phase === "sold" || snapshot.phase === "unsold"
       || (!changedPlayer && !newSelection)) return null;
 
     return {
       key: `${roomKey}:${newSelection && selection ? selection.id : `version-${snapshot.version}`}:${snapshot.currentPlayerId}`,
       playerId: snapshot.currentPlayerId,
+      ...(isTarget ? { isTarget: true } : {}),
     };
   }
 }

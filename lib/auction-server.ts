@@ -7,6 +7,7 @@ import {
 } from "@/lib/auction";
 import { readSharedCatalogVersion, readSharedPlayerCatalog, SHARED_CATALOG_ID } from "@/lib/player-catalog-store";
 import { createRoomPollCache } from "@/lib/room-poll-cache";
+import { ownTargetPicks, validateTargetPicks, type PrivateTargetPicks } from "@/lib/target-picks";
 import { DatabaseWriteBusyError } from "@/lib/database-write-queue";
 import { createTeamAccess, deriveTeamPassword, matchesTeamPassword, type TeamAccessCredential } from "@/lib/room-access";
 import {
@@ -15,7 +16,7 @@ import {
 } from "@/lib/shared-player-catalog";
 
 // Credential hashes stay outside RoomState and are never returned to a browser.
-type StoredRoom = { state: RoomState; tokenHashes: Record<string, string>; teamAccess?: TeamAccessCredential };
+type StoredRoom = { state: RoomState; tokenHashes: Record<string, string>; teamAccess?: TeamAccessCredential; privateTargetPicks?: PrivateTargetPicks };
 type SessionResponse = { state: RoomState; token: string; memberId: string };
 const MAX_BODY_BYTES = 32768;
 const ROOM_CAPACITY = 50;
@@ -61,8 +62,13 @@ function identifyMember(room: StoredRoom, hash: string): Member {
   return member;
 }
 
-function snapshot(state: RoomState): RoomState {
-  return { ...state, serverTime: Date.now() };
+function snapshot(room: StoredRoom, memberId: string): RoomState {
+  const state = { ...room.state, serverTime: Date.now() };
+  // Never copy a prior response projection into another member's response.
+  delete state.myTargetPicks;
+  const picks = ownTargetPicks(room.state, memberId, room.privateTargetPicks);
+  if (picks) state.myTargetPicks = picks;
+  return state;
 }
 
 function requirePracticeHost(room: StoredRoom, member: Member): void {
@@ -324,7 +330,7 @@ export async function createRoom(body: Record<string, unknown>): Promise<Session
       const saved = await readStoredRoom(existing[0].roomCode);
       const savedMember = identifyMember(saved, hash);
       if (savedMember.id !== existing[0].memberId) throw new AuctionError("This room session is no longer available.", 401, "UNAUTHORIZED");
-      return { state: snapshot(saved.state), token, memberId: savedMember.id };
+      return { state: snapshot(saved, savedMember.id), token, memberId: savedMember.id };
     }
   }
   // Accept old clients' practice credentials, but the browser no longer chooses the pool.
@@ -339,7 +345,7 @@ export async function createRoom(body: Record<string, unknown>): Promise<Session
     const state = createRoomState(code, name, member, now);
     const room: StoredRoom = { state, tokenHashes: { [member.id]: hash }, teamAccess: createTeamAccess(token, state.id) };
     const saved = await insertRoomWithCatalog(room, creation);
-    if (saved) return { state: snapshot(saved.state), token, memberId: saved.state.hostId };
+    if (saved) return { state: snapshot(saved, saved.state.hostId), token, memberId: saved.state.hostId };
   }
   throw new AuctionError("Could not create a room. Please try again.", 503, "ROOM_CREATE_RETRY");
 }
@@ -354,7 +360,7 @@ export async function createPractice(): Promise<SessionResponse> {
     state.code = code;
     state.mode = "practice";
     const room: StoredRoom = { state, tokenHashes: { [state.hostId]: hash } };
-    if (await insertRoomWithCatalog(room)) return { state: snapshot(state), token, memberId: state.hostId };
+    if (await insertRoomWithCatalog(room)) return { state: snapshot(room, state.hostId), token, memberId: state.hostId };
   }
   throw new AuctionError("Could not save your practice session. Please try again.", 503, "ROOM_CREATE_RETRY");
 }
@@ -380,7 +386,7 @@ export async function joinRoom(rawCode: string, body: Record<string, unknown>): 
     room.state.activity.push({ id: `join-${id}`, type: "room", text: `${name} joined the room.`, at: now, memberId: id });
     room.state.activity = room.state.activity.slice(-150);
     room.state.version += 1; room.state.serverTime = now; room.tokenHashes[id] = hash;
-    if (await persistIfCurrent(code, before, room)) return { state: snapshot(room.state), token, memberId: id };
+    if (await persistIfCurrent(code, before, room)) return { state: snapshot(room, id), token, memberId: id };
   }
   throw new AuctionError("The room is busy. Please try joining again.", 409, "ROOM_BUSY");
 }
@@ -459,7 +465,7 @@ export async function getRoom(rawCode: string, request: Request): Promise<RoomSt
     }
   }
   pollCache.remember(room.state, room.tokenHashes);
-  return snapshot(room.state);
+  return snapshot(room, member.id);
 }
 
 /** A stable poll reads only two indexed integers after authentication. A catalog
@@ -526,11 +532,20 @@ export async function actInRoom(
       }
       reset.activity.push({ id: `practice-reset-${reset.version}-${reset.serverTime}`, type: "room", text: "Practice restarted with the shared player pool.", at: reset.serverTime });
       room.state = reset;
+      room.privateTargetPicks = {};
     } else {
       if (options.memberId !== undefined && (typeof options.memberId !== "string" || !room.state.members.some((entry) => entry.id === options.memberId))) {
         throw new AuctionError("Choose an available practice seat.");
       }
       const actorId = typeof options.memberId === "string" ? options.memberId : member.id;
+      if (action?.type === "set_target_picks") {
+        // Always authenticate as the bearer, never a practice impersonation.
+        const picks = validateTargetPicks(room.state, member, action, room.privateTargetPicks);
+        room.privateTargetPicks = { ...room.privateTargetPicks, [member.id]: picks };
+        room.state = { ...room.state, version: before + 1, serverTime: Date.now() };
+        if (await persistIfCurrent(code, before, room)) return snapshot(room, member.id);
+        continue;
+      }
       if (room.state.mode !== "practice" && action?.type === "claim_team" && action.teamId !== null && action.teamId !== member.teamId) {
         requireTeamPassword(room, action.teamPassword);
       }
@@ -545,12 +560,15 @@ export async function actInRoom(
         room.state = syncRoomPlayerCatalog(room.state, catalog, Date.now(), true);
       }
       if (action.type === "leave") delete room.tokenHashes[actorId];
+      if (action.type === "leave" || (action.type === "claim_team" && action.teamId !== member.teamId)) {
+        if (room.privateTargetPicks) delete room.privateTargetPicks[actorId];
+      }
       if (["add_player", "update_player", "delete_player"].includes(action.type)) {
-        if (await persistCatalogAction(code, before, room, action, actorId)) return snapshot(room.state);
+        if (await persistCatalogAction(code, before, room, action, actorId)) return snapshot(room, member.id);
         continue;
       }
     }
-    if (await persistIfCurrent(code, before, room)) return snapshot(room.state);
+    if (await persistIfCurrent(code, before, room)) return snapshot(room, member.id);
     // Reapply against fresh state. A competing bid fails expectedAmount, and a
     // successful lock makes every subsequent competing bid fail BIDDING_CLOSED.
   }

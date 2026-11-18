@@ -19,6 +19,10 @@
 .new-lot-view:hover { text-decoration: underline; }
 .new-lot-dismiss { position: absolute; top: 8px; right: 7px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 5px; color: #bac3d0; }
 .new-lot-dismiss:hover { background: #ffffff0b; color: #fff; }
+.new-lot-notice.target-lot-notice { border-color: var(--franchise-accent, #e6c48a); box-shadow: 0 12px 36px #0005, inset 3px 0 var(--franchise-accent, #e6c48a); }
+.target-lot-notice .new-lot-copy > span:first-child { display: flex; align-items: center; gap: 7px; color: var(--franchise-accent, #e6c48a); font-weight: 650; }
+.lot-status-group { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; min-width: 0; }
+.my-target-lot-badge { display: inline-flex; gap: 6px; align-items: center; padding: 7px 9px; border: 1px solid var(--franchise-accent, #e6c48a); color: var(--franchise-accent, #e6c48a); border-radius: 4px; font-size: 13px; line-height: 1; white-space: nowrap; }
 .app-shell:has(dialog[open]) .new-lot-notice, .app-shell:has(.sidebar.is-open) .new-lot-notice { visibility: hidden; }
 @media(max-width: 940px) {
   .app-shell.tab-build-xi:has(.lineup-inspector.lineup-controls-open .lineup-inspector-player) .new-lot-notice { visibility: hidden; }

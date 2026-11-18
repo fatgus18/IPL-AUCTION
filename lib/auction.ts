@@ -33,6 +33,8 @@ export type TeamLineupInput = {
   captainId: string | null; viceCaptainId: string | null;
 };
 export type TeamLineup = TeamLineupInput & { revision: number };
+/** Private to the authenticated manager; never stored in the shared room state. */
+export type TargetPicks = { teamId: string; playerIds: string[]; revision: number };
 export type Team = {
   id: string; name: string; shortName: string; color: string; purse: number;
   squad: { playerId: string; amount: number }[];
@@ -63,6 +65,8 @@ export type RoomState = {
   sharedCatalogVersion?: number;
   catalogCount?: number;
   teamCatalogVersion?: number;
+  /** Response-only projection for this manager. Other members never receive it. */
+  myTargetPicks?: TargetPicks;
 };
 export type PlayerInput = Omit<Player, "id" | "status" | "soldTo" | "soldFor"> & { id?: string };
 export type AuctionAction =
@@ -75,6 +79,7 @@ export type AuctionAction =
   | { type: "update_settings"; settings: Partial<RoomSettings> }
   | { type: "chat"; text: string }
   | { type: "set_lineup"; teamId: string; lineup: TeamLineupInput; expectedRevision: number }
+  | { type: "set_target_picks"; teamId: string; playerIds: string[]; expectedRevision: number }
   | { type: "claim_team"; teamId: string | null; teamPassword?: string };
 
 export const DEFAULT_SETTINGS: RoomSettings = {

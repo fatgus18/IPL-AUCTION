@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { canBuildXI, canViewMySquad, normalizeRoomView, parseRoomView, type RoomView } from "../lib/room-navigation.ts";
+import { canBuildXI, canViewMySquad, canViewTargets, normalizeRoomView, parseRoomView, type RoomView } from "../lib/room-navigation.ts";
 
 const host = { role: "auctioneer", teamId: null } as const;
 const owner = { role: "bidder", teamId: "rcb" } as const;
@@ -11,15 +11,26 @@ test("legacy and malformed room views cannot open an unknown page", () => {
   for (const raw of [null, "", "practice", "home", "lineup", "build-XI", "my-squad/settings", "<script>"]) {
     assert.equal(parseRoomView(raw), "room");
   }
-  for (const view of [...sharedViews, "my-squad", "build-xi"] as RoomView[]) assert.equal(parseRoomView(view), view);
+  for (const view of [...sharedViews, "my-squad", "build-xi", "targets"] as RoomView[]) assert.equal(parseRoomView(view), view);
 });
 
 test("auctioneers never receive personal navigation, even if a legacy snapshot has a team id", () => {
   for (const member of [host, { ...host, teamId: "rcb" }]) {
     assert.equal(canViewMySquad(member), false);
     assert.equal(canBuildXI(member), false);
+    assert.equal(canViewTargets(member), false);
     assert.equal(normalizeRoomView("my-squad", member), "room");
     assert.equal(normalizeRoomView("build-xi", member), "room");
+    assert.equal(normalizeRoomView("targets", member), "room");
+  }
+});
+
+test("private target lists are available only to a bidder managing a team", () => {
+  assert.equal(canViewTargets(owner), true);
+  assert.equal(normalizeRoomView("targets", owner), "targets");
+  for (const member of [undefined, host, spectator, { ...spectator, teamId: "rcb" }, { ...owner, teamId: null }, { ...owner, teamId: "" }]) {
+    assert.equal(canViewTargets(member), false);
+    assert.equal(normalizeRoomView("targets", member), "room");
   }
 });
 

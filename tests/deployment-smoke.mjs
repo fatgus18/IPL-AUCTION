@@ -43,7 +43,7 @@ function expectStatus(result, status, label) {
 
 function privateState(state, secrets) {
   const serialized = JSON.stringify(state);
-  for (const privateField of ["tokenHashes", "passwordHash", "teamAccess"]) {
+  for (const privateField of ["tokenHashes", "passwordHash", "teamAccess", "privateTargetPicks"]) {
     assert.ok(!serialized.includes(`\"${privateField}\"`), "Shared snapshots must not expose credential material.");
   }
   for (const secret of secrets.filter(Boolean)) {
@@ -119,6 +119,19 @@ try {
   const startingFinancials = new Map(joinedState.teams.map(team => [team.id, { purse: team.purse, squad: team.squad }]));
   const player = joinedState.players.find(entry => entry.status === "available" && entry.eligibilityVerified !== false && !entry.isOverseas);
   assert.ok(player, "At least one eligible domestic player must be available.");
+  const targetIds = joinedState.players.filter(entry => !entry.catalogArchived && entry.status === "available").slice(0, 12).map(entry => entry.id);
+  assert.equal(targetIds.length, 12);
+  const manager = participants[0];
+  for (const [revision, count] of [[0, 5], [1, 9], [2, 12]]) {
+    const saved = expectStatus(await act(manager, { type: "set_target_picks", teamId: manager.teamId, playerIds: targetIds.slice(0, count), expectedRevision: revision }), 200, "Save cumulative private targets").state;
+    assert.deepEqual(saved.myTargetPicks, { teamId: manager.teamId, playerIds: targetIds.slice(0, count), revision: revision + 1 });
+  }
+  assert.deepEqual((await read(manager)).myTargetPicks.playerIds, targetIds);
+  assert.deepEqual((await read(participants[1])).myTargetPicks.playerIds, []);
+  assert.equal((await read(host)).myTargetPicks, undefined);
+  assert.equal((await read(spectator)).myTargetPicks, undefined);
+  expectStatus(await act(spectator, { type: "set_target_picks", teamId: manager.teamId, playerIds: [], expectedRevision: 3 }), 403, "Spectators cannot edit a manager's targets");
+  console.log("PASS: private target picks grow from five to nine to twelve and are visible only to their authenticated manager.");
   expectStatus(await act(spectator, { type: "select_player", playerId: player.id }), 403, "Only the auctioneer may select a player");
   expectStatus(await act(host, { type: "select_player", playerId: player.id }), 200, "Select player");
   expectStatus(await act(host, { type: "start" }), 200, "Open bidding");
@@ -148,6 +161,7 @@ try {
   expectStatus(await act(host, { type: "sell" }), 409, "A sale cannot charge twice");
 
   const sold = await read(spectator);
+  assert.deepEqual((await read(manager)).myTargetPicks.playerIds, targetIds, "Auction events preserve the private target list.");
   assert.equal(sold.phase, "sold");
   const winningTeam = sold.teams.find(team => team.id === winner.teamId);
   assert.equal(winningTeam.purse, startingFinancials.get(winner.teamId).purse - player.basePrice);

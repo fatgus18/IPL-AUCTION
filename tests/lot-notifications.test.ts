@@ -121,3 +121,61 @@ test("a changed player is detected even when chat has already displaced the sele
   assert.deepEqual(tracker.observe(current, away), { key: "room-one:ABCDEF:version-200:bumrah", playerId: "bumrah" });
   assert.equal(tracker.observe({ ...current, version: 201 }, away), null);
 });
+
+test("a saved target announces on the auction page as well as other pages", () => {
+  for (const location of [away, onAuctionPage]) {
+    const tracker = new LotNotificationTracker();
+    const options = { ...location, targetPlayerIds: ["axar", "bumrah"] };
+    tracker.observe(snapshot(), options);
+    const state = snapshot({ version: 2, currentPlayerId: "axar", activity: [selection("target-lot")] });
+    assert.deepEqual(tracker.observe(state, options), { key: "room-one:ABCDEF:target-lot:axar", playerId: "axar", isTarget: true });
+    assert.equal(tracker.observe(state, options), null);
+    assert.equal(tracker.observe({ ...state, version: 3, phase: "live" }, options), null);
+  }
+});
+
+test("target alerts use only this viewer's saved list and do not change generic notification rules", () => {
+  const state = snapshot({ version: 2, currentPlayerId: "axar", activity: [selection("target-lot")] });
+  for (const targetPlayerIds of [undefined, [], ["bumrah"]]) {
+    const tracker = new LotNotificationTracker();
+    tracker.observe(snapshot(), { ...onAuctionPage, targetPlayerIds });
+    assert.equal(tracker.observe(state, { ...onAuctionPage, targetPlayerIds }), null);
+    const awayTracker = new LotNotificationTracker();
+    awayTracker.observe(snapshot(), { ...away, targetPlayerIds });
+    assert.deepEqual(awayTracker.observe(state, { ...away, targetPlayerIds }), { key: "room-one:ABCDEF:target-lot:axar", playerId: "axar" });
+  }
+});
+
+test("saving or removing targets cannot replay a current lot", () => {
+  const tracker = new LotNotificationTracker();
+  tracker.observe(snapshot(), onAuctionPage);
+  const state = snapshot({ version: 2, currentPlayerId: "axar", activity: [selection("existing-lot")] });
+  assert.equal(tracker.observe(state, onAuctionPage), null);
+  assert.equal(tracker.observe({ ...state, version: 3 }, { ...onAuctionPage, targetPlayerIds: ["axar"] }), null);
+  assert.equal(tracker.observe({ ...state, version: 4 }, { ...away, targetPlayerIds: [] }), null);
+  assert.equal(tracker.observe({ ...state, version: 5 }, { ...away, targetPlayerIds: ["axar"] }), null);
+});
+
+test("an already-live saved target is silent on first load, but a fresh nomination alerts again", () => {
+  const tracker = new LotNotificationTracker();
+  const options = { ...onAuctionPage, targetPlayerIds: ["axar"] };
+  const current = snapshot({ version: 2, currentPlayerId: "axar", phase: "live", activity: [selection("first-lot")] });
+  assert.equal(tracker.observe(current, options), null);
+  assert.equal(tracker.observe({ ...current, version: 3, phase: "unsold" }, options), null);
+  assert.deepEqual(tracker.observe({ ...current, version: 4, phase: "waiting", activity: [...current.activity, selection("second-lot")] }, options), {
+    key: "room-one:ABCDEF:second-lot:axar", playerId: "axar", isTarget: true,
+  });
+});
+
+test("a removed target follows normal off-page rules and settled targets never notify", () => {
+  for (const phase of ["sold", "unsold"] as const) {
+    const tracker = new LotNotificationTracker();
+    const options = { ...onAuctionPage, targetPlayerIds: ["axar"] };
+    tracker.observe(snapshot(), options);
+    assert.equal(tracker.observe(snapshot({ version: 4, currentPlayerId: "axar", phase, activity: [selection("settled-lot")] }), options), null);
+  }
+  const tracker = new LotNotificationTracker();
+  tracker.observe(snapshot(), { ...onAuctionPage, targetPlayerIds: ["axar"] });
+  assert.equal(tracker.observe(snapshot({ version: 2 }), { ...onAuctionPage, targetPlayerIds: [] }), null);
+  assert.equal(tracker.observe(snapshot({ version: 3, currentPlayerId: "axar", activity: [selection("removed-target")] }), { ...onAuctionPage, targetPlayerIds: [] }), null);
+});

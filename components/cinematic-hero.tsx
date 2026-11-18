@@ -4,7 +4,7 @@ import { ArrowUpRight } from "lucide-react";
 import { TEAM_SEEDS } from "@/lib/team-catalog";
 import { TEAM_LOGOS } from "@/lib/visual-assets";
 
-type HeroTab = "home" | "room" | "players" | "squads" | "my-squad" | "build-xi" | "settings";
+type HeroTab = "home" | "room" | "players" | "squads" | "my-squad" | "build-xi" | "targets" | "settings";
 
 const COPY: Record<HeroTab, { kicker: string; first: string; second: string; description: string }> = {
   home: { kicker: "THE IPL AUCTION EXPERIENCE", first: "EVERY BID.", second: "A NEW LEGACY.", description: "The biggest names. Your next dynasty." },
@@ -13,6 +13,7 @@ const COPY: Record<HeroTab, { kicker: string; first: string; second: string; des
   squads: { kicker: "TWELVE FRANCHISES. ONE AMBITION.", first: "RIVALS TODAY.", second: "LEGENDS NEXT.", description: "Every signing is a statement. This is where it takes shape." },
   "my-squad": { kicker: "YOUR COLOURS. YOUR CALL.", first: "YOUR SQUAD.", second: "YOUR LEGACY.", description: "Every winning bid. Every player you bring home." },
   "build-xi": { kicker: "MATCHDAY", first: "BUILD", second: "YOUR XI.", description: "Your players. Your batting order." },
+  targets: { kicker: "MY TARGET PICKS", first: "YOUR NEXT", second: "SIGNING.", description: "A private shortlist for your auction." },
   settings: { kicker: "YOUR AUCTION. YOUR CALL.", first: "SET THE STAGE.", second: "OWN THE NIGHT.", description: "Fine-tune your room. Let the rivalry begin." },
 };
 

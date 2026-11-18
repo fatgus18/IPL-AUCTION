@@ -6,7 +6,7 @@ A multiplayer mock auction with a human auctioneer, shared team tables, and a cl
 
 - Create a room and invite people with a six-character code or room link. Twelve team managers can bid, with additional participants joining as spectators.
 - Maintain one database-backed player catalog shared across normal windows, incognito windows, browser profiles, and rooms. Add, edit, remove, search, and filter players across Marquee, Batter, Bowler, All-rounder, and Wicketkeeper categories.
-- Choose the next player, open or pause bidding, lock the final bid, and confirm a sale or mark a player unsold. Locked rounds reject further bids on the server.
+- Choose the next player, open or pause bidding, lock the final bid, and confirm a sale or mark a player unsold. Locked rounds reject further bids on the server. Before a sale or unsold decision, the auctioneer can unlock bidding with the existing leader and bids intact; stale unlocks and competing settlement requests are rejected.
 - The current unsettled player has a glowing red LIVE marker alongside the actual bidding phase. Participants browsing another room page receive a small new-player notice with a **View auction** shortcut; initial loads and repeated polls do not replay it. Notices clear when viewed, dismissed, superseded, or settled, and remain queued while a dialog is open.
 - Use a one- or two-second bid cooldown, configurable increments, and automatic purse, squad-size, and overseas-limit checks.
 - Place the next suggested bid or enter a custom amount in crores (for example, `5` means ₹5 Cr). Custom amounts must meet the current minimum and available purse; they keep the same cooldown, stale-lot, and locking checks as ordinary bids.
@@ -19,6 +19,7 @@ A multiplayer mock auction with a human auctioneer, shared team tables, and a cl
 - Build my XI is a separate participant page with a franchise-themed cricket ground, eleven portrait positions, a five-player bench, leadership controls, and a searchable photo picker. Every position can be filled independently, including No. 7 before No. 1, and empty positions stay in place after saving. Only the team’s manager can edit; duplicate selections and concurrent overwrites are rejected.
 - Hover or focus a selected XI or bench player to see matches, runs, wickets, and strike rate with the correct statistics format. The same details are in **Manage** for touch screens; opening stats does not fetch additional data.
 - Team Squads shows compact cards with purse remaining, spots filled, and **Owned and Managed by** attribution. Unclaimed franchises are labeled as awaiting a manager. Open a card for the full roster, purchase prices, player details, and saved lineup roles. Chat messages display the authenticated sender’s name and team, retained even after they leave.
+- The invitation panel offers separate **Copy invite link** and creator-only **Copy team password** actions. The password stays out of the page, invitation URL, and browser storage; copying failures have an explicit retry.
 - Share an HTTPS link to a Google Meet, Zoom, or other voice/video call alongside the auction.
 - How it works is a responsive four-step playbook covering room access, private targets, bidding, and building an XI.
 - Browse all 249 workbook players, with source-sheet filters, full-catalog search, and readable 24-player pages.
@@ -155,9 +156,10 @@ Run the auction rule tests:
 npm test
 ```
 
-With the server running, run the API integration checks in a second terminal:
+After building, run the isolated API integration checks:
 
 ```sh
+npm run build
 npm run test:api
 ```
 
@@ -167,6 +169,14 @@ The API runner starts a separate built server on an ephemeral port with a tempor
 $env:BASE_URL = "http://127.0.0.1:3001"
 node tests/api-integration.mjs
 ```
+
+The focused browser suites exercise lock/unlock across three independent sessions and invitation copying, clipboard failures, private-password concealment, and responsive controls:
+
+```sh
+node tests/run-isolated-api.mjs tests/unlock-browser-integration.mjs tests/invite-panel-browser.mjs
+```
+
+Browser suites use `PLAYWRIGHT_MODULE` and `BROWSER_EXECUTABLE` when supplied; otherwise they use the local browser-tool installation and Brave executable configured in the test files.
 
 Additional checks:
 

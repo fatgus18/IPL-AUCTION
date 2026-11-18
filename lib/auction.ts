@@ -59,6 +59,8 @@ export type RoomState = {
   serverTime: number; hostId: string; members: Member[]; players: Player[]; teams: Team[];
   currentPlayerId: string | null; currentBid: number; leadingTeamId: string | null;
   phase: Phase; lastBidAt: number | null; bidHistory: Bid[]; activity: Activity[];
+  /** Identifies the latest lock cycle independently of chat and other room changes. */
+  bidLockVersion?: number;
   settings: RoomSettings;
   catalogVersion?: string;
   catalogDataRevision?: string;
@@ -72,6 +74,7 @@ export type PlayerInput = Omit<Player, "id" | "status" | "soldTo" | "soldFor"> &
 export type AuctionAction =
   | { type: "select_player"; playerId: string }
   | { type: "start" | "pause" | "resume" | "lock" | "sell" | "unsold" | "leave" | "ping" }
+  | { type: "unlock"; expectedPlayerId: string; expectedAmount: number; expectedLockVersion: number }
   | { type: "bid"; expectedAmount: number; expectedPlayerId: string; customAmount?: number }
   | { type: "add_player"; player: PlayerInput }
   | { type: "update_player"; player: Player }
@@ -339,7 +342,7 @@ export function applyAction(source: RoomState, action: AuctionAction, memberId: 
   const state = structuredClone(source);
   const member = state.members.find((entry) => entry.id === memberId);
   requireCondition(member, "Join this room to continue.", 401, "UNAUTHORIZED");
-  const hostActions = ["select_player", "start", "pause", "resume", "lock", "sell", "unsold", "add_player", "update_player", "delete_player", "update_settings"];
+  const hostActions = ["select_player", "start", "pause", "resume", "lock", "unlock", "sell", "unsold", "add_player", "update_player", "delete_player", "update_settings"];
   if (hostActions.includes(action.type)) requireCondition(member.id === state.hostId && member.role === "auctioneer", "Only the auctioneer can do that.", 403, "FORBIDDEN");
   const player = state.players.find((entry) => entry.id === state.currentPlayerId);
   const log = (type: string, text: string) => state.activity.push({
@@ -366,7 +369,15 @@ export function applyAction(source: RoomState, action: AuctionAction, memberId: 
       state.phase = "live"; log("auction", "Bidding has resumed."); break;
     case "lock":
       requireCondition(player && (state.phase === "live" || state.phase === "paused"), "There is no open bidding to lock.", 409);
-      state.phase = "locked"; log("auction", "Bidding locked. No further bids are accepted."); break;
+      state.phase = "locked"; state.bidLockVersion = state.version + 1;
+      log("auction", "Bidding locked. No further bids are accepted."); break;
+    case "unlock":
+      requireCondition(player && player.status === "available" && state.phase === "locked", "Only a locked, unsettled player can be reopened for bidding.", 409, "BIDDING_NOT_LOCKED");
+      requireCondition(typeof action.expectedLockVersion === "number" && Number.isSafeInteger(action.expectedLockVersion) && action.expectedLockVersion >= 0 && action.expectedLockVersion === (state.bidLockVersion ?? 0), "This bidding lock has changed. Review the latest lock before reopening bidding.", 409, "STALE_LOCK");
+      requireCondition(action.expectedPlayerId === player.id, "The auctioneer has moved to another player. Review the current lot before reopening bidding.", 409, "STALE_PLAYER");
+      requireCondition(typeof action.expectedAmount === "number" && Number.isSafeInteger(action.expectedAmount) && action.expectedAmount >= 0, "A valid locked bid amount is required.", 400, "INVALID_UNLOCK_AMOUNT");
+      requireCondition(action.expectedAmount === state.currentBid, "The locked bid has changed. Review the current price before reopening bidding.", 409, "STALE_BID");
+      state.phase = "live"; log("unlock", `The auctioneer reopened bidding for ${player.name}.`); break;
     case "sell": {
       requireCondition(player && state.phase === "locked" && state.leadingTeamId && state.currentBid > 0, "Lock a winning bid before confirming the sale.", 409);
       const team = state.teams.find((entry) => entry.id === state.leadingTeamId)!;

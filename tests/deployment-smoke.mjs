@@ -156,9 +156,19 @@ try {
   const late = await act(other, { type: "bid", expectedPlayerId: player.id, expectedAmount: bidState.currentBid + bidState.settings.bidIncrement });
   expectStatus(late, 409, "Late bid after locking");
   assert.equal(late.data.code, "BIDDING_CLOSED");
+  const reopen = { type: "unlock", expectedPlayerId: player.id, expectedAmount: locked.currentBid, expectedLockVersion: locked.bidLockVersion ?? 0 };
+  expectStatus(await act(other, reopen), 403, "A manager cannot unlock bidding");
+  const reopened = expectStatus(await act(host, reopen), 200, "Creator reopens bidding").state;
+  assert.equal(reopened.phase, "live");
+  assert.equal(reopened.currentBid, locked.currentBid);
+  assert.equal(reopened.leadingTeamId, locked.leadingTeamId);
+  assert.deepEqual(reopened.bidHistory, locked.bidHistory);
+  assert.deepEqual(reopened.teams, locked.teams, "Unlocking must not change any squad or purse.");
+  expectStatus(await act(host, { type: "lock" }), 200, "Lock the reopened round");
   expectStatus(await act(other, { type: "sell" }), 403, "A manager cannot confirm a sale");
   expectStatus(await act(host, { type: "sell" }), 200, "Confirm sale");
   expectStatus(await act(host, { type: "sell" }), 409, "A sale cannot charge twice");
+  expectStatus(await act(host, reopen), 409, "A completed sale cannot be reopened");
 
   const sold = await read(spectator);
   assert.deepEqual((await read(manager)).myTargetPicks.playerIds, targetIds, "Auction events preserve the private target list.");
@@ -170,7 +180,7 @@ try {
     assert.deepEqual({ purse: team.purse, squad: team.squad }, startingFinancials.get(team.id), "Other franchises must remain financially unchanged.");
   }
   assert.equal(sold.players.find(entry => entry.id === player.id).status, "sold");
-  console.log("PASS: GT/LSG admission, creator permissions, simultaneous bidding, locking and single-sale accounting.");
+  console.log("PASS: GT/LSG admission, creator permissions, simultaneous bidding, safe lock/unlock and single-sale accounting.");
 
   const lineup = { playingXI: [null, null, null, null, null, null, player.id], substitutes: [], captainId: player.id, viceCaptainId: null };
   const save = { type: "set_lineup", teamId: winner.teamId, lineup, expectedRevision: winningTeam.lineup?.revision || 0 };

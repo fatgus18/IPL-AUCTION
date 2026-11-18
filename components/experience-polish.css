@@ -1,0 +1,241 @@
+/* A quieter broadcast desk: franchise colour frames the action, not every surface. */
+.app-shell {
+  --desk-accent: var(--franchise-accent, #e6c48a);
+  --desk-secondary: var(--franchise-secondary, #e6c48a);
+  --desk-base: color-mix(in srgb, var(--franchise-bg, #080e16) 60%, #090d13);
+  --desk-surface: color-mix(in srgb, var(--franchise-surface, #141d28) 56%, #101720);
+  --desk-raised: color-mix(in srgb, var(--franchise-raised, #202b38) 45%, #17202b);
+  --desk-line: color-mix(in srgb, var(--desk-accent) 14%, #ffffff0b);
+  --desk-quiet: #aeb8c6;
+  background: radial-gradient(ellipse at 95% 0%, color-mix(in srgb, var(--desk-accent) 6%, transparent), transparent 45%), var(--desk-base);
+}
+
+/* Navigation remains in its existing responsive drawer at smaller widths. */
+.app-shell .sidebar {
+  background: var(--desk-base);
+  border-bottom-color: var(--desk-line);
+  box-shadow: 0 1px 0 #0005;
+}
+.app-shell .sidebar .nav-item { color: #a8b1bd; font-weight: 500; }
+.app-shell .sidebar .nav-item.active { color: var(--desk-accent); font-weight: 650; }
+.app-shell .sidebar nav .nav-item.active::after { height: 3px; border-radius: 3px 3px 0 0; background: var(--desk-accent); }
+.app-shell .nav-count { font-variant-numeric: tabular-nums; color: #c3c8cf; border-color: #ffffff16; background: #ffffff05; }
+.app-shell .nav-item.active .nav-count { color: var(--desk-accent); border-color: var(--desk-line); background: color-mix(in srgb, var(--desk-accent) 7%, transparent); }
+.app-shell .topbar { padding-top: 15px; padding-bottom: 15px; min-height: 69px; }
+.app-shell .season-tag { border-color: var(--desk-line); background: #ffffff03; letter-spacing: .07em; }
+.app-shell .connection { font-size: 14px; }
+.app-shell :is(.button, .manage-button) { border-radius: 8px; min-height: 46px; font-weight: 600; }
+.app-shell :is(.button.secondary, .dock-button, .manage-button:not(.manage-primary):not(.manage-danger)) { background: var(--desk-surface); border-color: #ffffff21; }
+.app-shell :is(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--desk-accent); outline-offset: 4px; }
+.app-shell :is(.icon-btn, .dialog-close, .mobile-menu) { min-width: 44px; min-height: 44px; }
+.app-shell .sidebar-bottom > .nav-item { min-width: 44px; min-height: 44px; }
+
+/* Preserve the full eight-player poster; refine its frame and footer only. */
+.app-shell .cinematic-hero {
+  border-color: var(--desk-line);
+  border-radius: 16px;
+  box-shadow: 0 16px 44px #00000025, inset 0 1px #ffffff06;
+}
+.app-shell .cinematic-room .cinematic-content h1 { text-shadow: 0 3px 24px #05091080; }
+.app-shell .cinematic-kicker { letter-spacing: .12em; }
+.app-shell .cinematic-foot { border-color: #e6c48a1c; background: #0c141f; }
+.app-shell .cinematic-franchises { gap: 22px; }
+.app-shell .cinematic-franchises img { opacity: .9; }
+.app-shell .cinematic-hero:not(.cinematic-room) {
+  background: linear-gradient(120deg, var(--desk-surface), var(--desk-base));
+  border-left: 3px solid var(--desk-accent);
+}
+.app-shell .cinematic-hero:not(.cinematic-room) .cinematic-content { padding-top: 30px; padding-bottom: 30px; }
+.app-shell .franchise-hero {
+  background: linear-gradient(105deg, color-mix(in srgb, var(--desk-accent) 6%, var(--desk-surface)), var(--desk-base) 80%);
+  border-color: var(--desk-line);
+  border-left: 3px solid var(--desk-accent);
+  border-radius: 12px;
+  padding: 22px 26px;
+  margin-bottom: 26px;
+}
+.app-shell .franchise-hero h1 { letter-spacing: -.02em; }
+.app-shell .franchise-hero-owner { color: #b9c2ce; }
+
+/* A single financial dashboard, with consistent columns and readable numbers. */
+.app-shell .metrics {
+  gap: 0;
+  border: 1px solid var(--desk-line);
+  border-radius: 13px;
+  overflow: hidden;
+  background: linear-gradient(120deg, var(--desk-surface), var(--desk-base));
+  margin-bottom: 34px;
+  box-shadow: inset 0 1px #ffffff04;
+}
+.app-shell .metric { min-width: 0; min-height: 112px; padding: 22px 24px; gap: 14px; border-right-color: var(--desk-line); }
+.app-shell .metric > div { min-width: 0; }
+.app-shell .metric > div > span { font-size: 13px; color: #abb5c2; line-height: 1.45; letter-spacing: .055em; }
+.app-shell .metric strong { font-size: 40px; font-variant-numeric: tabular-nums; letter-spacing: -.025em; line-height: 1.2; }
+.app-shell .metric small { font-size: 15px; color: #8e9bad; font-weight: 400; }
+.app-shell .metric-icon { width: 32px; height: 36px; color: var(--desk-accent); opacity: .85; }
+.app-shell .metric[data-metric="own-spending"] strong { color: var(--desk-secondary); }
+.app-shell .metric-link { top: 10px; right: 10px; width: 36px; height: 36px; border-radius: 7px; }
+.app-shell .metric .mini-progress { height: 2px; }
+.app-shell .metric .mini-progress i { background: var(--desk-accent); }
+
+/* The player portrait remains untouched. Clearer panels separate bid and detail. */
+.app-shell .auction-titlebar { margin-bottom: 22px; }
+.app-shell .auction-titlebar h2 { font-size: clamp(29px, 2.6vw, 37px); letter-spacing: -.01em; }
+.app-shell .auction-layout { gap: 24px; }
+.app-shell .player-card {
+  background: radial-gradient(ellipse at 85% 10%, color-mix(in srgb, var(--desk-accent) 8%, transparent), transparent 65%), var(--desk-surface);
+  border-color: var(--desk-line);
+  border-radius: 14px;
+  box-shadow: 0 12px 34px #00000018;
+}
+.app-shell .card-topline { padding-top: 25px; }
+.app-shell .lot-label { color: #aeb8c2; font-size: 13px; letter-spacing: .08em; }
+.app-shell .player-tags > span { border-radius: 5px; font-size: 14px; }
+.app-shell .player-stats { background: color-mix(in srgb, var(--desk-base) 86%, transparent); border-color: var(--desk-line); }
+.app-shell .player-stats span { color: #adb6c1; font-size: 13px; letter-spacing: .06em; }
+.app-shell .player-stats strong { font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.app-shell .player-data-note { background: var(--desk-base); border-color: var(--desk-line); color: #a6b2c0; }
+.app-shell .player-data-note a { color: var(--desk-secondary); }
+.app-shell .portrait-floor { background: linear-gradient(0deg, var(--desk-surface), transparent); }
+.app-shell .bid-card { background: var(--desk-surface); border-color: var(--desk-line); border-radius: 14px; box-shadow: 0 12px 34px #00000020; }
+.app-shell .bid-card-heading { padding: 21px 24px; gap: 12px; flex-wrap: wrap; border-color: var(--desk-line); background: #ffffff02; }
+.app-shell .bid-card-heading h3 { font-size: 23px; letter-spacing: .025em; color: #f0ede6; }
+.app-shell .bid-card-heading > span { color: #bdc4ce; }
+.app-shell .bid-price { padding: 31px 22px 29px; }
+.app-shell .bid-price > span { font-size: 13px; letter-spacing: .08em; color: #afb7c2; }
+.app-shell .bid-price > strong { color: var(--desk-secondary); font-size: clamp(60px, 5.15vw, 76px); letter-spacing: -.025em; }
+.app-shell .leading-team { gap: 9px; color: #c8ced5; }
+.app-shell .bid-controls { margin-left: 22px; margin-right: 22px; border-color: var(--desk-line); }
+.app-shell .control-label { color: #c9c3b7; font-size: 13px; letter-spacing: .035em; }
+.app-shell .bid-controls > .bid-button { min-height: 52px; font-size: 15px; }
+.app-shell .locked-decision { display: grid; gap: 10px; }
+.app-shell .locked-decision > .button.primary { min-height: 50px; }
+.app-shell .locked-decision .unlock-bidding { min-height: 46px; width: 100%; border-color: var(--desk-line); color: #d9e0e8; background: var(--desk-base); }
+.app-shell .locked-decision .unlock-bidding:hover:not(:disabled) { background: var(--desk-raised); border-color: var(--desk-accent); }
+.app-shell .bid-history { border-color: var(--desk-line); background: var(--desk-base); }
+.app-shell .history-row { min-height: 45px; border-color: #ffffff09; }
+.app-shell .history-row.latest { background: color-mix(in srgb, var(--desk-accent) 5%, transparent); border-radius: 5px; }
+.app-shell .history-row strong { font-variant-numeric: tabular-nums; }
+.app-shell .custom-bid-fields input { min-height: 46px; border-radius: 7px; background: var(--desk-base); border-color: #ffffff21; }
+.app-shell .custom-bid > label { font-size: 14px; }
+.app-shell .activity-card { border-radius: 14px; border-color: var(--desk-line); background: var(--desk-surface); }
+.app-shell .activity-tabs > button { min-height: 49px; font-size: 14px; }
+.app-shell .activity-entry p { color: #b8c1cd; font-size: 14px; line-height: 1.65; }
+.app-shell .chat-form input { min-height: 44px; border-radius: 7px; background: var(--desk-base); }
+.app-shell .chat-form button { min-width: 44px; min-height: 44px; }
+.app-shell .team-table { border-radius: 12px; border-color: var(--desk-line); background: linear-gradient(130deg, color-mix(in srgb, var(--team-color) 7%, var(--desk-surface)), var(--desk-base)); }
+.app-shell .team-table.leading { border-color: var(--team-color); box-shadow: inset 0 3px var(--team-color), 0 8px 25px #0002; }
+.app-shell .team-identity > div > span { color: #b1bbc8; }
+.app-shell .table-purse strong { font-variant-numeric: tabular-nums; }
+.app-shell .table-floor { background: #00000012; border-color: var(--desk-line); }
+.app-shell .up-next { border-radius: 14px; border-color: var(--desk-line); background: var(--desk-surface); }
+
+/* Collections use calm controls, comfortable row rhythm and clear ownership. */
+.app-shell .manage-panel { --manage-bg: var(--desk-surface); --manage-elevated: var(--desk-raised); --manage-line: var(--desk-line); }
+.app-shell .manage-section-heading { margin-bottom: 25px; }
+.app-shell .manage-section-heading h2 { letter-spacing: -.02em; }
+.app-shell .manage-pool-summary { border: 1px solid var(--desk-line); border-radius: 12px; background: var(--desk-surface); }
+.app-shell .manage-pool-summary > span { padding-top: 21px; padding-bottom: 21px; }
+.app-shell :is(.manage-search, .manage-status-filter, .target-search) { border-radius: 9px; background: var(--desk-base); border-color: #ffffff25; box-shadow: inset 0 1px 3px #0002; }
+.app-shell :is(.manage-search, .target-search):focus-within { border-color: var(--desk-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--desk-accent) 8%, transparent); }
+.app-shell :is(.manage-role-tabs button, .target-role-filters button, .personal-squad-categories > button) { min-height: 44px; font-size: 14px; border-radius: 7px; }
+.app-shell .manage-player-table-wrap { border-radius: 12px; border-color: var(--desk-line); background: var(--desk-surface); }
+.app-shell .manage-player-table th { background: var(--desk-raised); color: #bbc3ce; font-size: 13px; letter-spacing: .055em; padding-block: 17px; }
+.app-shell .manage-player-table td { border-color: #ffffff0a; padding-block: 16px; }
+.app-shell .manage-player-table tbody tr:hover { background: #ffffff03; }
+.app-shell .manage-player-table tbody .manage-row-current { background: color-mix(in srgb, var(--desk-accent) 6%, transparent); }
+.app-shell .manage-player-name strong { font-size: 16px; font-weight: 600; }
+.app-shell .manage-player-name > div > span { color: #aeb8c6; font-size: 14px; }
+.app-shell .team-squad-summary { position: relative; border-radius: 14px; padding: 26px; border-color: var(--desk-line); background: linear-gradient(110deg, color-mix(in srgb, var(--summary-team-color) 6%, var(--desk-surface)), var(--desk-base)); box-shadow: 0 6px 22px #00000012; }
+.app-shell .team-squad-summary:hover { border-color: color-mix(in srgb, var(--summary-team-color) 65%, #ffffff18); background-color: var(--desk-raised); }
+.app-shell .team-squad-summary-name > strong { font-weight: 600; letter-spacing: -.015em; }
+.app-shell .team-squad-summary-manager { color: #aab6c5; }
+.app-shell .team-squad-summary-stats { border-color: #ffffff10; margin-top: 24px; padding-top: 22px; }
+.app-shell .team-squad-summary-stats strong { font-size: 29px; letter-spacing: -.035em; }
+.app-shell .personal-squad-totals { background: var(--desk-surface); border-color: var(--desk-line); border-radius: 12px; }
+.app-shell .personal-squad-player { border-color: #ffffff16; border-radius: 13px; background: var(--desk-surface); box-shadow: 0 7px 24px #00000012; }
+.app-shell .personal-squad-player-art::after { background: linear-gradient(transparent, var(--desk-surface)); }
+.app-shell .personal-squad-player-info { padding: 20px; }
+.app-shell .personal-squad-player-info h4 { font-size: 20px; letter-spacing: -.02em; }
+.app-shell .personal-squad-purchase { padding-top: 17px; margin-top: 19px; }
+.app-shell .target-player-card { background: var(--desk-surface); border-radius: 12px; }
+.app-shell .target-board { background: var(--desk-surface); border-color: var(--desk-line); border-radius: 14px; }
+.app-shell .target-player-copy { padding: 15px; }
+.app-shell .target-player-copy > p { font-size: 14px; color: #aeb9c7; }
+.app-shell .target-player-bottom { gap: 10px; flex-wrap: wrap; }
+.app-shell .target-player-bottom > span { font-size: 13px; }
+.app-shell .target-player-bottom > span strong { font-size: 15px; }
+.app-shell .target-toggle { font-size: 14px; padding: 9px 11px; }
+.app-shell .target-shortlist-copy strong { font-size: 14px; }
+.app-shell .target-availability button { min-height: 44px; font-size: 14px; }
+.app-shell .target-shortlist > li > button { width: 40px; min-height: 40px; }
+.app-shell .target-search input { font-size: 16px; }
+.app-shell .room-dock { background: var(--desk-base); border-color: var(--desk-line); box-shadow: 0 -6px 26px #00000018; }
+.app-shell .dock-button { border-radius: 7px; min-height: 44px; }
+.app-shell .dock-status strong { font-weight: 600; }
+.app-shell .new-lot-notice { border-radius: 13px; background: var(--desk-raised); }
+.app-shell .new-lot-view { min-height: 40px; }
+
+@media (min-width: 1280px) {
+  .app-shell .sidebar nav .nav-item { isolation: isolate; }
+  .app-shell .sidebar nav .nav-item::before { content: ""; position: absolute; z-index: -1; inset: 16px -7px; border-radius: 7px; pointer-events: none; background: transparent; transition: background-color .16s; }
+  .app-shell .sidebar nav .nav-item.active::before { background: color-mix(in srgb, var(--desk-accent) 7%, transparent); }
+  .app-shell .sidebar nav .nav-item:hover::before { background: #ffffff04; }
+}
+@media (max-width: 1279px) {
+  .app-shell.in-auction .sidebar nav { background: var(--desk-base); border-color: var(--desk-line); }
+  .app-shell.in-auction .sidebar nav .nav-item { border-color: #ffffff0c; border-radius: 7px; }
+  .app-shell.in-auction .sidebar nav .nav-item.active { background: color-mix(in srgb, var(--desk-accent) 8%, transparent); }
+  .app-shell.in-auction .sidebar nav .nav-item.active::after { width: 3px; height: 28px; top: calc(50% - 14px); bottom: auto; right: auto; border-radius: 2px; }
+  .app-shell .cinematic-franchises { gap: 12px; }
+  .app-shell .metric { padding: 20px 18px; }
+  .app-shell .metric strong { font-size: 36px; }
+}
+@media (max-width: 1050px) {
+  .app-shell .metric > div > span { letter-spacing: 0; }
+  .app-shell .metric strong { font-size: 34px; }
+  .app-shell .cinematic-franchises { gap: 8px; }
+}
+@media (max-width: 760px) {
+  .app-shell .metric { padding: 18px 15px; }
+  .app-shell .metric strong { font-size: 31px; }
+  .app-shell .team-squad-summary { padding: 22px; }
+  .app-shell .team-squad-summary-stats strong { font-size: 26px; }
+}
+@media (max-width: 600px) {
+  .app-shell .topbar { padding-top: 12px; padding-bottom: 12px; gap: 8px; }
+  .app-shell .topbar-right { gap: 7px; }
+  .app-shell .connection { font-size: 13px; }
+  .app-shell .cinematic-hero { border-radius: 12px; }
+  .app-shell .cinematic-franchises { gap: 6px 14px; }
+  .app-shell .cinematic-kicker { letter-spacing: .06em; }
+  .app-shell .franchise-hero { padding: 18px; margin-bottom: 22px; border-radius: 10px; }
+  .app-shell .metrics { margin-bottom: 27px; border-radius: 11px; }
+  .app-shell .metric { min-height: 103px; padding: 17px 15px; border-bottom-color: var(--desk-line); }
+  .app-shell .metric strong { font-size: 33px; }
+  .app-shell .metric small { font-size: 14px; }
+  .app-shell .metric-link { top: 6px; right: 6px; width: 30px; height: 30px; }
+  .app-shell .metric:last-child > div > span { padding-right: 10px; }
+  .app-shell .auction-layout { gap: 19px; }
+  .app-shell .card-topline { padding-top: 21px; }
+  .app-shell .player-tags > span { font-size: 13px; }
+  .app-shell .player-stats span { letter-spacing: 0; }
+  .app-shell .bid-price > strong { font-size: 72px; }
+  .app-shell .bid-card-heading { padding: 20px 22px; }
+  .app-shell .team-squad-summary { padding: 21px; }
+  .app-shell .team-squad-summary-stats strong { font-size: clamp(23px, 6.3vw, 29px); }
+  .app-shell .target-player-copy { padding: 12px; }
+  .app-shell .target-player-copy > p { font-size: 13px; }
+  .app-shell .target-toggle { width: 100%; font-size: 13px; }
+  .app-shell .target-player-bottom > span strong { font-size: 14px; }
+  .app-shell .target-role-filters button { padding: 8px 10px; }
+  .app-shell .dock-button { min-width: 44px; }
+}
+@media (hover: hover) {
+  .app-shell .sidebar .nav-item:hover { color: #f3f2ed; }
+  .app-shell .metric-link:hover { background: #ffffff07; color: var(--desk-accent); }
+  .app-shell .target-player-card:hover { border-color: color-mix(in srgb, var(--desk-accent) 40%, #ffffff20); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .sidebar nav .nav-item::before { transition: none; }
+}

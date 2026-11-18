@@ -1,0 +1,57 @@
+.app-dialog.invite-dialog {
+  width: min(540px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  border: 1px solid color-mix(in srgb, var(--franchise-accent, #dfc18c) 28%, #27313c);
+  border-radius: 20px;
+  background: var(--franchise-bg, #0c1118);
+  box-shadow: 0 32px 100px #0009;
+}
+.app-dialog.invite-dialog .dialog-inner { padding: 0; }
+.app-dialog.invite-dialog .dialog-close { top: 20px; right: 20px; width: 44px; height: 44px; z-index: 2; border: 1px solid #ffffff15; background: #ffffff04; border-radius: 50%; }
+.invitation { --invite-accent: var(--franchise-accent, #e6c48a); --invite-line: color-mix(in srgb, var(--invite-accent) 22%, transparent); padding: 32px; color: #f2eee7; }
+.invitation-heading { padding-right: 30px; }
+.invitation-emblem { display: grid; place-items: center; width: 50px; height: 50px; margin-bottom: 23px; color: var(--invite-accent); border: 1px solid var(--invite-line); border-radius: 14px; background: color-mix(in srgb, var(--invite-accent) 6%, transparent); }
+.invitation-overline { display: block; color: var(--invite-accent); font-size: 14px; line-height: 1.4; font-weight: 600; letter-spacing: .12em; }
+.app-dialog.invite-dialog .invitation-heading h2 { margin: 8px 0 7px; font: 700 clamp(36px, 6vw, 44px)/1.1 var(--font-display), sans-serif; letter-spacing: .01em; text-transform: uppercase; }
+.invitation-heading p { color: #aebcca; font-size: 16px; line-height: 1.6; }
+.invitation-pass { margin-top: 26px; padding: 22px; border: 1px solid var(--invite-line); border-radius: 13px; background: linear-gradient(135deg, color-mix(in srgb, var(--invite-accent) 7%, transparent), transparent 70%), var(--franchise-surface, #141c26); }
+.invitation-pass-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: #b5c0ca; font-size: 14px; line-height: 1.5; }
+.invitation-pass-label { display: inline-flex; align-items: center; gap: 7px; color: var(--invite-accent); white-space: nowrap; }
+.invitation-pass-label > span { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.invitation-room-code { display: block; margin: 9px 0 22px; color: #f4eee3; font: 650 clamp(28px, 7vw, 36px)/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .17em; overflow-wrap: anywhere; }
+.invitation-pass-rule { height: 1px; margin-bottom: 20px; background: linear-gradient(90deg, var(--invite-line), #ffffff0b); }
+.invitation-pass label { display: block; margin-bottom: 9px; color: #c0cad4; font-size: 14px; line-height: 1.5; font-weight: 500; }
+.invitation-link-field { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0 13px; border: 1px solid #ffffff16; border-radius: 7px; background: #0003; color: #8f9eaf; }
+.invitation-link-field svg { flex-shrink: 0; }
+.app-dialog.invite-dialog .invitation-link-field input { width: 100%; min-width: 0; min-height: 48px; padding: 0; border: 0; border-radius: 0; background: transparent; color: #ced6de; font-size: 14px; line-height: 1.5; }
+.app-dialog.invite-dialog .invitation-link-field input:focus { outline: none; }
+.invitation-link-field:focus-within { outline: 2px solid var(--invite-accent); outline-offset: 3px; }
+.invitation-copy { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 48px; padding: 12px 16px; border: 1px solid transparent; border-radius: 7px; font-size: 15px; line-height: 1.5; font-weight: 650; }
+.invitation-copy-link { margin-top: 14px; color: var(--franchise-text-on-accent, #21190d); background: var(--invite-accent); border-color: var(--invite-accent); }
+.invitation-copy-link:hover:not(:disabled) { background: color-mix(in srgb, var(--invite-accent) 84%, white); border-color: color-mix(in srgb, var(--invite-accent) 84%, white); }
+.invitation .invitation-feedback { margin: 11px 0 0; color: #aebcca; font-size: 14px; line-height: 1.6; }
+.invitation .invitation-feedback.is-error { color: #f3aaa4; }
+.invitation-private { margin-top: 24px; }
+.invitation-private-heading { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; color: var(--invite-accent); }
+.invitation-private-heading h3 { flex: 1; color: #e9e5de; font-size: 16px; font-weight: 600; line-height: 1.5; }
+.invitation-private-heading > span { color: #9caab7; font-size: 14px; line-height: 1.5; }
+.invitation-copy-password { color: #ebe5da; background: color-mix(in srgb, var(--invite-accent) 5%, transparent); border-color: var(--invite-line); }
+.invitation-copy-password:hover:not(:disabled) { background: color-mix(in srgb, var(--invite-accent) 10%, transparent); border-color: var(--invite-accent); }
+.invitation-manage { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; margin-top: 5px; padding: 8px 0; color: var(--invite-accent); font-size: 14px; line-height: 1.5; }
+.invitation-manage:hover { text-decoration: underline; text-underline-offset: 4px; }
+.invitation-spectator-note { display: flex; align-items: flex-start; gap: 10px; margin-top: 20px; color: #aebcca; font-size: 14px; line-height: 1.65; }
+.invitation-spectator-note svg { flex-shrink: 0; margin-top: 3px; color: var(--invite-accent); }
+.invitation :is(button, input):focus-visible { outline: 2px solid var(--invite-accent); outline-offset: 4px; }
+.invitation-loading-icon { animation: invitation-spin 1.2s linear infinite; }
+@keyframes invitation-spin { to { transform: rotate(360deg); } }
+@media (max-width: 520px) {
+  .app-dialog.invite-dialog { width: calc(100vw - 24px); max-height: calc(100dvh - 24px); border-radius: 16px; }
+  .app-dialog.invite-dialog .dialog-close { top: 16px; right: 16px; }
+  .invitation { padding: 24px 20px; }
+  .invitation-emblem { margin-bottom: 20px; }
+  .invitation-pass { padding: 18px 16px; margin-top: 22px; }
+  .invitation-pass-top { gap: 8px; flex-wrap: wrap; }
+  .app-dialog.invite-dialog .invitation-link-field input { font-size: 16px; }
+  .invitation-private { margin-top: 22px; }
+}
+@media (prefers-reduced-motion: reduce) { .invitation-loading-icon { animation: none; } }

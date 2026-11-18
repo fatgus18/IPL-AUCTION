@@ -1,0 +1,40 @@
+.auction-awards { --award-accent: var(--franchise-accent, #e4c48b); --award-surface: var(--desk-surface, #131d29); margin: 40px 0; }
+.auction-awards-heading { display: flex; align-items: center; gap: 17px; margin-bottom: 25px; }
+.award-heading-symbol { display: grid; place-items: center; width: 58px; height: 66px; flex-shrink: 0; color: var(--award-accent); background: color-mix(in srgb, var(--award-accent) 6%, transparent); border: 1px solid color-mix(in srgb, var(--award-accent) 22%, transparent); border-radius: 12px; }
+.award-overline { color: var(--award-accent); font-size: 13px; letter-spacing: .13em; font-weight: 600; }
+.auction-awards-heading h2 { font: 700 clamp(31px, 3vw, 42px)/1.2 var(--font-display), sans-serif; margin: 5px 0 8px; text-transform: uppercase; }
+.auction-awards-heading h2 span { color: var(--award-accent); }
+.auction-awards-heading p { font-size: 15px; color: #afbdce; line-height: 1.6; }
+.auction-awards-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
+.auction-award-card { display: flex; flex-direction: column; min-width: 0; padding: 24px; border: 1px solid #ffffff15; border-radius: 14px; background: linear-gradient(145deg, #ffffff02, transparent 80%), var(--award-surface); }
+.auction-award-card.is-awarded { border-color: color-mix(in srgb, var(--award-accent) 22%, #ffffff08); }
+.auction-award-card.award-headline { background: radial-gradient(ellipse at top right, color-mix(in srgb, var(--award-accent) 12%, transparent), transparent 70%), var(--award-surface); }
+.award-card-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.award-card-heading h3 { font-size: 19px; font-weight: 650; line-height: 1.4; }
+.award-card-heading svg { color: var(--award-accent); flex-shrink: 0; }
+.award-card-metric { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 24px 0 17px; }
+.award-card-metric > strong { color: var(--award-accent); font: 600 clamp(31px, 3vw, 42px)/1.2 var(--font-display), sans-serif; font-variant-numeric: tabular-nums; }
+.award-card-metric > span { border: 1px solid #ffffff1d; border-radius: 20px; padding: 4px 9px; color: #b8c6d6; font-size: 13px; }
+.award-winners { list-style: none; padding: 0; margin: 0; }
+.auction-award-winner { display: flex; align-items: center; gap: 13px; padding: 13px 0; min-width: 0; }
+.auction-award-winner + .auction-award-winner { border-top: 1px solid #ffffff0c; }
+.award-winner-art { flex: 0 0 52px; width: 52px; height: 57px; display: flex; justify-content: center; align-items: center; gap: 3px; }
+.award-winner-art img { width: 100%; max-width: 100%; max-height: 100%; object-fit: contain; }
+.award-winner-art:has(img + img) img { width: 25px; }
+.award-winner-art.has-player { height: 70px; border-radius: 7px; overflow: hidden; background: #ffffff03; }
+.auction-award-winner > span:last-child { min-width: 0; }
+.auction-award-winner strong { display: block; font-size: 16px; line-height: 1.45; overflow-wrap: anywhere; }
+.auction-award-winner small { display: block; color: #a6b7ca; font-size: 14px; line-height: 1.6; margin-top: 5px; }
+.award-empty { font-size: 15px; color: #9caec3; line-height: 1.7; padding-bottom: 22px; }
+.award-criterion { border-top: 1px solid #ffffff10; padding-top: 10px; margin-top: auto; }
+.award-criterion summary, .award-extra-winners summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: #a9bbcf; font-size: 14px; list-style: none; }
+.award-criterion summary::after, .award-extra-winners summary::after { content: "+"; margin-left: auto; padding-left: 10px; }
+.award-criterion[open] summary::after, .award-extra-winners[open] summary::after { content: "−"; }
+.award-criterion summary::-webkit-details-marker, .award-extra-winners summary::-webkit-details-marker { display: none; }
+.award-criterion p { font-size: 14px; line-height: 1.7; color: #b9c5d2; padding-bottom: 8px; }
+.award-criterion summary:focus-visible, .award-extra-winners summary:focus-visible { outline: 2px solid var(--award-accent); outline-offset: 3px; }
+.award-extra-winners { margin-bottom: 13px; }
+.award-record-note, .award-history-note { font-size: 14px; line-height: 1.7; color: #a8b8ca; margin-top: 19px; }
+.award-history-note { border-left: 2px solid var(--award-accent); padding: 12px 16px; background: #ffffff03; margin-bottom: 22px; }
+@media (max-width: 1100px) { .auction-awards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .auction-awards-grid { grid-template-columns: 1fr; gap: 15px; } .auction-award-card { padding: 22px; } .auction-awards-heading { align-items: flex-start; gap: 13px; } .award-heading-symbol { width: 44px; height: 55px; } .auction-awards-heading p { font-size: 14px; } .award-card-metric > strong { font-size: 38px; } }

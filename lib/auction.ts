@@ -1,6 +1,7 @@
 import { CATALOG_VERSION, CATALOG_DATA_REVISION, buildCatalogPool, legacyPlayerDetails } from "./player-catalog.ts";
 import { PLAYER_ROLES, formatMoney, getNextBid } from "./auction-display.ts";
 import { TEAM_SEEDS, TEAM_CATALOG_VERSION, PRACTICE_MANAGER_NAMES } from "./team-catalog.ts";
+import { recordAuctionAwards, type AuctionAwardLedger } from "./auction-awards.ts";
 export { PLAYER_ROLES, formatMoney, getNextBid } from "./auction-display.ts";
 export { TEAM_SEEDS } from "./team-catalog.ts";
 
@@ -34,7 +35,11 @@ export type TeamLineupInput = {
 };
 export type TeamLineup = TeamLineupInput & { revision: number };
 /** Private to the authenticated manager; never stored in the shared room state. */
-export type TargetPicks = { teamId: string; playerIds: string[]; revision: number };
+export type TargetPicks = {
+  teamId: string; playerIds: string[]; revision: number;
+  /** Private planning limits in integer lakhs; these never restrict an actual bid. */
+  maxBids?: Record<string, number>;
+};
 export type Team = {
   id: string; name: string; shortName: string; color: string; purse: number;
   squad: { playerId: string; amount: number }[];
@@ -82,6 +87,8 @@ export type RoomState = {
   completedManagers?: Record<string, { id: string; name: string }>;
   /** Durable audit history, independent of the rolling activity feed. */
   saleCorrections?: SaleCorrection[];
+  /** Durable public bid counts; independent of the rolling bid history. */
+  awardLedger?: AuctionAwardLedger;
 };
 export type PlayerInput = Omit<Player, "id" | "status" | "soldTo" | "soldFor"> & { id?: string };
 export type AuctionAction =
@@ -95,7 +102,7 @@ export type AuctionAction =
   | { type: "update_settings"; settings: Partial<RoomSettings> }
   | { type: "chat"; text: string }
   | { type: "set_lineup"; teamId: string; lineup: TeamLineupInput; expectedRevision: number }
-  | { type: "set_target_picks"; teamId: string; playerIds: string[]; expectedRevision: number }
+  | { type: "set_target_picks"; teamId: string; playerIds: string[]; expectedRevision: number; maxBids?: Record<string, number> }
   | { type: "end_auction"; expectedResultsRevision: number }
   | { type: "correct_sale"; playerId: string; expectedTeamId: string; expectedAmount: number; expectedResultsRevision: number; teamId: string | null; amount?: number; reason: string }
   | { type: "claim_team"; teamId: string | null; teamPassword?: string };
@@ -577,6 +584,7 @@ export function applyAction(source: RoomState, action: AuctionAction, memberId: 
     case "ping": break;
     default: throw new AuctionError("Unknown auction action.");
   }
+  recordAuctionAwards(source, state);
   member.lastSeenAt = now; state.activity = state.activity.slice(-150); state.bidHistory = state.bidHistory.slice(-2000);
   state.serverTime = now; state.version += 1;
   return state;

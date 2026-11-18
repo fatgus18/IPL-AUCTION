@@ -5,12 +5,13 @@ import { ArrowDown, Check, ChevronRight, LockKeyhole, Plus, Radio, RotateCcw, Sa
 import type { AuctionAction, Player, RoomState, Team } from "@/lib/auction";
 import { AuctionRequestError } from "@/lib/auction-client";
 import { formatMoney } from "@/lib/auction-display";
+import { budgetInputsFromSaved, budgetInputValue, budgetLimitValue, parseBudgetInputs, privateBudgetPlan, sameBudgetInputs, sameBudgetValues, type BudgetInputs } from "@/lib/private-budget-display";
 import { getPlayingRole, PLAYING_ROLES, type PlayingRole } from "@/lib/player-roles";
 import { PlayerImage, TeamCrest } from "./ipl-visuals";
 import "./my-target-picks.css";
 
 type Props = { state: RoomState; memberId: string; onAction: (action: AuctionAction) => Promise<void>; connected?: boolean };
-type Draft = { playerIds: string[]; baseline: string[]; revision: number };
+type Draft = { playerIds: string[]; baseline: string[]; budgets: BudgetInputs; baselineBudgets: BudgetInputs; revision: number };
 type Availability = "all" | "available" | "on-table" | "unsold" | "sold";
 type TargetStatus = { label: string; tone: "available" | "live" | "won" | "sold" | "removed" | "unsold" };
 const PAGE_SIZE = 24;
@@ -37,9 +38,16 @@ function TargetPicksStudio({ state, team, onAction, connected }: Omit<Props, "me
   const savingRef = useRef(false);
   const saved = state.myTargetPicks?.teamId === team.id ? state.myTargetPicks.playerIds : [];
   const savedRevision = state.myTargetPicks?.teamId === team.id ? state.myTargetPicks.revision : 0;
-  const acknowledged = Boolean(local && savedRevision > local.revision && samePicks(local.playerIds, saved));
-  const activeDraft = !state.endedAt && local && !samePicks(local.playerIds, local.baseline) && !acknowledged ? local : null;
+  const savedBudgets = state.myTargetPicks?.teamId === team.id ? state.myTargetPicks.maxBids ?? {} : {};
+  const savedInputs = budgetInputsFromSaved(savedBudgets);
+  const localAmounts = local ? parseBudgetInputs(local.playerIds, local.budgets) : null;
+  const acknowledged = Boolean(local && localAmounts && !localAmounts.invalidIds.length && savedRevision > local.revision && samePicks(local.playerIds, saved) && sameBudgetValues(localAmounts.maxBids, savedBudgets));
+  const activeDraft = !state.endedAt && local && (!samePicks(local.playerIds, local.baseline) || !sameBudgetInputs(local.budgets, local.baselineBudgets)) && !acknowledged ? local : null;
   const draft = activeDraft?.playerIds ?? saved;
+  const budgetInputs = activeDraft?.budgets ?? savedInputs;
+  const parsedBudgets = parseBudgetInputs(draft, budgetInputs);
+  const invalidBudgets = new Set(parsedBudgets.invalidIds);
+  const budgetPlan = privateBudgetPlan(state.players, draft, parsedBudgets.maxBids, team.purse);
   const revision = activeDraft?.revision ?? savedRevision;
   const dirty = Boolean(activeDraft);
   const remoteChanged = Boolean(activeDraft && activeDraft.revision !== savedRevision);
@@ -73,27 +81,36 @@ function TargetPicksStudio({ state, team, onAction, connected }: Omit<Props, "me
     const player = playerMap.get(playerId);
     if (!selected.has(playerId) && (!player || player.catalogArchived || player.status === "sold")) return;
     const next = selected.has(playerId) || remove ? draft.filter((id) => id !== playerId) : [...draft, playerId];
-    setLocal({ playerIds: next, baseline: activeDraft?.baseline ?? saved, revision });
+    const nextBudgets = Object.fromEntries(Object.entries(budgetInputs).filter(([id]) => next.includes(id)));
+    setLocal({ playerIds: next, baseline: activeDraft?.baseline ?? saved, budgets: nextBudgets, baselineBudgets: activeDraft?.baselineBudgets ?? savedInputs, revision });
+    setNotice("");
+    setError("");
+    if (acknowledged) setConflict(false);
+  }
+
+  function editBudget(playerId: string, value: string) {
+    if (savingRef.current || state.endedAt || !selected.has(playerId)) return;
+    setLocal({ playerIds: draft, baseline: activeDraft?.baseline ?? saved, budgets: { ...budgetInputs, [playerId]: value }, baselineBudgets: activeDraft?.baselineBudgets ?? savedInputs, revision });
     setNotice("");
     setError("");
     if (acknowledged) setConflict(false);
   }
 
   async function save() {
-    if (state.endedAt || savingRef.current || !dirty || !connected || remoteChanged || unresolvedConflict) return;
+    if (state.endedAt || savingRef.current || !dirty || !connected || remoteChanged || unresolvedConflict || invalidBudgets.size) return;
     savingRef.current = true;
     setSaving(true);
     setError("");
     setNotice("");
     try {
-      await onAction({ type: "set_target_picks", teamId: team.id, playerIds: draft, expectedRevision: revision });
+      await onAction({ type: "set_target_picks", teamId: team.id, playerIds: draft, maxBids: parsedBudgets.maxBids, expectedRevision: revision });
       setLocal(null);
       setConflict(false);
       setNotice("Targets saved. You’ll be notified when they come up.");
     } catch (failure) {
       if (failure instanceof AuctionRequestError && failure.code === "TARGET_PICKS_CONFLICT") {
         setConflict(true);
-        setError("Your targets changed in another tab. Reload the saved list before making more changes.");
+        setError("Your targets or budgets changed in another tab. Reload the saved list before making more changes.");
       } else setError(failure instanceof Error ? failure.message : "Your targets could not be saved. Your selections are still here.");
     } finally {
       savingRef.current = false;
@@ -116,10 +133,11 @@ function TargetPicksStudio({ state, team, onAction, connected }: Omit<Props, "me
 
     <div className="target-save-bar">
       <p className={`target-save-status ${dirty ? "is-dirty" : ""}`} role="status" aria-live="polite">{state.endedAt ? "Auction complete · Saved target list" : !connected ? "Reconnecting · Selections kept" : dirty ? `${draft.length} selected · Unsaved changes` : acknowledged ? "Targets saved. You’ll be notified when they come up." : notice || `${saved.length} saved targets · Edit anytime`}</p>
-      <div>{(dirty || unresolvedConflict) && <button type="button" className="target-reload" onClick={reload} disabled={saving}><RotateCcw size={16} /><span>Reload saved targets</span></button>}<button type="button" className="target-save" disabled={!!state.endedAt || !dirty || saving || !connected || remoteChanged || unresolvedConflict} onClick={save}>{saving ? <span className="target-spinner" /> : <Save size={17} />}{saving ? "Saving targets…" : "Save targets"}</button></div>
+      <div>{(dirty || unresolvedConflict) && <button type="button" className="target-reload" onClick={reload} disabled={saving}><RotateCcw size={16} /><span>Reload saved targets</span></button>}<button type="button" className="target-save" disabled={!!state.endedAt || !dirty || saving || !connected || remoteChanged || unresolvedConflict || invalidBudgets.size > 0} onClick={save}>{saving ? <span className="target-spinner" /> : <Save size={17} />}{saving ? "Saving targets…" : "Save targets"}</button></div>
     </div>
-    {(remoteChanged || unresolvedConflict) && <p className="target-warning" role="alert">A newer target list was saved in another tab. Your selections are preserved here. Reload saved targets to use the latest list.</p>}
+    {(remoteChanged || unresolvedConflict) && <p className="target-warning" role="alert">Your targets or budgets changed in another tab. Your draft is preserved here. Reload saved targets to use the latest list.</p>}
     {error && !acknowledged && <p className="target-warning" role="alert">{error}</p>}
+    {invalidBudgets.size > 0 && <p className="target-warning" role="alert">Check {invalidBudgets.size === 1 ? "the highlighted limit" : "the highlighted limits"} before saving. Use ₹0.01–1,000 Cr with up to two decimal places, or leave blank.</p>}
 
     <div className="target-workspace">
       <section className="target-pool" aria-label="Player pool for targeting">
@@ -144,13 +162,29 @@ function TargetPicksStudio({ state, team, onAction, connected }: Omit<Props, "me
       </section>
 
       <aside className="target-board" aria-labelledby="target-board-title">
-        <div className="target-board-heading"><span className="target-section-kicker">02 / Your shortlist</span><div><h3 id="target-board-title">The targets.</h3><span>{draft.length.toString().padStart(2, "0")}</span></div><p>Save your picks to get a personal alert when they reach the auction floor.</p></div>
+        <div className="target-board-heading"><span className="target-section-kicker">02 / Your shortlist</span><div><h3 id="target-board-title">The targets.</h3><span>{draft.length.toString().padStart(2, "0")}</span></div><p>Set a private limit for each target. Save to receive reminders during bidding.</p></div>
+        <section className="target-budget-plan" aria-label="Private budget plan">
+          <div><span>Remaining purse</span><strong>{formatMoney(team.purse)}</strong></div>
+          <div><span>Planned limits{dirty ? " · Draft" : ""}</span><strong>{formatMoney(budgetPlan.planned)}</strong></div>
+          <p className={budgetPlan.overallocated ? "is-overallocated" : ""}>{budgetPlan.overallocated ? `${formatMoney(budgetPlan.overallocated)} over your remaining purse` : `${formatMoney(budgetPlan.unallocated)} outside this plan`}</p>
+          <span>{budgetPlan.unpriced} remaining {budgetPlan.unpriced === 1 ? "target without a limit" : "targets without a limit"}</span>
+          <p className="target-budget-note">Planning only. Limits don’t reserve your purse or place bids.</p>
+        </section>
         <div className="target-board-summary"><span><strong>{remaining}</strong>Still in play</span><span><strong>{secured}</strong>In your squad</span></div>
         {draft.length ? <ul className="target-shortlist" aria-label="Your target list">
           {draft.map((id, index) => {
             const player = playerMap.get(id);
             const status = statusFor(player);
-            return <li key={id} data-player-id={id}><span className="target-shortlist-number">{String(index + 1).padStart(2, "0")}</span><span className="target-shortlist-photo">{player ? <PlayerImage player={player} /> : <Target size={23} />}</span><div className="target-shortlist-copy"><strong>{player?.name ?? "Unavailable player"}</strong><span className={`tone-${status.tone}`}>{status.label}</span></div><button type="button" aria-label={`Remove ${player?.name ?? "unavailable player"} from targets`} disabled={!!state.endedAt || saving} onClick={() => edit(id, true)}><X size={16} /></button></li>;
+            const inputId = `target-budget-${id}`;
+            const invalid = invalidBudgets.has(id);
+            const limitAmount = budgetLimitValue(parsedBudgets.maxBids, id);
+            const belowBase = player && limitAmount !== undefined && limitAmount < player.basePrice;
+            const settled = !player || player.catalogArchived || player.status === "sold";
+            return <li key={id} data-player-id={id}>
+              <div className="target-shortlist-person"><span className="target-shortlist-number">{String(index + 1).padStart(2, "0")}</span><span className="target-shortlist-photo">{player ? <PlayerImage player={player} /> : <Target size={23} />}</span><div className="target-shortlist-copy"><strong>{player?.name ?? "Unavailable player"}</strong><span className={`tone-${status.tone}`}>{status.label}</span></div><button type="button" aria-label={`Remove ${player?.name ?? "unavailable player"} from targets`} disabled={!!state.endedAt || saving} onClick={() => edit(id, true)}><X size={16} /></button></div>
+              <div className={`target-budget-field${invalid ? " is-invalid" : ""}`}><label htmlFor={inputId}>Your max bid <span>₹ Cr</span></label><input id={inputId} type="text" inputMode="decimal" autoComplete="off" aria-label={`Private limit for ${player?.name ?? "unavailable player"} in crores`} aria-invalid={invalid} aria-describedby={invalid || belowBase || settled ? `${inputId}-hint` : undefined} value={budgetInputValue(budgetInputs, id)} placeholder="No limit set" maxLength={12} disabled={saving || !!state.endedAt || settled} onChange={(event) => editBudget(id, event.target.value)} /></div>
+              {(invalid || belowBase || settled) && <p id={`${inputId}-hint`} className={`target-budget-hint${invalid || (belowBase && !settled) ? " is-warning" : ""}`}>{invalid ? "Enter a positive amount with up to two decimal places." : settled ? "Excluded from your remaining plan." : `Below base price of ${formatMoney(player!.basePrice)}.`}</p>}
+            </li>;
           })}
         </ul> : <div className="target-shortlist-empty"><span><Target size={35} strokeWidth={1.3} /></span><h4>Who’s on your radar?</h4><p>Choose players from the pool. Add a few now and more as the auction unfolds.</p></div>}
         <div className="target-board-foot"><LockKeyhole size={14} /><span>Your targets stay private.</span>{dirty && <span className="target-board-unsaved">Unsaved</span>}</div>

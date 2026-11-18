@@ -57,7 +57,7 @@ test("Excel matches original team/points views and leaves match statistics edita
   const bytes = await createAuctionWorkbook(recap);
   assert.equal(bytes.subarray(0, 2).toString(), "PK");
   const workbook = new ExcelJS.Workbook(); await workbook.xlsx.load(new Uint8Array(bytes).buffer);
-  assert.equal(workbook.worksheets.length, recap.teams.length + 6);
+  assert.equal(workbook.worksheets.length, recap.teams.length + 7);
   for (const name of ["Read me", "Overview", "THE TEAMS", "POINTS", "All players", "Audit", "GT", "LSG", "RCB"]) assert.ok(workbook.getWorksheet(name), name);
   const all = workbook.getWorksheet("All players")!;
   assert.equal(all.rowCount, recap.soldCount + 4);
@@ -104,7 +104,7 @@ test("PDF is a real paginated, embedded-font recap with bounded size for every t
   assert.equal(pdf.subarray(0, 5).toString(), "%PDF-");
   assert.match(pdf.subarray(-30).toString(), /%%EOF/);
   const source = pdf.toString("latin1");
-  assert.equal((source.match(/\/Type \/Page\b/g) ?? []).length, recap.teams.length + 3, "overview uses two pages; each small squad and the audit fit on one page without blank footer pages");
+  assert.equal((source.match(/\/Type \/Page\b/g) ?? []).length, recap.teams.length + 4, "overview uses two pages; small squads, awards and audit each fit without blank footer pages");
   assert.match(source, /\/ToUnicode/); assert.match(source, /\/FontFile2/);
   assert.ok(pdf.byteLength < 1_000_000, `PDF should stay comfortably below server response limits: ${pdf.byteLength}`);
   assert.doesNotMatch(source, /SECRET-TARGET|SECRET-CHAT/);

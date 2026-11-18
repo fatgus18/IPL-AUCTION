@@ -123,11 +123,13 @@ try {
   const targetIds = joinedState.players.filter(entry => !entry.catalogArchived && entry.status === "available").slice(0, 12).map(entry => entry.id);
   assert.equal(targetIds.length, 12);
   const manager = participants[0];
+  const privateLimits = { [targetIds[0]]: 475 };
   for (const [revision, count] of [[0, 5], [1, 9], [2, 12]]) {
-    const saved = expectStatus(await act(manager, { type: "set_target_picks", teamId: manager.teamId, playerIds: targetIds.slice(0, count), expectedRevision: revision }), 200, "Save cumulative private targets").state;
-    assert.deepEqual(saved.myTargetPicks, { teamId: manager.teamId, playerIds: targetIds.slice(0, count), revision: revision + 1 });
+    const saved = expectStatus(await act(manager, { type: "set_target_picks", teamId: manager.teamId, playerIds: targetIds.slice(0, count), expectedRevision: revision, ...(revision === 0 ? { maxBids: privateLimits } : {}) }), 200, "Save cumulative private targets").state;
+    assert.deepEqual(saved.myTargetPicks, { teamId: manager.teamId, playerIds: targetIds.slice(0, count), revision: revision + 1, maxBids: privateLimits });
   }
   assert.deepEqual((await read(manager)).myTargetPicks.playerIds, targetIds);
+  assert.deepEqual((await read(manager)).myTargetPicks.maxBids, privateLimits);
   assert.deepEqual((await read(participants[1])).myTargetPicks.playerIds, []);
   assert.equal((await read(host)).myTargetPicks, undefined);
   assert.equal((await read(spectator)).myTargetPicks, undefined);
@@ -212,6 +214,7 @@ try {
   assert.deepEqual(corrected.teams.find(team => team.id === winner.teamId).lineup, afterLineup.lineup);
   assert.equal(corrected.saleCorrections.length, 1);
   expectStatus(await request(`${roomPath()}/export?format=xlsx`, { token: winner.token }), 409, "Exports require a completed auction");
+  expectStatus(await request(`${roomPath()}/poster?team=${winner.teamId}`, { token: winner.token }), 409, "Posters cannot be generated before completion");
   const finish = { type: "end_auction", expectedResultsRevision: corrected.resultsRevision };
   expectStatus(await act(other, finish), 403, "Only the creator can end bidding");
   const completed = expectStatus(await act(host, finish), 200, "End the smoke auction").state;
@@ -229,6 +232,9 @@ try {
     else {
       const workbook = new ExcelJS.Workbook(); await workbook.xlsx.load(bytes);
       assert.ok(workbook.getWorksheet("THE TEAMS")); assert.ok(workbook.getWorksheet("POINTS"));
+      const awardSheet = workbook.getWorksheet("Awards"); assert.ok(awardSheet);
+      const headline = []; awardSheet.eachRow(row => { if (row.getCell(1).value === "Headline signing") headline.push(row.getCell(2).value); });
+      assert.deepEqual(headline, [player.name], "the corrected highest signing must receive its factual award");
       const row = workbook.getWorksheet("All players").getRow(5);
       assert.equal(row.getCell(3).value, player.name);
       assert.equal(row.getCell(2).value, managerNames[winner.teamId]);
@@ -238,6 +244,15 @@ try {
       assert.equal(workbook.getWorksheet("Audit").rowCount, 5);
     }
   }
+  assert.equal(completed.awardLedger.players[player.id].bids, 1, "only the one accepted bid enters awards tracking");
+  const posterResponse = await fetch(`${baseUrl}${roomPath()}/poster?team=${winner.teamId}`, { headers: { Authorization: `Bearer ${spectator.token}` }, signal: AbortSignal.timeout(60000) });
+  assert.equal(posterResponse.status, 200, "a participant can generate a completed franchise poster");
+  assert.match(posterResponse.headers.get("content-type") || "", /image\/png/);
+  assert.match(posterResponse.headers.get("cache-control") || "", /no-store/);
+  const posterBytes = Buffer.from(await posterResponse.arrayBuffer());
+  assert.equal(posterBytes.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+  assert.equal(posterBytes.readUInt32BE(16), 1440); assert.equal(posterBytes.readUInt32BE(20), 1800);
+  console.log("PASS: private bidding limits persist without leaking, factual awards reach downloads, and an authenticated completed-squad poster renders as a real 1440×1800 PNG.");
   console.log("PASS: creator-only audited corrections and completion; preserved room, post-auction XI saving, and real PDF/Excel downloads with current managers, captaincy and spending.");
 } catch (error) {
   failure = error;

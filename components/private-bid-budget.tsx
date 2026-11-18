@@ -1,0 +1,24 @@
+"use client";
+
+import { ArrowRight, LockKeyhole, TriangleAlert } from "lucide-react";
+import type { RoomState } from "@/lib/auction";
+import { formatMoney } from "@/lib/auction-display";
+import { currentPrivateBudget } from "@/lib/private-budget-display";
+import "./private-bid-budget.css";
+
+type Props = { state: RoomState; memberId: string; onViewAuction?: () => void; compact?: boolean };
+
+export function PrivateBidBudget({ state, memberId, onViewAuction, compact = false }: Props) {
+  const budget = currentPrivateBudget(state, memberId);
+  if (!budget || (compact && budget.warning === "within")) return null;
+  const warning = budget.warning !== "within";
+  const message = budget.warning === "over" ? `Current bid is ${formatMoney(budget.currentBid - budget.limit)} above your limit.`
+    : budget.warning === "at" ? "The current bid has reached your planned limit."
+      : budget.warning === "next-over" ? `${state.leadingTeamId ? "The next bid" : "The opening bid"} of ${formatMoney(budget.nextBid)} exceeds your limit.`
+        : "A private reminder. You decide what to bid.";
+  return <aside className={`private-bid-budget${warning ? " is-warning" : ""}${compact ? " is-compact" : ""}`} aria-label="Your private bidding budget" role="status" aria-live="polite" aria-atomic="true">
+    <span className="private-budget-icon" aria-hidden="true">{warning ? <TriangleAlert size={19} /> : <LockKeyhole size={18} />}</span>
+    <div className="private-budget-copy"><p>{compact ? budget.player.name : "Your private limit"}<strong>{formatMoney(budget.limit)}</strong></p><span>{message}</span></div>
+    {onViewAuction && <button type="button" onClick={onViewAuction}>View auction<ArrowRight size={16} /></button>}
+  </aside>;
+}

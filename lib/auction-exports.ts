@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { AuctionError, type RoomState } from "./auction.ts";
 import { getPlayingRole, PLAYING_ROLES } from "./player-roles.ts";
+import { getAuctionAwards, type AuctionAwards } from "./auction-awards.ts";
 
 /** Only this allowlisted projection enters a download. Never serialize a room snapshot. */
 export type RecapPlayer = {
@@ -19,6 +20,7 @@ export type RecapTeam = {
 export type AuctionRecap = {
   code: string; name: string; endedAt: number; exportedAt: number; revision: number;
   totalSpentLakhs: number; soldCount: number; teams: RecapTeam[];
+  awards: AuctionAwards;
   corrections: {
     at: number; actor: string; player: string; reason: string; revision: number;
     beforeTeam: string; beforeAmountLakhs: number;
@@ -64,6 +66,7 @@ export function buildAuctionRecap(state: RoomState, exportedAt = Date.now()): Au
     revision: state.resultsRevision ?? 0,
     totalSpentLakhs: teams.reduce((sum, team) => sum + team.spentLakhs, 0),
     soldCount: teams.reduce((sum, team) => sum + team.players.length, 0), teams,
+    awards: getAuctionAwards(state),
     corrections: (state.saleCorrections ?? []).map(correction => ({
       at: correction.at, actor: correction.actorName, player: correction.playerName,
       reason: correction.reason, revision: correction.revision,
@@ -208,6 +211,17 @@ export async function createAuctionWorkbook(recap: AuctionRecap): Promise<Buffer
     sheetTitle(sheet, `${team.name} / ${team.manager}`, `${team.players.length} signings | Spent ${money(team.spentLakhs)} | Purse ${money(team.purseLakhs)} | Results revision ${recap.revision}`, PLAYER_HEADERS.length);
     headers(sheet, 4, PLAYER_HEADERS); addPlayerRows(sheet, [team]);
   }
+  const awards = baseSheet(workbook, "Awards", [26, 37, 22, 58, 75]);
+  sheetTitle(awards, "THE AUCTION HONOURS", "Factual awards · All tied winners are included · Purchase awards reflect corrected sales", 5);
+  headers(awards, 4, ["Award", "Winner", "Result", "Details", "How this is decided"]);
+  for (const award of recap.awards.awards) {
+    const winners = award.winners.length ? award.winners : [{ name: "Not awarded", detail: award.unavailable ?? "" }];
+    for (const winner of winners) {
+      const row = dataRow(awards, [award.title, winner.name, award.metric, winner.detail, award.criterion]);
+      row.height = Math.max(48, Math.ceil(award.criterion.length / 65) * 15 + 12, Math.ceil(winner.detail.length / 45) * 15 + 12);
+    }
+  }
+  awards.autoFilter = `A4:E${Math.max(4, awards.rowCount)}`;
   const audit = baseSheet(workbook, "Audit", [24, 25, 30, 34, 22, 34, 22, 64, 12]);
   sheetTitle(audit, "SALE CORRECTIONS", "Every correction retains its original sale values, actor, time and reason. All amounts are INR lakh.", 9);
   headers(audit, 4, ["Time (IST)", "Corrected by", "Player", "Previous team", "Previous price", "Corrected team", "Corrected price", "Reason", "Revision"]);
@@ -284,6 +298,13 @@ export async function createAuctionPdf(recap: AuctionRecap): Promise<Buffer> {
     else line(team.manager === "No manager assigned" ? "No manager took charge of this team." : "No players purchased.", { color: `#${MUTED}` });
     line("C = captain · VC = vice captain · * = overseas player", { size: 8, color: `#${MUTED}` });
   }
+  newPage("AUCTION AWARDS / THE HONOURS BOARD");
+  line("THE AUCTION HONOURS", { size: 24, strong: true });
+  line("Factual awards with every shared winner. Final purchase awards include corrections; bidding awards use accepted bid records.", { size: 10, color: `#${MUTED}`, gap: 18 });
+  table(["AWARD / CRITERIA", "WINNER / DETAILS", "RESULT"], recap.awards.awards.flatMap(award => {
+    const winners = award.winners.length ? award.winners : [{ name: "Not awarded", detail: award.unavailable ?? "" }];
+    return winners.map((winner, index) => [`${award.title}${index === 0 ? `\n${award.criterion}` : " (shared)"}`, `${winner.name}\n${winner.detail}`, award.metric.replace("₹", "INR ")]);
+  }), [160, 235, 116.28]);
   newPage("SALE CORRECTIONS / AUDIT");
   line("THE CORRECTION RECORD", { size: 24, strong: true });
   if (!recap.corrections.length) line("No sale corrections were recorded.", { size: 11 });

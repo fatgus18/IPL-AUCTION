@@ -5,8 +5,10 @@ import { getPlayingRole } from "./player-roles.ts";
 
 export const DEFAULT_SEASON_SOURCE_URL = "https://www.cricinfo.com/series/ipl-2026-1510719/most-valuable-players";
 export type SeasonMappings = Record<string, string>;
+export type SeasonAcquisition = "fetch" | "import" | "reference";
+export type SeasonReferenceMetadata = Pick<SeasonSourceSnapshot, "sourceUrl" | "seriesId" | "seriesName" | "fetchedAt"> & { playerCount: number };
 export type StoredAuctionSeason = {
-  sourceUrl: string; snapshot: SeasonSourceSnapshot | null; method: "fetch" | "import" | null;
+  sourceUrl: string; snapshot: SeasonSourceSnapshot | null; method: SeasonAcquisition | null;
   mappings: SeasonMappings; lastFetchAttemptAt: number | null; fetchRequestId?: string;
 };
 export type SeasonSourceRowView = SeasonSourceRow & {
@@ -27,7 +29,8 @@ export type SeasonTeam = {
 export type AuctionSeasonView = {
   code: string; name: string; revision: number; roomVersion: number; sourceUrl: string;
   canManage: boolean; provisional: boolean; updatedAt: number | null; lastFetchAttemptAt: number | null;
-  snapshot: (Omit<SeasonSourceSnapshot, "rows"> & { method: "fetch" | "import" }) | null;
+  snapshot: (Omit<SeasonSourceSnapshot, "rows"> & { method: SeasonAcquisition }) | null;
+  reference: SeasonReferenceMetadata | null;
   sourceChanged: boolean; teams: SeasonTeam[];
   coverage: { matchedPlayers: number; totalPlayers: number; sourceRows: number; unmatchedPlayers: number };
   sourceRows: SeasonSourceRowView[];
@@ -105,7 +108,7 @@ export function matchSeasonRows(players: readonly Player[], rows: readonly Seaso
 
 export function buildAuctionSeason(
   state: RoomState, stored: StoredAuctionSeason = emptyAuctionSeason(),
-  metadata: { revision?: number; updatedAt?: number | null; canManage?: boolean } = {},
+  metadata: { revision?: number; updatedAt?: number | null; canManage?: boolean; reference?: SeasonReferenceMetadata | null } = {},
 ): AuctionSeasonView {
   const sourceRows = matchSeasonRows(state.players, stored.snapshot?.rows ?? [], stored.mappings);
   const sourceByPlayer = new Map(sourceRows.filter(row => row.playerId).map(row => [row.playerId!, row]));
@@ -161,7 +164,9 @@ export function buildAuctionSeason(
     sourceUrl: stored.sourceUrl, canManage: metadata.canManage ?? false, provisional: !state.endedAt,
     updatedAt: metadata.updatedAt ?? null, lastFetchAttemptAt: stored.lastFetchAttemptAt,
     snapshot: stored.snapshot ? { sourceUrl: stored.snapshot.sourceUrl, provider: stored.snapshot.provider, seriesId: stored.snapshot.seriesId, seriesName: stored.snapshot.seriesName, fetchedAt: stored.snapshot.fetchedAt, method: stored.method ?? "fetch" } : null,
-    sourceChanged: !!stored.snapshot && stored.snapshot.sourceUrl !== stored.sourceUrl,
+    reference: metadata.reference ?? null,
+    sourceChanged: !!stored.snapshot && stored.snapshot.sourceUrl !== stored.sourceUrl
+      && !(stored.method === "reference" && metadata.reference?.seriesId === stored.snapshot.seriesId),
     teams, coverage: { matchedPlayers, totalPlayers, sourceRows: sourceRows.length, unmatchedPlayers: unmatchedPlayers.length },
     sourceRows, unmatchedPlayers, mappings: { ...stored.mappings },
   };

@@ -65,7 +65,9 @@ export async function createSeasonWorkbook(season: AuctionSeasonView): Promise<B
     ["Squad changes", "Saved lineup changes and creator sale corrections recompute standings against the latest successful source snapshot."],
     ["Configured source", season.sourceUrl], ["Scored source", season.snapshot?.sourceUrl ?? "No successful source snapshot"],
     ["Series", season.snapshot?.seriesName ?? "Not fetched"], ["Retrieved", season.snapshot ? new Date(season.snapshot.fetchedAt).toISOString() : "Not fetched"],
-    ["Acquisition", season.snapshot?.method ?? "None"], ["Source pending", season.sourceChanged ? "Configured source differs from scored source. Refresh to replace the current snapshot." : "No"],
+    ["Acquisition", season.snapshot?.method === "reference" ? "Verified dated reference snapshot — not a live fetch" : season.snapshot?.method ?? "None"],
+    ["Reference snapshot", season.snapshot?.method === "reference" ? `Captured ${season.snapshot.fetchedAt}. Loading this snapshot does not update its capture date or fetch newer provider data.` : "Not in use"],
+    ["Source pending", season.sourceChanged ? "Configured source differs from scored source. Refresh to replace the current snapshot." : "No"],
   ]) row(rules, entry).height = 44;
   const coverage = sheet(workbook, "Source coverage", [18, 30, 30, 16, 20, 13, 13, 13, 22, 80], "SOURCE COVERAGE", subtitle, ["Provider ID", "Source name", "Pool player ID", "Match method", "Raw MVP points", "Matches", "Runs", "Wickets", "Source team", "Profile URL"]);
   for (const source of season.sourceRows) row(coverage, [source.providerPlayerId, source.name, source.playerId, source.match ?? "Unmatched", source.points, source.matches, source.runs, source.wickets, source.teamName, source.profileUrl]);

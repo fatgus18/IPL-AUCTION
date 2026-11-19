@@ -41,12 +41,13 @@ try {
   await act(manager, { type: "set_target_picks", teamId: "rcb", expectedRevision: 0, playerIds: [privateTarget.id], maxBids: { [privateTarget.id]: 900 } });
   let season = await get(host);
   assert.equal(season.revision, 0); assert.equal(season.snapshot, null); assert.equal(season.canManage, true);
+  assert.equal(season.reference.playerCount, 202); assert.equal(season.reference.seriesId, "1510719");
   assert.equal(season.coverage.totalPlayers, 5); assert.equal(season.coverage.matchedPlayers, 0);
   assert.equal((await request(seasonPath(host))).status, 401);
   assert.equal((await request(seasonPath(host), { token: other.token })).status, 401);
   for (const member of [manager, spectator]) {
     assert.equal((await get(member)).canManage, false);
-    for (const type of ["configure", "fetch", "import", "map"]) assert.equal((await write(member, { type, expectedRevision: 0 })).status, 403);
+    for (const type of ["configure", "fetch", "import", "map", "reference"]) assert.equal((await write(member, { type, expectedRevision: 0 })).status, 403);
   }
   assert.equal((await request(seasonPath(host), { token: host.token, body: { type: "configure", sourceUrl: season.sourceUrl, expectedRevision: 0 }, origin: "https://attacker.invalid" })).status, 403);
   assert.equal((await write(host, { type: "configure", sourceUrl: "http://127.0.0.1/secret", expectedRevision: 0 })).status, 400);
@@ -107,6 +108,18 @@ try {
   const workbook = new ExcelJS.Workbook(); await workbook.xlsx.load(await exportResponse.arrayBuffer());
   assert.ok(workbook.getWorksheet("POINTS")); assert.ok(workbook.getWorksheet("THE TEAMS")); assert.ok(workbook.getWorksheet("Source coverage"));
   assert.equal((await fetch(`${baseUrl}${seasonPath(host)}/export`)).status, 401);
+  const referenceMeta = (await get(other)).reference;
+  let referenceSeason = ok(await write(other, { type: "reference", expectedRevision: 0 })).season;
+  assert.equal(referenceSeason.revision, 1); assert.equal(referenceSeason.snapshot.method, "reference");
+  assert.equal(referenceSeason.snapshot.fetchedAt, referenceMeta.fetchedAt);
+  assert.equal(referenceSeason.sourceRows.length, 202); assert.equal(referenceSeason.sourceChanged, false);
+  assert.equal((await write(other, { type: "reference", expectedRevision: 0 })).data.code, "SEASON_CONFLICT");
+  referenceSeason = ok(await write(other, { type: "reference", expectedRevision: 1 })).season;
+  assert.equal(referenceSeason.snapshot.fetchedAt, referenceMeta.fetchedAt, "loading again never invents a fresh capture timestamp");
+  referenceSeason = ok(await write(other, { type: "configure", sourceUrl: source2025, expectedRevision: 2 })).season;
+  assert.equal(referenceSeason.reference, null); assert.equal(referenceSeason.sourceChanged, true);
+  assert.equal((await write(other, { type: "reference", expectedRevision: 3 })).data.code, "SEASON_REFERENCE_UNAVAILABLE");
+  assert.deepEqual((await get(other)).snapshot, referenceSeason.snapshot, "unavailable fallback cannot replace good source data");
   const persisted = JSON.parse((await database.execute({ sql: "SELECT state_json FROM auction_rooms WHERE code = ?", args: [host.state.code] })).rows[0].state_json);
   assert.equal(Object.hasOwn(persisted.state, "season"), false); assert.equal(Object.hasOwn(persisted.state, "sourceRows"), false);
   ok(await request(`${roomPath(host)}/delete`, { token: host.token, body: { confirmationCode: host.state.code } }));

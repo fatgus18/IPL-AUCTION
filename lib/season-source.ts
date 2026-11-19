@@ -200,7 +200,7 @@ export async function fetchSeasonSource(input: string, fetcher: typeof fetch = f
         if (response.status === 429) throw new SeasonSourceError("ESPNcricinfo is limiting requests. Wait a minute before fetching again.", 429, "SEASON_SOURCE_RATE_LIMIT");
         throw new SeasonSourceError(response.status === 404
           ? "That MVP page was not found. Check the series link."
-          : "ESPNcricinfo is not allowing this fetch right now. Your saved points are unchanged; try later or import a copied CSV/JSON table.", 502, "SEASON_SOURCE_UNAVAILABLE");
+          : `ESPNcricinfo returned HTTP ${response.status} for this server request. Your saved points are unchanged; try later, use a dated snapshot, or import a copied table.`, 502, "SEASON_SOURCE_UNAVAILABLE");
       }
       const type = response.headers.get("content-type") ?? "";
       if (type && !/^(text\/html|application\/xhtml\+xml)(?:;|$)/i.test(type)) {

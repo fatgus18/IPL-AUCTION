@@ -6,6 +6,7 @@ import type { SeasonSourceRow } from "../lib/season-source";
 const { createDemoState }: typeof import("../lib/auction") = await import(new URL("../lib/auction.ts", import.meta.url).href);
 const { buildAuctionSeason, emptyAuctionSeason, matchSeasonRows, sumSeasonPoints, seasonSourceKey }: typeof import("../lib/auction-season") = await import(new URL("../lib/auction-season.ts", import.meta.url).href);
 const { createSeasonWorkbook }: typeof import("../lib/season-export") = await import(new URL("../lib/season-export.ts", import.meta.url).href);
+const { getSeasonReference, SEASON_REFERENCE_METADATA }: typeof import("../lib/season-reference") = await import(new URL("../lib/season-reference.ts", import.meta.url).href);
 
 function source(name: string, points: number, providerPlayerId: string | null = null): SeasonSourceRow {
   return { name, points, providerPlayerId, profileUrl: null, matches: 12, runs: 234, wickets: 5, teamName: "Provider franchise", battingImpact: null, bowlingImpact: null };
@@ -125,4 +126,24 @@ test("source changes retain honest provenance and workbook carries all actual po
   let formulas = 0;
   workbook.eachSheet(sheet => sheet.eachRow(row => row.eachCell(cell => { if (cell.type === ExcelJS.ValueType.Formula) formulas++; })));
   assert.equal(formulas, 0);
+});
+
+test("dated reference projections and Excel preserve capture provenance rather than claim a live refresh", async () => {
+  const { state, stored } = fixture();
+  stored.snapshot = getSeasonReference(stored.sourceUrl);
+  stored.method = "reference";
+  const view = buildAuctionSeason(state, stored, { revision: 8, updatedAt: Date.now(), reference: SEASON_REFERENCE_METADATA });
+  assert.equal(view.snapshot!.method, "reference");
+  assert.equal(view.snapshot!.fetchedAt, "2026-11-19T20:00:31.557Z");
+  assert.equal(view.reference!.playerCount, 202);
+  assert.equal(view.sourceChanged, false);
+  stored.sourceUrl = "https://www.cricinfo.com/series/1510719/most-valuable-players";
+  assert.equal(buildAuctionSeason(state, stored, { reference: SEASON_REFERENCE_METADATA }).sourceChanged, false, "equivalent official series URL accepts the reference's canonical provenance");
+  stored.sourceUrl = "https://www.cricinfo.com/series/ipl-2025-1449924/most-valuable-players";
+  assert.equal(buildAuctionSeason(state, stored, { reference: null }).sourceChanged, true, "a different season never relabels old data");
+  const workbook = new ExcelJS.Workbook(); await workbook.xlsx.load(new Uint8Array(await createSeasonWorkbook(view)).buffer);
+  const rules: string[] = [];
+  workbook.getWorksheet("Rules")!.eachRow(row => row.eachCell(cell => { if (typeof cell.value === "string") rules.push(cell.value); }));
+  assert.ok(rules.some(value => value.includes("not a live fetch")));
+  assert.ok(rules.some(value => value.includes("Captured 2026-11-19T20:00:31.557Z")));
 });

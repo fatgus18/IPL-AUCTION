@@ -7,6 +7,7 @@ import { getSeasonRoomContext } from "./auction-server";
 import { buildAuctionSeason, emptyAuctionSeason, matchSeasonRows, seasonSourceKey, type StoredAuctionSeason, type SeasonMappings } from "./auction-season";
 import { fetchSeasonSource, normalizeSeasonSourceUrl, parseSeasonSourceImport, SeasonSourceError, type SeasonSourceSnapshot } from "./season-source";
 import { getPlayerSeasonIdentity } from "./player-identities";
+import { getSeasonReference, SEASON_REFERENCE_METADATA } from "./season-reference";
 
 type WriteTransaction = Parameters<Parameters<typeof withDatabaseWrite>[0]>[0];
 type SeasonRecord = { stored: StoredAuctionSeason; revision: number; updatedAt: number | null };
@@ -46,7 +47,10 @@ async function writeSeason(tx: WriteTransaction, code: string, stored: StoredAuc
 export async function getAuctionSeason(code: string, request: Request) {
   const context = await getSeasonRoomContext(code, request);
   const record = await readSeason(context.state.code);
-  return buildAuctionSeason(context.state, record.stored, { ...record, canManage: isCreator(context) });
+  return buildAuctionSeason(context.state, record.stored, {
+    ...record, canManage: isCreator(context),
+    reference: getSeasonReference(record.stored.sourceUrl) ? SEASON_REFERENCE_METADATA : null,
+  });
 }
 
 function validateMappings(value: unknown, record: SeasonRecord, state: RoomState): SeasonMappings {
@@ -93,7 +97,7 @@ export async function updateAuctionSeason(code: string, request: Request, body: 
   const context = await getSeasonRoomContext(code, request);
   requireCreator(context);
   const expectedRevision = requireRevision(body.expectedRevision);
-  if (!["configure", "fetch", "import", "map"].includes(String(body.type))) throw new AuctionError("Choose a valid season action.");
+  if (!["configure", "fetch", "import", "map", "reference"].includes(String(body.type))) throw new AuctionError("Choose a valid season action.");
   const roomCode = context.state.code;
   if (body.type === "fetch") {
     const requestId = randomUUID();
@@ -138,6 +142,10 @@ export async function updateAuctionSeason(code: string, request: Request, body: 
     if (typeof body.text !== "string") throw new AuctionError("Paste the source's MVP table to import.", 400, "SEASON_IMPORT_REQUIRED");
     return parseSeasonSourceImport(body.text, initial.stored.sourceUrl);
   }) : null;
+  const reference = body.type === "reference" ? getSeasonReference(initial.stored.sourceUrl) : null;
+  if (body.type === "reference" && !reference) {
+    throw new AuctionError("A verified snapshot is not available for this series. Use Fetch latest or import its points table.", 400, "SEASON_REFERENCE_UNAVAILABLE");
+  }
   const configuredUrl = body.type === "configure" ? sourceOperation(() => {
     if (typeof body.sourceUrl !== "string") throw new AuctionError("Enter an ESPNcricinfo MVP page link.");
     return normalizeSeasonSourceUrl(body.sourceUrl);
@@ -152,6 +160,10 @@ export async function updateAuctionSeason(code: string, request: Request, body: 
     if (imported) {
       if (initial.stored.sourceUrl !== record.stored.sourceUrl) throw new AuctionError("The source changed. Import the table again.", 409, "SEASON_CONFLICT");
       stored = { ...stored, snapshot: imported, method: "import", mappings: retainedMappings(record.stored, imported) };
+    }
+    if (reference) {
+      if (initial.stored.sourceUrl !== record.stored.sourceUrl) throw new AuctionError("The source changed. Review the selected series before loading the snapshot.", 409, "SEASON_CONFLICT");
+      stored = { ...stored, snapshot: reference, method: "reference", mappings: retainedMappings(record.stored, reference) };
     }
     if (body.type === "map") stored = { ...stored, mappings: validateMappings(body.mappings, record, freshContext.state) };
     await writeSeason(tx, roomCode, stored, record.revision + 1, Date.now());

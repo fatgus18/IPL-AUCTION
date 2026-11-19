@@ -65,6 +65,17 @@ try {
   assert.equal(await hp.getByRole("button", { name: "Fetch latest data", exact: true }).isVisible(), true);
   assert.match(await hp.locator(".season-leader-card").innerText(), /Connect a points source/);
   assert.equal(await hp.locator(".season-standing-points strong").first().innerText(), "—");
+  const reference = await seasonAction(hp, "reference", () => hp.getByRole("button", { name: "Load verified 2026 snapshot", exact: true }).click());
+  assert.equal(reference.snapshot.method, "reference");
+  assert.equal(reference.coverage.sourceRows, 202);
+  assert.equal(reference.snapshot.fetchedAt, reference.reference.fetchedAt, "The reference keeps its original capture date.");
+  assert.match(await hp.locator(".season-source-facts").innerText(), /Verified snapshot/);
+  assert.match(await hp.locator(".season-source-facts").innerText(), /not a live refresh/);
+  await hp.locator(".season-source-panel").screenshot({ path: resolve(output, "season-reference-desktop.png") });
+  await hp.setViewportSize({ width: 360, height: 1000 }); await paint(hp); await noOverflow(hp);
+  await hp.locator(".season-source-panel").screenshot({ path: resolve(output, "season-reference-360.png") });
+  await hp.setViewportSize({ width: 1440, height: 1000 });
+  console.log("PASS: the creator can explicitly load the real 202-row reference snapshot with its original timestamp and honest saved-data label.");
   await hp.locator(".season-import-tools summary").click();
   await hp.getByLabel("Player points table", { exact: true }).fill(`name,points,matches,runs,wickets\n${players[0].name},100.25,5,213,2\n${players[1].name},10.25,4,185,1\n${players[2].name},-8.5,3,50,0\nSource player alternate,12,2,30,1\n${players[4].name},90,4,200,2`);
   let season = await seasonAction(hp, "import", () => hp.getByRole("button", { name: "Save imported points", exact: true }).click());
@@ -94,6 +105,7 @@ try {
   const { page: sp, context: sc } = await open(spectator);
   for (const page of [mp, sp]) {
     assert.equal(await page.getByRole("button", { name: /Fetch latest/ }).count(), 0);
+    assert.equal(await page.getByRole("button", { name: "Load verified 2026 snapshot", exact: true }).count(), 0);
     assert.equal(await page.getByLabel("Player points table", { exact: true }).count(), 0);
     await showTeam(page, "Royal Challengers Bengaluru");
     assert.equal(await page.locator(".season-team-dialog tbody tr").count(), 4);

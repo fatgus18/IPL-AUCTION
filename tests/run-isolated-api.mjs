@@ -47,7 +47,7 @@ try {
   }
   assert.ok(ready, `The isolated server did not become ready: ${serverOutput}`);
   const suites = process.argv.slice(2);
-  if (!suites.length) suites.push("tests/api-integration.mjs", "tests/practice-api-integration.mjs", "tests/shared-catalog-api-integration.mjs", "tests/room-recovery-api-integration.mjs", "tests/historic-teams-api-integration.mjs", "tests/lobby-catalog-api-integration.mjs", "tests/room-access-api-integration.mjs", "tests/lineup-api-integration.mjs", "tests/auction-interactions-api-integration.mjs", "tests/auction-pause-api.mjs", "tests/accounts-api.mjs", "tests/target-picks-api-integration.mjs", "tests/unlock-api-integration.mjs", "tests/auction-completion-api.mjs", "tests/auction-exports-api.mjs", "tests/private-budgets-api.mjs", "tests/franchise-posters-api.mjs", "tests/auction-awards-api.mjs");
+  if (!suites.length) suites.push("tests/api-integration.mjs", "tests/practice-api-integration.mjs", "tests/shared-catalog-api-integration.mjs", "tests/room-recovery-api-integration.mjs", "tests/historic-teams-api-integration.mjs", "tests/lobby-catalog-api-integration.mjs", "tests/room-access-api-integration.mjs", "tests/lineup-api-integration.mjs", "tests/auction-interactions-api-integration.mjs", "tests/auction-pause-api.mjs", "tests/accounts-api.mjs", "tests/auction-season-api.mjs", "tests/player-identities-api.mjs", "tests/target-picks-api-integration.mjs", "tests/unlock-api-integration.mjs", "tests/auction-completion-api.mjs", "tests/auction-exports-api.mjs", "tests/private-budgets-api.mjs", "tests/franchise-posters-api.mjs", "tests/auction-awards-api.mjs");
   for (const suite of suites) {
     const child = spawn(process.execPath, [suite], { env, windowsHide: true, stdio: "inherit" });
     const [code] = await once(child, "exit");
@@ -67,6 +67,10 @@ try {
     return response.json();
   };
   const accessBeforeRestart = await privateAccess(roomBeforeRestart);
+  const seasonUrl = baseUrl + '/api/rooms/' + roomBeforeRestart.state.code + '/season';
+  const seasonImport = await fetch(seasonUrl, { method: 'POST', headers: { Authorization: 'Bearer ' + roomBeforeRestart.token, 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'import', expectedRevision: 0, text: 'Name,Points\nAxar Patel,10.25' }) });
+  assert.equal(seasonImport.status, 200);
+  const seasonBeforeRestart = (await seasonImport.json()).season;
   const pauseResponse = await fetch(`${baseUrl}/api/rooms/${roomBeforeRestart.state.code}/action`, {
     method: "POST", headers: { Authorization: `Bearer ${roomBeforeRestart.token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ action: { type: "pause_auction" } }),
@@ -109,6 +113,11 @@ try {
   assert.equal(resumeResponse.status, 200);
   assert.equal((await resumeResponse.json()).state.auctionPausedAt, undefined, "the original creator can resume after restart");
   assert.deepEqual(await privateAccess(recoveredRoom), accessBeforeRestart, "the private team password survives server restart");
+  const savedSeason = await fetch(seasonUrl, { headers: { Authorization: 'Bearer ' + recoveredRoom.token } }).then(response => response.json());
+  assert.equal(savedSeason.season.revision, seasonBeforeRestart.revision);
+  assert.deepEqual(savedSeason.season.snapshot, seasonBeforeRestart.snapshot);
+  assert.deepEqual(savedSeason.season.sourceRows, seasonBeforeRestart.sourceRows);
+  console.log('PASS: source links, season points and provider matching survive a server restart.');
   const deletedRetry = await createDeleted();
   assert.equal(deletedRetry.status, 410, "a deleted creation key must stay revoked across server restart");
   assert.equal((await deletedRetry.json()).code, "ROOM_DELETED");

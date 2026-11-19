@@ -1,11 +1,11 @@
 import type { Member } from "./auction";
 
-export type RoomView = "room" | "players" | "squads" | "my-squad" | "build-xi" | "targets" | "settings" | "broadcast";
+export type RoomView = "room" | "players" | "squads" | "my-squad" | "build-xi" | "targets" | "settings" | "broadcast" | "season";
 type RoomViewer = Pick<Member, "role" | "teamId"> | undefined;
 
 export function parseRoomView(value: string | null): RoomView {
   switch (value) {
-    case "players": case "squads": case "my-squad": case "build-xi": case "targets": case "settings": case "broadcast": return value;
+    case "players": case "squads": case "my-squad": case "build-xi": case "targets": case "settings": case "broadcast": case "season": return value;
     default: return "room";
   }
 }

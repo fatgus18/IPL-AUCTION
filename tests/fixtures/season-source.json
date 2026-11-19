@@ -1,0 +1,72 @@
+{
+  "sourceUrl": "https://www.cricinfo.com/series/ipl-2026-1510719/most-valuable-players",
+  "note": "Three observed public ESPNcricinfo MVP rows, retrieved 2026-11-20. Total adjusted to fixture subset; full table had 202 players.",
+  "props": {
+    "appPageProps": {
+      "data": {
+        "series": {
+          "objectId": 1510719,
+          "seoName": "IPL 2026"
+        },
+        "content": {
+          "smartStats": {
+            "total": 3,
+            "results": [
+              {
+                "type": "SERIES",
+                "player": {
+                  "objectId": 1408688,
+                  "longName": "Vaibhav Sooryavanshi",
+                  "slug": "vaibhav-sooryavanshi"
+                },
+                "team": {
+                  "longName": "Rajasthan Royals"
+                },
+                "totalImpact": 1012.29,
+                "battingImpact": 1012.29,
+                "bowlingImpact": 0,
+                "runs": 776,
+                "wickets": null,
+                "matches": 16
+              },
+              {
+                "type": "SERIES",
+                "player": {
+                  "objectId": 326016,
+                  "longName": "Bhuvneshwar Kumar",
+                  "slug": "bhuvneshwar-kumar"
+                },
+                "team": {
+                  "longName": "Royal Challengers Bengaluru"
+                },
+                "totalImpact": 791.42,
+                "battingImpact": 23.27,
+                "bowlingImpact": 768.15,
+                "runs": 34,
+                "wickets": 28,
+                "matches": 16
+              },
+              {
+                "type": "SERIES",
+                "player": {
+                  "objectId": 1081442,
+                  "longName": "Mayank Markande",
+                  "slug": "mayank-markande"
+                },
+                "team": {
+                  "longName": "Mumbai Indians"
+                },
+                "totalImpact": -25.81,
+                "battingImpact": 0,
+                "bowlingImpact": -25.81,
+                "runs": 0,
+                "wickets": null,
+                "matches": 3
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

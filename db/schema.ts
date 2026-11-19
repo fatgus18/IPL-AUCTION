@@ -9,6 +9,14 @@ export const auctionRooms = sqliteTable("auction_rooms", {
   createdAt: integer("created_at").notNull(),
 });
 
+/** Season source snapshots are fetched separately from the fast auction poll. */
+export const auctionSeasons = sqliteTable("auction_seasons", {
+  roomCode: text("room_code").primaryKey(),
+  stateJson: text("state_json").notNull(),
+  revision: integer("revision").notNull().default(0),
+  updatedAt: integer("updated_at").notNull(),
+});
+
 /** One canonical player pool for this installation, independent of browser credentials. */
 export const sharedPlayerCatalog = sqliteTable("shared_player_catalog", {
   id: text("id").primaryKey(),

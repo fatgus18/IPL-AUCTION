@@ -51,6 +51,9 @@ const AuctionAdministration = dynamic(() => import("./auction-administration").t
 const AuctionRecap = dynamic(() => import("./auction-recap").then(module => module.AuctionRecap));
 const FranchisePosters = dynamic(() => import("./franchise-posters").then(module => module.FranchisePosters));
 const SaleAudit = dynamic(() => import("./auction-administration").then(module => module.SaleAudit));
+const AuctionSeason = dynamic(() => import("./auction-season").then(module => module.AuctionSeason), {
+  loading: () => <div className="room-loading" role="status">Opening your season…</div>,
+});
 const AccountPanel = dynamic(() => import("./account-panel").then(module => module.AccountPanel), {
   loading: () => <p role="status">Opening your account…</p>,
 });
@@ -619,6 +622,7 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
     ...(showMySquad ? [{ key: "my-squad" as const, label: "My Squad", icon: ShieldCheck }] : []),
     ...(showBuildXI ? [{ key: "build-xi" as const, label: "Build my XI", icon: LayoutGrid }] : []),
     { key: "squads", label: "Team squads", icon: Users },
+    { key: "season", label: "Auction Season", icon: Trophy },
     { key: "settings", label: "Room settings", icon: Settings2 },
   ] : [{ key: "home", label: "Home", icon: House }, { key: "players", label: "Player pool", icon: ClipboardList }];
 
@@ -642,7 +646,7 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
     <div className="main-shell">
       <header className="topbar"><div className="topbar-left"><button className="icon-btn mobile-menu" aria-label="Open navigation" onClick={() => setSidebar(true)}><Menu size={21}/></button><span className="breadcrumb"><Trophy size={13}/>IPL</span><span className="breadcrumb-slash">/</span><strong>{inRoom ? state.name : "The auction starts here"}</strong><span className="season-tag">MOCK AUCTION</span></div><div className="topbar-right"><button className="account-entry" aria-label={accountUser ? "My auctions" : "Sign in"} title={accountUser ? `My auctions · ${accountUser.username}` : "Sign in to your account"} onClick={() => setModal("account")}><UserRound size={18}/><span>{accountUser ? "My auctions" : "Sign in"}</span></button>{isCreator && !state.endedAt && <button type="button" className="room-break-trigger" disabled={busy || !connected} aria-label={auctionPaused ? "Resume auction" : "Pause auction"} onClick={() => act({ type: auctionPaused ? "resume_auction" : "pause_auction" })}>{auctionPaused ? <Play size={18}/> : <Pause size={18}/>}<span>{auctionPaused ? "Resume auction" : "Pause auction"}</span></button>}{inRoom && <button ref={broadcastEntryRef} className="broadcast-entry" aria-label="Broadcast mode" title="Open broadcast mode" onClick={() => changeTab("broadcast")}><MonitorPlay size={18}/><span>Broadcast</span></button>}<SoundControls sound={sound}/>{inRoom && <><span className={`connection ${!connected ? "offline" : ""}`}><i/>{!connected ? "Reconnecting…" : "Connected"}</span><div className="topbar-divider"/></>}<button className={`avatar small${ownTeam ? " profile-franchise-crest" : ""}`} aria-label="How this auction works" onClick={() => setModal("help")}>{ownTeam ? <TeamCrest key={ownTeam.id} team={ownTeam}/> : member?.name.slice(0, 1) ?? "?"}</button></div></header>
       <main>
-        {tab === "broadcast" || (inRoom && state.endedAt && tab === "room") ? null : inRoom && ownTeam ? <FranchiseHero team={ownTeam} ownerName={member?.name ?? "Team owner"}/> : <CinematicHero tab={tab} playerCount={catalogCount}>{heroActions}</CinematicHero>}
+        {tab === "broadcast" || tab === "season" || (inRoom && state.endedAt && tab === "room") ? null : inRoom && ownTeam ? <FranchiseHero team={ownTeam} ownerName={member?.name ?? "Team owner"}/> : <CinematicHero tab={tab} playerCount={catalogCount}>{heroActions}</CinematicHero>}
 
         {inRoom && accountReady && !accountUser && <div className="account-save-reminder"><ShieldCheck size={19}/><span>Sign in to save your room access across devices.</span><button type="button" onClick={() => setModal("account")}>Sign in</button></div>}
         {inRoom && !state.endedAt && <AuctionBreak paused={auctionPaused} creator={!!isCreator} busy={busy || !connected} onResume={() => act({ type: "resume_auction" })}/>}
@@ -656,6 +660,7 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
         {inRoom && state.endedAt && tab !== "room" && <div className="auction-ended-banner" role="status"><span><strong>Auction complete.</strong> Your room and final squads are saved.</span><button className="button secondary" onClick={() => changeTab("room")}>View recap & downloads<ArrowRight size={16}/></button></div>}
         {inRoom && ownTeam && tab !== "room" && !state.endedAt && <PrivateBidBudget state={state} memberId={memberId} compact onViewAuction={() => changeTab("room")}/>}
         {tab === "players" && (!inRoom && !state.sharedCatalogVersion ? <div className="lobby-pool-loading" role="status">{connected ? "Loading the shared player pool…" : "Waiting for the player pool to reconnect…"}</div> : <PlayerPool state={state} isHost={!inRoom || (!!isHost && !state.endedAt)} inRoom={inRoom} canSelect={inRoom && !!isHost && !state.endedAt && !auctionPaused} onAction={runAction}/>)}
+        {inRoom && tab === "season" && <AuctionSeason key={`${state.code}:${memberId}`} state={state} token={session.token} memberId={memberId} isCreator={!!isCreator} connected={connected} ownTeamId={ownTeam?.id}/>}
         {inRoom && tab === "squads" && <><Squads state={state}/>{!!state.saleCorrections?.length && <SaleAudit state={state}/>}</>}
         {showTargets && session && <Activity key={`targets:${session.code}:${memberId}:${ownTeam?.id}`} mode={tab === "targets" ? "visible" : "hidden"}><MyTargetPicks state={state} memberId={memberId} onAction={runAction} connected={connected}/></Activity>}
         {showMySquad && tab === "my-squad" && <MySquad state={state} memberId={memberId}/>}

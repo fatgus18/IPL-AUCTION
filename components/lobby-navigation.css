@@ -8,9 +8,9 @@
 @media (min-width: 1280px) and (max-width: 1679px) {
   .in-auction .sidebar-profile { display: none; }
   .in-auction .sidebar { gap: 18px; padding-left: 24px; padding-right: 24px; }
-  .in-auction .sidebar nav { gap: 16px; }
+  .in-auction .sidebar nav { gap: 12px; }
 }
-@media (min-width: 1280px) and (max-width: 1500px) {
+@media (min-width: 1280px) and (max-width: 1580px) {
   .in-auction .sidebar nav .nav-item { font-size: 14px; gap: 7px; }
   .in-auction .sidebar nav .nav-item > svg { display: none; }
 }

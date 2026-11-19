@@ -1,0 +1,1746 @@
+{
+  "version": "espn-ipl-2026-2026-11-20",
+  "sourceUrl": "https://www.cricinfo.com/series/ipl-2026-1510719/most-valuable-players",
+  "verifiedAt": "2026-11-19T19:20:04.930Z",
+  "sourcePlayers": 202,
+  "players": [
+    {
+      "id": "axar-patel",
+      "providerPlayerId": "554691",
+      "canonicalName": "Axar Patel",
+      "profileUrl": "https://www.cricinfo.com/cricketers/axar-patel-554691",
+      "aliases": [
+        "Axar Patel"
+      ]
+    },
+    {
+      "id": "rashid-khan",
+      "providerPlayerId": "793463",
+      "canonicalName": "Rashid Khan",
+      "profileUrl": "https://www.cricinfo.com/cricketers/rashid-khan-793463",
+      "aliases": [
+        "Rashid Khan"
+      ]
+    },
+    {
+      "id": "marco-jansen",
+      "providerPlayerId": "696401",
+      "canonicalName": "Marco Jansen",
+      "profileUrl": "https://www.cricinfo.com/cricketers/marco-jansen-696401",
+      "aliases": [
+        "Marco Jansen"
+      ]
+    },
+    {
+      "id": "sunil-narine",
+      "providerPlayerId": "230558",
+      "canonicalName": "Sunil Narine",
+      "profileUrl": "https://www.cricinfo.com/cricketers/sunil-narine-230558",
+      "aliases": [
+        "Sunil Narine"
+      ]
+    },
+    {
+      "id": "abhishek-sharma",
+      "providerPlayerId": "1070183",
+      "canonicalName": "Abhishek Sharma",
+      "profileUrl": "https://www.cricinfo.com/cricketers/abhishek-sharma-1070183",
+      "aliases": [
+        "Abhishek Sharma"
+      ]
+    },
+    {
+      "id": "hardik-pandya",
+      "providerPlayerId": "625371",
+      "canonicalName": "Hardik Pandya",
+      "profileUrl": "https://www.cricinfo.com/cricketers/hardik-pandya-625371",
+      "aliases": [
+        "Hardik Pandya"
+      ]
+    },
+    {
+      "id": "ruturaj-gaikwad",
+      "providerPlayerId": "1060380",
+      "canonicalName": "Ruturaj Gaikwad",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ruturaj-gaikwad-1060380",
+      "aliases": [
+        "Ruturaj Gaikwad"
+      ]
+    },
+    {
+      "id": "shubman-gill",
+      "providerPlayerId": "1070173",
+      "canonicalName": "Shubman Gill",
+      "profileUrl": "https://www.cricinfo.com/cricketers/shubman-gill-1070173",
+      "aliases": [
+        "Shubman Gill"
+      ]
+    },
+    {
+      "id": "virat-kohli",
+      "providerPlayerId": "253802",
+      "canonicalName": "Virat Kohli",
+      "profileUrl": "https://www.cricinfo.com/cricketers/virat-kohli-253802",
+      "aliases": [
+        "Virat Kohli"
+      ]
+    },
+    {
+      "id": "shreyas-iyer",
+      "providerPlayerId": "642519",
+      "canonicalName": "Shreyas Iyer",
+      "profileUrl": "https://www.cricinfo.com/cricketers/shreyas-iyer-642519",
+      "aliases": [
+        "Shreyas Iyer"
+      ]
+    },
+    {
+      "id": "travis-head",
+      "providerPlayerId": "530011",
+      "canonicalName": "Travis Head",
+      "profileUrl": "https://www.cricinfo.com/cricketers/travis-head-530011",
+      "aliases": [
+        "Travis Head"
+      ]
+    },
+    {
+      "id": "yashasvi-jaiswal",
+      "providerPlayerId": "1151278",
+      "canonicalName": "Yashasvi Jaiswal",
+      "profileUrl": "https://www.cricinfo.com/cricketers/yashasvi-jaiswal-1151278",
+      "aliases": [
+        "Yashasvi Jaiswal"
+      ]
+    },
+    {
+      "id": "tilak-varma",
+      "providerPlayerId": "1170265",
+      "canonicalName": "Tilak Varma",
+      "profileUrl": "https://www.cricinfo.com/cricketers/tilak-varma-1170265",
+      "aliases": [
+        "Tilak Varma"
+      ]
+    },
+    {
+      "id": "suryakumar-yadav",
+      "providerPlayerId": "446507",
+      "canonicalName": "Suryakumar Yadav",
+      "profileUrl": "https://www.cricinfo.com/cricketers/suryakumar-yadav-446507",
+      "aliases": [
+        "Suryakumar Yadav"
+      ]
+    },
+    {
+      "id": "kuldeep-yadav",
+      "providerPlayerId": "559235",
+      "canonicalName": "Kuldeep Yadav",
+      "profileUrl": "https://www.cricinfo.com/cricketers/kuldeep-yadav-559235",
+      "aliases": [
+        "Kuldeep Yadav"
+      ]
+    },
+    {
+      "id": "josh-hazlewood",
+      "providerPlayerId": "288284",
+      "canonicalName": "Josh Hazlewood",
+      "profileUrl": "https://www.cricinfo.com/cricketers/josh-hazlewood-288284",
+      "aliases": [
+        "Josh Hazlewood"
+      ]
+    },
+    {
+      "id": "arshdeep-singh",
+      "providerPlayerId": "1125976",
+      "canonicalName": "Arshdeep Singh",
+      "profileUrl": "https://www.cricinfo.com/cricketers/arshdeep-singh-1125976",
+      "aliases": [
+        "Arshdeep Singh"
+      ]
+    },
+    {
+      "id": "yuzvendra-chahal",
+      "providerPlayerId": "430246",
+      "canonicalName": "Yuzvendra Chahal",
+      "profileUrl": "https://www.cricinfo.com/cricketers/yuzvendra-chahal-430246",
+      "aliases": [
+        "Yuzvendra Chahal"
+      ]
+    },
+    {
+      "id": "varun-chakravarthy",
+      "providerPlayerId": "1108375",
+      "canonicalName": "Varun Chakravarthy",
+      "profileUrl": "https://www.cricinfo.com/cricketers/varun-chakravarthy-1108375",
+      "aliases": [
+        "Varun Chakravarthy"
+      ]
+    },
+    {
+      "id": "pat-cummins",
+      "providerPlayerId": "489889",
+      "canonicalName": "Pat Cummins",
+      "profileUrl": "https://www.cricinfo.com/cricketers/pat-cummins-489889",
+      "aliases": [
+        "Pat Cummins"
+      ]
+    },
+    {
+      "id": "jasprit-bumrah",
+      "providerPlayerId": "625383",
+      "canonicalName": "Jasprit Bumrah",
+      "profileUrl": "https://www.cricinfo.com/cricketers/jasprit-bumrah-625383",
+      "aliases": [
+        "Jasprit Bumrah"
+      ]
+    },
+    {
+      "id": "sanju-samson",
+      "providerPlayerId": "425943",
+      "canonicalName": "Sanju Samson",
+      "profileUrl": "https://www.cricinfo.com/cricketers/sanju-samson-425943",
+      "aliases": [
+        "Sanju Samson"
+      ]
+    },
+    {
+      "id": "kl-rahul",
+      "providerPlayerId": "422108",
+      "canonicalName": "KL Rahul",
+      "profileUrl": "https://www.cricinfo.com/cricketers/kl-rahul-422108",
+      "aliases": [
+        "KL Rahul"
+      ]
+    },
+    {
+      "id": "jos-buttler",
+      "providerPlayerId": "308967",
+      "canonicalName": "Jos Buttler",
+      "profileUrl": "https://www.cricinfo.com/cricketers/jos-buttler-308967",
+      "aliases": [
+        "Jos Buttler"
+      ]
+    },
+    {
+      "id": "nicholas-pooran",
+      "providerPlayerId": "604302",
+      "canonicalName": "Nicholas Pooran",
+      "profileUrl": "https://www.cricinfo.com/cricketers/nicholas-pooran-604302",
+      "aliases": [
+        "Nicholas Pooran"
+      ]
+    },
+    {
+      "id": "dewald-brevis",
+      "providerPlayerId": "1070665",
+      "canonicalName": "Dewald Brevis",
+      "profileUrl": "https://www.cricinfo.com/cricketers/dewald-brevis-1070665",
+      "aliases": [
+        "Dewald Brevis"
+      ]
+    },
+    {
+      "id": "nitish-rana",
+      "providerPlayerId": "604527",
+      "canonicalName": "Nitish Rana",
+      "profileUrl": "https://www.cricinfo.com/cricketers/nitish-rana-604527",
+      "aliases": [
+        "Nitish Rana"
+      ]
+    },
+    {
+      "id": "david-miller",
+      "providerPlayerId": "321777",
+      "canonicalName": "David Miller",
+      "profileUrl": "https://www.cricinfo.com/cricketers/david-miller-321777",
+      "aliases": [
+        "David Miller"
+      ]
+    },
+    {
+      "id": "finn-allen",
+      "providerPlayerId": "959759",
+      "canonicalName": "Finn Allen",
+      "profileUrl": "https://www.cricinfo.com/cricketers/finn-allen-959759",
+      "aliases": [
+        "Finn Allen"
+      ]
+    },
+    {
+      "id": "aiden-markram",
+      "providerPlayerId": "600498",
+      "canonicalName": "Aiden Markram",
+      "profileUrl": "https://www.cricinfo.com/cricketers/aiden-markram-600498",
+      "aliases": [
+        "Aiden Markram"
+      ]
+    },
+    {
+      "id": "devdutt-padikkal",
+      "providerPlayerId": "1119026",
+      "canonicalName": "Devdutt Padikkal",
+      "profileUrl": "https://www.cricinfo.com/cricketers/devdutt-padikkal-1119026",
+      "aliases": [
+        "Devdutt Padikkal"
+      ]
+    },
+    {
+      "id": "manish-pandey",
+      "providerPlayerId": "290630",
+      "canonicalName": "Manish Pandey",
+      "profileUrl": "https://www.cricinfo.com/cricketers/manish-pandey-290630",
+      "aliases": [
+        "Manish Pandey"
+      ]
+    },
+    {
+      "id": "rovman-powell",
+      "providerPlayerId": "820351",
+      "canonicalName": "Rovman Powell",
+      "profileUrl": "https://www.cricinfo.com/cricketers/rovman-powell-820351",
+      "aliases": [
+        "Rovman Powell"
+      ]
+    },
+    {
+      "id": "rinku-singh",
+      "providerPlayerId": "723105",
+      "canonicalName": "Rinku Singh",
+      "profileUrl": "https://www.cricinfo.com/cricketers/rinku-singh-723105",
+      "aliases": [
+        "Rinku Singh"
+      ]
+    },
+    {
+      "id": "shimron-hetmyer",
+      "providerPlayerId": "670025",
+      "canonicalName": "Shimron Hetmyer",
+      "profileUrl": "https://www.cricinfo.com/cricketers/shimron-hetmyer-670025",
+      "aliases": [
+        "Shimron Hetmyer"
+      ]
+    },
+    {
+      "id": "tim-david",
+      "providerPlayerId": "892749",
+      "canonicalName": "Tim David",
+      "profileUrl": "https://www.cricinfo.com/cricketers/tim-david-892749",
+      "aliases": [
+        "Tim David"
+      ]
+    },
+    {
+      "id": "tristan-stubbs",
+      "providerPlayerId": "595978",
+      "canonicalName": "Tristan Stubbs",
+      "profileUrl": "https://www.cricinfo.com/cricketers/tristan-stubbs-595978",
+      "aliases": [
+        "Tristan Stubbs"
+      ]
+    },
+    {
+      "id": "sai-sudharsan",
+      "providerPlayerId": "1151288",
+      "canonicalName": "Sai Sudharsan",
+      "profileUrl": "https://www.cricinfo.com/cricketers/sai-sudharsan-1151288",
+      "aliases": [
+        "Sai Sudharsan"
+      ]
+    },
+    {
+      "id": "rohit-sharma",
+      "providerPlayerId": "34102",
+      "canonicalName": "Rohit Sharma",
+      "profileUrl": "https://www.cricinfo.com/cricketers/rohit-sharma-34102",
+      "aliases": [
+        "Rohit Sharma"
+      ]
+    },
+    {
+      "id": "riyan-parag",
+      "providerPlayerId": "1079434",
+      "canonicalName": "Riyan Parag",
+      "profileUrl": "https://www.cricinfo.com/cricketers/riyan-parag-1079434",
+      "aliases": [
+        "Riyan Parag"
+      ]
+    },
+    {
+      "id": "rajat-patidar",
+      "providerPlayerId": "823703",
+      "canonicalName": "Rajat Patidar",
+      "profileUrl": "https://www.cricinfo.com/cricketers/rajat-patidar-823703",
+      "aliases": [
+        "Rajat Patidar"
+      ]
+    },
+    {
+      "id": "sarfaraz-khan",
+      "providerPlayerId": "642525",
+      "canonicalName": "Sarfaraz Khan",
+      "profileUrl": "https://www.cricinfo.com/cricketers/sarfaraz-khan-642525",
+      "aliases": [
+        "Sarfaraz Khan"
+      ]
+    },
+    {
+      "id": "karun-nair",
+      "providerPlayerId": "398439",
+      "canonicalName": "Karun Nair",
+      "profileUrl": "https://www.cricinfo.com/cricketers/karun-nair-398439",
+      "aliases": [
+        "Karun Nair"
+      ]
+    },
+    {
+      "id": "ajinkya-rahane",
+      "providerPlayerId": "277916",
+      "canonicalName": "Ajinkya Rahane",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ajinkya-rahane-277916",
+      "aliases": [
+        "Ajinkya Rahane"
+      ]
+    },
+    {
+      "id": "sherfane-rutherford",
+      "providerPlayerId": "914541",
+      "canonicalName": "Sherfane Rutherford",
+      "profileUrl": "https://www.cricinfo.com/cricketers/sherfane-rutherford-914541",
+      "aliases": [
+        "Sherfane Rutherford"
+      ]
+    },
+    {
+      "id": "matthew-short",
+      "providerPlayerId": "605575",
+      "canonicalName": "Matthew Short",
+      "profileUrl": "https://www.cricinfo.com/cricketers/matthew-short-605575",
+      "aliases": [
+        "Matthew Short"
+      ]
+    },
+    {
+      "id": "pathum-nissanka",
+      "providerPlayerId": "1028655",
+      "canonicalName": "Pathum Nissanka",
+      "profileUrl": "https://www.cricinfo.com/cricketers/pathum-nissanka-1028655",
+      "aliases": [
+        "Pathum Nissanka"
+      ]
+    },
+    {
+      "id": "rahul-chahar",
+      "providerPlayerId": "1064812",
+      "canonicalName": "Rahul Chahar",
+      "profileUrl": "https://www.cricinfo.com/cricketers/rahul-chahar-1064812",
+      "aliases": [
+        "Rahul Chahar"
+      ]
+    },
+    {
+      "id": "akeal-hosein",
+      "providerPlayerId": "530812",
+      "canonicalName": "Akeal Hosein",
+      "profileUrl": "https://www.cricinfo.com/cricketers/akeal-hosein-530812",
+      "aliases": [
+        "Akeal Hosein"
+      ]
+    },
+    {
+      "id": "eshan-malinga",
+      "providerPlayerId": "1306214",
+      "canonicalName": "Eshan Malinga",
+      "profileUrl": "https://www.cricinfo.com/cricketers/eshan-malinga-1306214",
+      "aliases": [
+        "Eshan Malinga"
+      ]
+    },
+    {
+      "id": "jaydev-unadkat",
+      "providerPlayerId": "390484",
+      "canonicalName": "Jaydev Unadkat",
+      "profileUrl": "https://www.cricinfo.com/cricketers/jaydev-unadkat-390484",
+      "aliases": [
+        "Jaydev Unadkat"
+      ]
+    },
+    {
+      "id": "noor-ahmad",
+      "providerPlayerId": "1182529",
+      "canonicalName": "Noor Ahmad",
+      "profileUrl": "https://www.cricinfo.com/cricketers/noor-ahmad-1182529",
+      "aliases": [
+        "Noor Ahmad"
+      ]
+    },
+    {
+      "id": "mitchell-starc",
+      "providerPlayerId": "311592",
+      "canonicalName": "Mitchell Starc",
+      "profileUrl": "https://www.cricinfo.com/cricketers/mitchell-starc-311592",
+      "aliases": [
+        "Mitchell Starc"
+      ]
+    },
+    {
+      "id": "lungi-ngidi",
+      "providerPlayerId": "542023",
+      "canonicalName": "Lungi Ngidi",
+      "profileUrl": "https://www.cricinfo.com/cricketers/lungi-ngidi-542023",
+      "aliases": [
+        "Lungi Ngidi"
+      ]
+    },
+    {
+      "id": "mohammed-siraj",
+      "providerPlayerId": "940973",
+      "canonicalName": "Mohammed Siraj",
+      "profileUrl": "https://www.cricinfo.com/cricketers/mohammed-siraj-940973",
+      "aliases": [
+        "Mohammed Siraj"
+      ]
+    },
+    {
+      "id": "prasidh-krishna",
+      "providerPlayerId": "917159",
+      "canonicalName": "Prasidh Krishna",
+      "profileUrl": "https://www.cricinfo.com/cricketers/prasidh-krishna-917159",
+      "aliases": [
+        "Prasidh Krishna"
+      ]
+    },
+    {
+      "id": "kagiso-rabada",
+      "providerPlayerId": "550215",
+      "canonicalName": "Kagiso Rabada",
+      "profileUrl": "https://www.cricinfo.com/cricketers/kagiso-rabada-550215",
+      "aliases": [
+        "Kagiso Rabada"
+      ]
+    },
+    {
+      "id": "jacob-duffy",
+      "providerPlayerId": "547766",
+      "canonicalName": "Jacob Duffy",
+      "profileUrl": "https://www.cricinfo.com/cricketers/jacob-duffy-547766",
+      "aliases": [
+        "Jacob Duffy"
+      ]
+    },
+    {
+      "id": "bhuvneshwar-kumar",
+      "providerPlayerId": "326016",
+      "canonicalName": "Bhuvneshwar Kumar",
+      "profileUrl": "https://www.cricinfo.com/cricketers/bhuvneshwar-kumar-326016",
+      "aliases": [
+        "Bhuvneshwar Kumar"
+      ]
+    },
+    {
+      "id": "lockie-ferguson",
+      "providerPlayerId": "493773",
+      "canonicalName": "Lockie Ferguson",
+      "profileUrl": "https://www.cricinfo.com/cricketers/lockie-ferguson-493773",
+      "aliases": [
+        "Lockie Ferguson"
+      ]
+    },
+    {
+      "id": "matheesha-pathirana",
+      "providerPlayerId": "1194795",
+      "canonicalName": "Matheesha Pathirana",
+      "profileUrl": "https://www.cricinfo.com/cricketers/matheesha-pathirana-1194795",
+      "aliases": [
+        "Matheesha Pathirana"
+      ]
+    },
+    {
+      "id": "harshal-patel",
+      "providerPlayerId": "390481",
+      "canonicalName": "Harshal Patel",
+      "profileUrl": "https://www.cricinfo.com/cricketers/harshal-patel-390481",
+      "aliases": [
+        "Harshal Patel"
+      ]
+    },
+    {
+      "id": "jofra-archer",
+      "providerPlayerId": "669855",
+      "canonicalName": "Jofra Archer",
+      "profileUrl": "https://www.cricinfo.com/cricketers/jofra-archer-669855",
+      "aliases": [
+        "Jofra Archer"
+      ]
+    },
+    {
+      "id": "ravi-bishnoi",
+      "providerPlayerId": "1175441",
+      "canonicalName": "Ravi Bishnoi",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ravi-bishnoi-1175441",
+      "aliases": [
+        "Ravi Bishnoi"
+      ]
+    },
+    {
+      "id": "avesh-khan",
+      "providerPlayerId": "694211",
+      "canonicalName": "Avesh Khan",
+      "profileUrl": "https://www.cricinfo.com/cricketers/avesh-khan-694211",
+      "aliases": [
+        "Avesh Khan"
+      ]
+    },
+    {
+      "id": "mohammed-shami",
+      "providerPlayerId": "481896",
+      "canonicalName": "Mohammed Shami",
+      "profileUrl": "https://www.cricinfo.com/cricketers/mohammed-shami-481896",
+      "aliases": [
+        "Mohammed Shami"
+      ]
+    },
+    {
+      "id": "anrich-nortje",
+      "providerPlayerId": "481979",
+      "canonicalName": "Anrich Nortje",
+      "profileUrl": "https://www.cricinfo.com/cricketers/anrich-nortje-481979",
+      "aliases": [
+        "Anrich Nortje"
+      ]
+    },
+    {
+      "id": "trent-boult",
+      "providerPlayerId": "277912",
+      "canonicalName": "Trent Boult",
+      "profileUrl": "https://www.cricinfo.com/cricketers/trent-boult-277912",
+      "aliases": [
+        "Trent Boult"
+      ]
+    },
+    {
+      "id": "deepak-chahar",
+      "providerPlayerId": "447261",
+      "canonicalName": "Deepak Chahar",
+      "profileUrl": "https://www.cricinfo.com/cricketers/deepak-chahar-447261",
+      "aliases": [
+        "Deepak Chahar"
+      ]
+    },
+    {
+      "id": "shardul-thakur",
+      "providerPlayerId": "475281",
+      "canonicalName": "Shardul Thakur",
+      "profileUrl": "https://www.cricinfo.com/cricketers/shardul-thakur-475281",
+      "aliases": [
+        "Shardul Thakur"
+      ]
+    },
+    {
+      "id": "t-natarajan",
+      "providerPlayerId": "802575",
+      "canonicalName": "T Natarajan",
+      "profileUrl": "https://www.cricinfo.com/cricketers/t-natarajan-802575",
+      "aliases": [
+        "T Natarajan"
+      ]
+    },
+    {
+      "id": "ben-dwarshuis",
+      "providerPlayerId": "679567",
+      "canonicalName": "Ben Dwarshuis",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ben-dwarshuis-679567",
+      "aliases": [
+        "Ben Dwarshuis"
+      ]
+    },
+    {
+      "id": "adam-milne",
+      "providerPlayerId": "450860",
+      "canonicalName": "Adam Milne",
+      "profileUrl": "https://www.cricinfo.com/cricketers/adam-milne-450860",
+      "aliases": [
+        "Adam Milne"
+      ]
+    },
+    {
+      "id": "khaleel-ahmed",
+      "providerPlayerId": "942645",
+      "canonicalName": "Khaleel Ahmed",
+      "profileUrl": "https://www.cricinfo.com/cricketers/khaleel-ahmed-942645",
+      "aliases": [
+        "Khaleel Ahmed"
+      ]
+    },
+    {
+      "id": "matt-henry",
+      "providerPlayerId": "506612",
+      "canonicalName": "Matt Henry",
+      "profileUrl": "https://www.cricinfo.com/cricketers/matt-henry-506612",
+      "aliases": [
+        "Matt Henry"
+      ]
+    },
+    {
+      "id": "anshul-kamboj",
+      "providerPlayerId": "1175428",
+      "canonicalName": "Anshul Kamboj",
+      "profileUrl": "https://www.cricinfo.com/cricketers/anshul-kamboj-1175428",
+      "aliases": [
+        "Anshul Kamboj"
+      ]
+    },
+    {
+      "id": "dushmantha-chameera",
+      "providerPlayerId": "552152",
+      "canonicalName": "Dushmantha Chameera",
+      "profileUrl": "https://www.cricinfo.com/cricketers/dushmantha-chameera-552152",
+      "aliases": [
+        "Dushmantha Chameera"
+      ]
+    },
+    {
+      "id": "kyle-jamieson",
+      "providerPlayerId": "625960",
+      "canonicalName": "Kyle Jamieson",
+      "profileUrl": "https://www.cricinfo.com/cricketers/kyle-jamieson-625960",
+      "aliases": [
+        "Kyle Jamieson"
+      ]
+    },
+    {
+      "id": "mukesh-kumar",
+      "providerPlayerId": "926851",
+      "canonicalName": "Mukesh Kumar",
+      "profileUrl": "https://www.cricinfo.com/cricketers/mukesh-kumar-926851",
+      "aliases": [
+        "Mukesh Kumar"
+      ]
+    },
+    {
+      "id": "xavier-bartlett",
+      "providerPlayerId": "1050545",
+      "canonicalName": "Xavier Bartlett",
+      "profileUrl": "https://www.cricinfo.com/cricketers/xavier-bartlett-1050545",
+      "aliases": [
+        "Xavier Bartlett"
+      ]
+    },
+    {
+      "id": "nandre-burger",
+      "providerPlayerId": "971349",
+      "canonicalName": "Nandre Burger",
+      "profileUrl": "https://www.cricinfo.com/cricketers/nandre-burger-971349",
+      "aliases": [
+        "Nandre Burger"
+      ]
+    },
+    {
+      "id": "mayank-yadav",
+      "providerPlayerId": "1292563",
+      "canonicalName": "Mayank Yadav",
+      "profileUrl": "https://www.cricinfo.com/cricketers/mayank-yadav-1292563",
+      "aliases": [
+        "Mayank Yadav"
+      ]
+    },
+    {
+      "id": "allah-ghazanfar",
+      "providerPlayerId": "1326798",
+      "canonicalName": "AM Ghazanfar",
+      "profileUrl": "https://www.cricinfo.com/cricketers/am-ghazanfar-1326798",
+      "aliases": [
+        "Allah Ghazanfar"
+      ],
+      "identityEvidence": "Existing verified profile identity/name variant; canonical display name and ESPN ID checked against the supplied MVP page."
+    },
+    {
+      "id": "mayank-markande",
+      "providerPlayerId": "1081442",
+      "canonicalName": "Mayank Markande",
+      "profileUrl": "https://www.cricinfo.com/cricketers/mayank-markande-1081442",
+      "aliases": [
+        "Mayank Markande"
+      ]
+    },
+    {
+      "id": "cooper-connolly",
+      "providerPlayerId": "1210488",
+      "canonicalName": "Cooper Connolly",
+      "profileUrl": "https://www.cricinfo.com/cricketers/cooper-connolly-1210488",
+      "aliases": [
+        "Cooper Connolly"
+      ]
+    },
+    {
+      "id": "shivam-dube",
+      "providerPlayerId": "714451",
+      "canonicalName": "Shivam Dube",
+      "profileUrl": "https://www.cricinfo.com/cricketers/shivam-dube-714451",
+      "aliases": [
+        "Shivam Dube"
+      ]
+    },
+    {
+      "id": "venkatesh-iyer",
+      "providerPlayerId": "851403",
+      "canonicalName": "Venkatesh Iyer",
+      "profileUrl": "https://www.cricinfo.com/cricketers/venkatesh-iyer-851403",
+      "aliases": [
+        "Venkatesh Iyer"
+      ]
+    },
+    {
+      "id": "krunal-pandya",
+      "providerPlayerId": "471342",
+      "canonicalName": "Krunal Pandya",
+      "profileUrl": "https://www.cricinfo.com/cricketers/krunal-pandya-471342",
+      "aliases": [
+        "Krunal Pandya"
+      ]
+    },
+    {
+      "id": "marcus-stoinis",
+      "providerPlayerId": "325012",
+      "canonicalName": "Marcus Stoinis",
+      "profileUrl": "https://www.cricinfo.com/cricketers/marcus-stoinis-325012",
+      "aliases": [
+        "Marcus Stoinis"
+      ]
+    },
+    {
+      "id": "cameron-green",
+      "providerPlayerId": "1076713",
+      "canonicalName": "Cameron Green",
+      "profileUrl": "https://www.cricinfo.com/cricketers/cameron-green-1076713",
+      "aliases": [
+        "Cameron Green"
+      ]
+    },
+    {
+      "id": "nitish-kumar-reddy",
+      "providerPlayerId": "1175496",
+      "canonicalName": "Nitish Kumar Reddy",
+      "profileUrl": "https://www.cricinfo.com/cricketers/nitish-kumar-reddy-1175496",
+      "aliases": [
+        "Nitish Kumar Reddy"
+      ]
+    },
+    {
+      "id": "liam-livingstone",
+      "providerPlayerId": "403902",
+      "canonicalName": "Liam Livingstone",
+      "profileUrl": "https://www.cricinfo.com/cricketers/liam-livingstone-403902",
+      "aliases": [
+        "Liam Livingstone"
+      ]
+    },
+    {
+      "id": "ravindra-jadeja",
+      "providerPlayerId": "234675",
+      "canonicalName": "Ravindra Jadeja",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ravindra-jadeja-234675",
+      "aliases": [
+        "Ravindra Jadeja"
+      ]
+    },
+    {
+      "id": "mitchell-marsh",
+      "providerPlayerId": "272450",
+      "canonicalName": "Mitchell Marsh",
+      "profileUrl": "https://www.cricinfo.com/cricketers/mitchell-marsh-272450",
+      "aliases": [
+        "Mitchell Marsh"
+      ]
+    },
+    {
+      "id": "will-jacks",
+      "providerPlayerId": "897549",
+      "canonicalName": "Will Jacks",
+      "profileUrl": "https://www.cricinfo.com/cricketers/will-jacks-897549",
+      "aliases": [
+        "Will Jacks"
+      ]
+    },
+    {
+      "id": "mitchell-santner",
+      "providerPlayerId": "502714",
+      "canonicalName": "Mitchell Santner",
+      "profileUrl": "https://www.cricinfo.com/cricketers/mitchell-santner-502714",
+      "aliases": [
+        "Mitchell Santner"
+      ]
+    },
+    {
+      "id": "washington-sundar",
+      "providerPlayerId": "719715",
+      "canonicalName": "Washington Sundar",
+      "profileUrl": "https://www.cricinfo.com/cricketers/washington-sundar-719715",
+      "aliases": [
+        "Washington Sundar"
+      ]
+    },
+    {
+      "id": "corbin-bosch",
+      "providerPlayerId": "594322",
+      "canonicalName": "Corbin Bosch",
+      "profileUrl": "https://www.cricinfo.com/cricketers/corbin-bosch-594322",
+      "aliases": [
+        "Corbin Bosch"
+      ]
+    },
+    {
+      "id": "jamie-overton",
+      "providerPlayerId": "510530",
+      "canonicalName": "Jamie Overton",
+      "profileUrl": "https://www.cricinfo.com/cricketers/jamie-overton-510530",
+      "aliases": [
+        "Jamie Overton"
+      ]
+    },
+    {
+      "id": "glenn-phillips",
+      "providerPlayerId": "823509",
+      "canonicalName": "Glenn Phillips",
+      "profileUrl": "https://www.cricinfo.com/cricketers/glenn-phillips-823509",
+      "aliases": [
+        "Glenn Phillips"
+      ]
+    },
+    {
+      "id": "rahul-tewatia",
+      "providerPlayerId": "423838",
+      "canonicalName": "Rahul Tewatia",
+      "profileUrl": "https://www.cricinfo.com/cricketers/rahul-tewatia-423838",
+      "aliases": [
+        "Rahul Tewatia"
+      ]
+    },
+    {
+      "id": "jason-holder",
+      "providerPlayerId": "391485",
+      "canonicalName": "Jason Holder",
+      "profileUrl": "https://www.cricinfo.com/cricketers/jason-holder-391485",
+      "aliases": [
+        "Jason Holder"
+      ]
+    },
+    {
+      "id": "jacob-bethell",
+      "providerPlayerId": "1194959",
+      "canonicalName": "Jacob Bethell",
+      "profileUrl": "https://www.cricinfo.com/cricketers/jacob-bethell-1194959",
+      "aliases": [
+        "Jacob Bethell"
+      ]
+    },
+    {
+      "id": "romario-shepherd",
+      "providerPlayerId": "677077",
+      "canonicalName": "Romario Shepherd",
+      "profileUrl": "https://www.cricinfo.com/cricketers/romario-shepherd-677077",
+      "aliases": [
+        "Romario Shepherd"
+      ]
+    },
+    {
+      "id": "azmatullah-omarzai",
+      "providerPlayerId": "819429",
+      "canonicalName": "Azmatullah Omarzai",
+      "profileUrl": "https://www.cricinfo.com/cricketers/azmatullah-omarzai-819429",
+      "aliases": [
+        "Azmatullah Omarzai"
+      ]
+    },
+    {
+      "id": "shahbaz-ahmed",
+      "providerPlayerId": "1159711",
+      "canonicalName": "Shahbaz Ahmed",
+      "profileUrl": "https://www.cricinfo.com/cricketers/shahbaz-ahmed-1159711",
+      "aliases": [
+        "Shahbaz Ahmed"
+      ]
+    },
+    {
+      "id": "lhuan-dre-pretorius",
+      "providerPlayerId": "1385640",
+      "canonicalName": "Lhuan-dre Pretorius",
+      "profileUrl": "https://www.cricinfo.com/cricketers/lhuan-dre-pretorius-1385640",
+      "aliases": [
+        "Lhuan-dre Pretorius"
+      ]
+    },
+    {
+      "id": "philip-salt",
+      "providerPlayerId": "669365",
+      "canonicalName": "Phil Salt",
+      "profileUrl": "https://www.cricinfo.com/cricketers/phil-salt-669365",
+      "aliases": [
+        "Philip Salt"
+      ],
+      "identityEvidence": "Existing verified profile identity/name variant; canonical display name and ESPN ID checked against the supplied MVP page."
+    },
+    {
+      "id": "jitesh-sharma",
+      "providerPlayerId": "721867",
+      "canonicalName": "Jitesh Sharma",
+      "profileUrl": "https://www.cricinfo.com/cricketers/jitesh-sharma-721867",
+      "aliases": [
+        "Jitesh Sharma"
+      ]
+    },
+    {
+      "id": "ishan-kishan",
+      "providerPlayerId": "720471",
+      "canonicalName": "Ishan Kishan",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ishan-kishan-720471",
+      "aliases": [
+        "Ishan Kishan"
+      ]
+    },
+    {
+      "id": "heinrich-klaasen",
+      "providerPlayerId": "436757",
+      "canonicalName": "Heinrich Klaasen",
+      "profileUrl": "https://www.cricinfo.com/cricketers/heinrich-klaasen-436757",
+      "aliases": [
+        "Heinrich Klaasen"
+      ]
+    },
+    {
+      "id": "dhruv-jurel",
+      "providerPlayerId": "1175488",
+      "canonicalName": "Dhruv Jurel",
+      "profileUrl": "https://www.cricinfo.com/cricketers/dhruv-jurel-1175488",
+      "aliases": [
+        "Dhruv Jurel"
+      ]
+    },
+    {
+      "id": "rishabh-pant",
+      "providerPlayerId": "931581",
+      "canonicalName": "Rishabh Pant",
+      "profileUrl": "https://www.cricinfo.com/cricketers/rishabh-pant-931581",
+      "aliases": [
+        "Rishabh Pant"
+      ]
+    },
+    {
+      "id": "josh-inglis",
+      "providerPlayerId": "662235",
+      "canonicalName": "Josh Inglis",
+      "profileUrl": "https://www.cricinfo.com/cricketers/josh-inglis-662235",
+      "aliases": [
+        "Josh Inglis"
+      ]
+    },
+    {
+      "id": "quinton-de-kock",
+      "providerPlayerId": "379143",
+      "canonicalName": "Quinton de Kock",
+      "profileUrl": "https://www.cricinfo.com/cricketers/quinton-de-kock-379143",
+      "aliases": [
+        "Quinton de Kock"
+      ]
+    },
+    {
+      "id": "ryan-rickelton",
+      "providerPlayerId": "605661",
+      "canonicalName": "Ryan Rickelton",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ryan-rickelton-605661",
+      "aliases": [
+        "Ryan Rickelton"
+      ]
+    },
+    {
+      "id": "tim-seifert",
+      "providerPlayerId": "625964",
+      "canonicalName": "Tim Seifert",
+      "profileUrl": "https://www.cricinfo.com/cricketers/tim-seifert-625964",
+      "aliases": [
+        "Tim Seifert"
+      ]
+    },
+    {
+      "id": "donovan-ferreira",
+      "providerPlayerId": "698315",
+      "canonicalName": "Donovan Ferreira",
+      "profileUrl": "https://www.cricinfo.com/cricketers/donovan-ferreira-698315",
+      "aliases": [
+        "Donovan Ferreira"
+      ]
+    },
+    {
+      "id": "urvil-patel",
+      "providerPlayerId": "1131570",
+      "canonicalName": "Urvil Patel",
+      "profileUrl": "https://www.cricinfo.com/cricketers/urvil-patel-1131570",
+      "aliases": [
+        "Urvil Patel"
+      ]
+    },
+    {
+      "id": "sameer-rizvi",
+      "providerPlayerId": "1175489",
+      "canonicalName": "Sameer Rizvi",
+      "profileUrl": "https://www.cricinfo.com/cricketers/sameer-rizvi-1175489",
+      "aliases": [
+        "Sameer Rizvi"
+      ]
+    },
+    {
+      "id": "kumar-kushagra",
+      "providerPlayerId": "1207295",
+      "canonicalName": "Kumar Kushagra",
+      "profileUrl": "https://www.cricinfo.com/cricketers/kumar-kushagra-1207295",
+      "aliases": [
+        "Kumar Kushagra"
+      ]
+    },
+    {
+      "id": "vishnu-vinod",
+      "providerPlayerId": "732293",
+      "canonicalName": "Vishnu Vinod",
+      "profileUrl": "https://www.cricinfo.com/cricketers/vishnu-vinod-732293",
+      "aliases": [
+        "Vishnu Vinod"
+      ]
+    },
+    {
+      "id": "smaran-ravichandran",
+      "providerPlayerId": "1327722",
+      "canonicalName": "Ravichandran Smaran",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ravichandran-smaran-1327722",
+      "aliases": [
+        "Smaran Ravichandran"
+      ],
+      "identityEvidence": "Existing verified profile identity/name variant; canonical display name and ESPN ID checked against the supplied MVP page."
+    },
+    {
+      "id": "aniket-verma",
+      "providerPlayerId": "1409976",
+      "canonicalName": "Aniket Verma",
+      "profileUrl": "https://www.cricinfo.com/cricketers/aniket-verma-1409976",
+      "aliases": [
+        "Aniket Verma"
+      ]
+    },
+    {
+      "id": "shubham-dubey",
+      "providerPlayerId": "1252585",
+      "canonicalName": "Shubham Dubey",
+      "profileUrl": "https://www.cricinfo.com/cricketers/shubham-dubey-1252585",
+      "aliases": [
+        "Shubham Dubey"
+      ]
+    },
+    {
+      "id": "abdul-samad",
+      "providerPlayerId": "1175485",
+      "canonicalName": "Abdul Samad",
+      "profileUrl": "https://www.cricinfo.com/cricketers/abdul-samad-1175485",
+      "aliases": [
+        "Abdul Samad"
+      ]
+    },
+    {
+      "id": "robin-minz",
+      "providerPlayerId": "1350762",
+      "canonicalName": "Robin Minz",
+      "profileUrl": "https://www.cricinfo.com/cricketers/robin-minz-1350762",
+      "aliases": [
+        "Robin Minz"
+      ]
+    },
+    {
+      "id": "kartik-sharma",
+      "providerPlayerId": "1459392",
+      "canonicalName": "Kartik Sharma",
+      "profileUrl": "https://www.cricinfo.com/cricketers/kartik-sharma-1459392",
+      "aliases": [
+        "Kartik Sharma"
+      ]
+    },
+    {
+      "id": "sahil-parakh",
+      "providerPlayerId": "1451028",
+      "canonicalName": "Sahil Parakh",
+      "profileUrl": "https://www.cricinfo.com/cricketers/sahil-parakh-1451028",
+      "aliases": [
+        "Sahil Parakh"
+      ]
+    },
+    {
+      "id": "tejasvi-dahiya",
+      "providerPlayerId": "1460372",
+      "canonicalName": "Tejasvi Dahiya",
+      "profileUrl": "https://www.cricinfo.com/cricketers/tejasvi-dahiya-1460372",
+      "aliases": [
+        "Tejasvi Dahiya"
+      ]
+    },
+    {
+      "id": "salil-arora",
+      "providerPlayerId": "1199281",
+      "canonicalName": "Salil Arora",
+      "profileUrl": "https://www.cricinfo.com/cricketers/salil-arora-1199281",
+      "aliases": [
+        "Salil Arora"
+      ]
+    },
+    {
+      "id": "ravi-singh",
+      "providerPlayerId": "1461577",
+      "canonicalName": "Ravi Singh",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ravi-singh-1461577",
+      "aliases": [
+        "Ravi Singh"
+      ]
+    },
+    {
+      "id": "himmat-singh",
+      "providerPlayerId": "805235",
+      "canonicalName": "Himmat Singh",
+      "profileUrl": "https://www.cricinfo.com/cricketers/himmat-singh-805235",
+      "aliases": [
+        "Himmat Singh"
+      ]
+    },
+    {
+      "id": "akshat-raghuvanshi",
+      "providerPlayerId": "1300795",
+      "canonicalName": "Akshat Raghuwanshi",
+      "profileUrl": "https://www.cricinfo.com/cricketers/akshat-raghuwanshi-1300795",
+      "aliases": [
+        "Akshat Raghuvanshi"
+      ],
+      "identityEvidence": "Existing verified profile identity/name variant; canonical display name and ESPN ID checked against the supplied MVP page."
+    },
+    {
+      "id": "mukul-choudhary",
+      "providerPlayerId": "1354217",
+      "canonicalName": "Mukul Choudhary",
+      "profileUrl": "https://www.cricinfo.com/cricketers/mukul-choudhary-1354217",
+      "aliases": [
+        "Mukul Choudhary"
+      ]
+    },
+    {
+      "id": "ayush-mhatre",
+      "providerPlayerId": "1452455",
+      "canonicalName": "Ayush Mhatre",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ayush-mhatre-1452455",
+      "aliases": [
+        "Ayush Mhatre"
+      ]
+    },
+    {
+      "id": "abhishek-porel",
+      "providerPlayerId": "1277545",
+      "canonicalName": "Abishek Porel",
+      "profileUrl": "https://www.cricinfo.com/cricketers/abishek-porel-1277545",
+      "aliases": [
+        "Abhishek Porel"
+      ],
+      "identityEvidence": "Existing verified profile identity/name variant; canonical display name and ESPN ID checked against the supplied MVP page."
+    },
+    {
+      "id": "shahrukh-khan",
+      "providerPlayerId": "719719",
+      "canonicalName": "M Shahrukh Khan",
+      "profileUrl": "https://www.cricinfo.com/cricketers/m-shahrukh-khan-719719",
+      "aliases": [
+        "Shahrukh Khan"
+      ],
+      "identityEvidence": "Existing verified profile identity/name variant; canonical display name and ESPN ID checked against the supplied MVP page."
+    },
+    {
+      "id": "priyansh-arya",
+      "providerPlayerId": "1175456",
+      "canonicalName": "Priyansh Arya",
+      "profileUrl": "https://www.cricinfo.com/cricketers/priyansh-arya-1175456",
+      "aliases": [
+        "Priyansh Arya"
+      ]
+    },
+    {
+      "id": "nehal-wadhera",
+      "providerPlayerId": "1151273",
+      "canonicalName": "Nehal Wadhera",
+      "profileUrl": "https://www.cricinfo.com/cricketers/nehal-wadhera-1151273",
+      "aliases": [
+        "Nehal Wadhera"
+      ]
+    },
+    {
+      "id": "shashank-singh",
+      "providerPlayerId": "377534",
+      "canonicalName": "Shashank Singh",
+      "profileUrl": "https://www.cricinfo.com/cricketers/shashank-singh-377534",
+      "aliases": [
+        "Shashank Singh"
+      ]
+    },
+    {
+      "id": "prabhsimran-singh",
+      "providerPlayerId": "1161024",
+      "canonicalName": "Prabhsimran Singh",
+      "profileUrl": "https://www.cricinfo.com/cricketers/prabhsimran-singh-1161024",
+      "aliases": [
+        "Prabhsimran Singh"
+      ]
+    },
+    {
+      "id": "angkrish-raghuvanshi",
+      "providerPlayerId": "1292495",
+      "canonicalName": "Angkrish Raghuvanshi",
+      "profileUrl": "https://www.cricinfo.com/cricketers/angkrish-raghuvanshi-1292495",
+      "aliases": [
+        "Angkrish Raghuvanshi"
+      ]
+    },
+    {
+      "id": "vaibhav-suryavanshi",
+      "providerPlayerId": "1408688",
+      "canonicalName": "Vaibhav Sooryavanshi",
+      "profileUrl": "https://www.cricinfo.com/cricketers/vaibhav-sooryavanshi-1408688",
+      "aliases": [
+        "Vaibhav Suryavanshi"
+      ],
+      "identityEvidence": "Existing verified profile identity/name variant; canonical display name and ESPN ID checked against the supplied MVP page."
+    },
+    {
+      "id": "ayush-badoni",
+      "providerPlayerId": "1151270",
+      "canonicalName": "Ayush Badoni",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ayush-badoni-1151270",
+      "aliases": [
+        "Ayush Badoni"
+      ]
+    },
+    {
+      "id": "naman-dhir",
+      "providerPlayerId": "1287032",
+      "canonicalName": "Naman Dhir",
+      "profileUrl": "https://www.cricinfo.com/cricketers/naman-dhir-1287032",
+      "aliases": [
+        "Naman Dhir"
+      ]
+    },
+    {
+      "id": "ashutosh-sharma",
+      "providerPlayerId": "1131978",
+      "canonicalName": "Ashutosh Sharma",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ashutosh-sharma-1131978",
+      "aliases": [
+        "Ashutosh Sharma"
+      ]
+    },
+    {
+      "id": "gurjapneet-singh",
+      "providerPlayerId": "1269869",
+      "canonicalName": "Gurjapneet Singh",
+      "profileUrl": "https://www.cricinfo.com/cricketers/gurjapneet-singh-1269869",
+      "aliases": [
+        "Gurjapneet Singh"
+      ]
+    },
+    {
+      "id": "auqib-nabi",
+      "providerPlayerId": "1159732",
+      "canonicalName": "Auqib Nabi",
+      "profileUrl": "https://www.cricinfo.com/cricketers/auqib-nabi-1159732",
+      "aliases": [
+        "Auqib Nabi"
+      ]
+    },
+    {
+      "id": "vipraj-nigam",
+      "providerPlayerId": "1449074",
+      "canonicalName": "Vipraj Nigam",
+      "profileUrl": "https://www.cricinfo.com/cricketers/vipraj-nigam-1449074",
+      "aliases": [
+        "Vipraj Nigam"
+      ]
+    },
+    {
+      "id": "rasikh-dar-salam",
+      "providerPlayerId": "1161489",
+      "canonicalName": "Rasikh Salam",
+      "profileUrl": "https://www.cricinfo.com/cricketers/rasikh-salam-1161489",
+      "aliases": [
+        "Rasikh Dar Salam"
+      ],
+      "identityEvidence": "Existing verified profile identity/name variant; canonical display name and ESPN ID checked against the supplied MVP page."
+    },
+    {
+      "id": "suyash-sharma",
+      "providerPlayerId": "1350792",
+      "canonicalName": "Suyash Sharma",
+      "profileUrl": "https://www.cricinfo.com/cricketers/suyash-sharma-1350792",
+      "aliases": [
+        "Suyash Sharma"
+      ]
+    },
+    {
+      "id": "yash-thakur",
+      "providerPlayerId": "1070196",
+      "canonicalName": "Yash Thakur",
+      "profileUrl": "https://www.cricinfo.com/cricketers/yash-thakur-1070196",
+      "aliases": [
+        "Yash Thakur"
+      ]
+    },
+    {
+      "id": "vaibhav-arora",
+      "providerPlayerId": "1209292",
+      "canonicalName": "Vaibhav Arora",
+      "profileUrl": "https://www.cricinfo.com/cricketers/vaibhav-arora-1209292",
+      "aliases": [
+        "Vaibhav Arora"
+      ]
+    },
+    {
+      "id": "kartik-tyagi",
+      "providerPlayerId": "1122918",
+      "canonicalName": "Kartik Tyagi",
+      "profileUrl": "https://www.cricinfo.com/cricketers/kartik-tyagi-1122918",
+      "aliases": [
+        "Kartik Tyagi"
+      ]
+    },
+    {
+      "id": "prince-yadav",
+      "providerPlayerId": "1350768",
+      "canonicalName": "Prince Yadav",
+      "profileUrl": "https://www.cricinfo.com/cricketers/prince-yadav-1350768",
+      "aliases": [
+        "Prince Yadav"
+      ]
+    },
+    {
+      "id": "mohsin-khan",
+      "providerPlayerId": "1132005",
+      "canonicalName": "Mohsin Khan",
+      "profileUrl": "https://www.cricinfo.com/cricketers/mohsin-khan-1132005",
+      "aliases": [
+        "Mohsin Khan"
+      ]
+    },
+    {
+      "id": "manimaran-siddharth",
+      "providerPlayerId": "1151286",
+      "canonicalName": "Manimaran Siddharth",
+      "profileUrl": "https://www.cricinfo.com/cricketers/manimaran-siddharth-1151286",
+      "aliases": [
+        "Manimaran Siddharth"
+      ]
+    },
+    {
+      "id": "ashwani-kumar",
+      "providerPlayerId": "1209126",
+      "canonicalName": "Ashwani Kumar",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ashwani-kumar-1209126",
+      "aliases": [
+        "Ashwani Kumar"
+      ]
+    },
+    {
+      "id": "manav-suthar",
+      "providerPlayerId": "1175426",
+      "canonicalName": "Manav Suthar",
+      "profileUrl": "https://www.cricinfo.com/cricketers/manav-suthar-1175426",
+      "aliases": [
+        "Manav Suthar"
+      ]
+    },
+    {
+      "id": "mukesh-choudhary",
+      "providerPlayerId": "1125688",
+      "canonicalName": "Mukesh Choudhary",
+      "profileUrl": "https://www.cricinfo.com/cricketers/mukesh-choudhary-1125688",
+      "aliases": [
+        "Mukesh Choudhary"
+      ]
+    },
+    {
+      "id": "ashok-sharma",
+      "providerPlayerId": "1299879",
+      "canonicalName": "Ashok Sharma",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ashok-sharma-1299879",
+      "aliases": [
+        "Ashok Sharma"
+      ]
+    },
+    {
+      "id": "abhinandan-singh",
+      "providerPlayerId": "1449085",
+      "canonicalName": "Abhinandan Singh",
+      "profileUrl": "https://www.cricinfo.com/cricketers/abhinandan-singh-1449085",
+      "aliases": [
+        "Abhinandan Singh"
+      ]
+    },
+    {
+      "id": "sakib-hussain",
+      "providerPlayerId": "1340422",
+      "canonicalName": "Sakib Hussain",
+      "profileUrl": "https://www.cricinfo.com/cricketers/sakib-hussain-1340422",
+      "aliases": [
+        "Sakib Hussain"
+      ]
+    },
+    {
+      "id": "praful-hinge",
+      "providerPlayerId": "1216167",
+      "canonicalName": "Praful Hinge",
+      "profileUrl": "https://www.cricinfo.com/cricketers/praful-hinge-1216167",
+      "aliases": [
+        "Praful Hinge"
+      ]
+    },
+    {
+      "id": "yash-raj-punia",
+      "providerPlayerId": "1515186",
+      "canonicalName": "Yash Raj Punja",
+      "profileUrl": "https://www.cricinfo.com/cricketers/yash-raj-punja-1515186",
+      "aliases": [
+        "Yash Raj Punia"
+      ],
+      "identityEvidence": "Existing verified profile identity/name variant; canonical display name and ESPN ID checked against the supplied MVP page."
+    },
+    {
+      "id": "sushant-mishra",
+      "providerPlayerId": "1175457",
+      "canonicalName": "Sushant Mishra",
+      "profileUrl": "https://www.cricinfo.com/cricketers/sushant-mishra-1175457",
+      "aliases": [
+        "Sushant Mishra"
+      ]
+    },
+    {
+      "id": "brijesh-sharma",
+      "providerPlayerId": "1515046",
+      "canonicalName": "Brijesh Sharma",
+      "profileUrl": "https://www.cricinfo.com/cricketers/brijesh-sharma-1515046",
+      "aliases": [
+        "Brijesh Sharma"
+      ]
+    },
+    {
+      "id": "arjun-tendulkar",
+      "providerPlayerId": "1148776",
+      "canonicalName": "Arjun Tendulkar",
+      "profileUrl": "https://www.cricinfo.com/cricketers/arjun-tendulkar-1148776",
+      "aliases": [
+        "Arjun Tendulkar"
+      ]
+    },
+    {
+      "id": "akash-singh",
+      "providerPlayerId": "1175458",
+      "canonicalName": "Akash Singh",
+      "profileUrl": "https://www.cricinfo.com/cricketers/akash-singh-1175458",
+      "aliases": [
+        "Akash Singh"
+      ]
+    },
+    {
+      "id": "raj-bawa",
+      "providerPlayerId": "1292502",
+      "canonicalName": "Raj Bawa",
+      "profileUrl": "https://www.cricinfo.com/cricketers/raj-bawa-1292502",
+      "aliases": [
+        "Raj Bawa"
+      ]
+    },
+    {
+      "id": "raghu-sharma",
+      "providerPlayerId": "1122621",
+      "canonicalName": "Raghu Sharma",
+      "profileUrl": "https://www.cricinfo.com/cricketers/raghu-sharma-1122621",
+      "aliases": [
+        "Raghu Sharma"
+      ]
+    },
+    {
+      "id": "r-sai-kishore",
+      "providerPlayerId": "1048739",
+      "canonicalName": "Sai Kishore",
+      "profileUrl": "https://www.cricinfo.com/cricketers/sai-kishore-1048739",
+      "aliases": [
+        "R Sai Kishore"
+      ],
+      "identityEvidence": "Existing verified profile identity/name variant; canonical display name and ESPN ID checked against the supplied MVP page."
+    },
+    {
+      "id": "harpreet-brar",
+      "providerPlayerId": "1168641",
+      "canonicalName": "Harpreet Brar",
+      "profileUrl": "https://www.cricinfo.com/cricketers/harpreet-brar-1168641",
+      "aliases": [
+        "Harpreet Brar"
+      ]
+    },
+    {
+      "id": "vijaykumar-vyshak",
+      "providerPlayerId": "777815",
+      "canonicalName": "Vijaykumar Vyshak",
+      "profileUrl": "https://www.cricinfo.com/cricketers/vijaykumar-vyshak-777815",
+      "aliases": [
+        "Vijaykumar Vyshak"
+      ]
+    },
+    {
+      "id": "tushar-deshpande",
+      "providerPlayerId": "822553",
+      "canonicalName": "Tushar Deshpande",
+      "profileUrl": "https://www.cricinfo.com/cricketers/tushar-deshpande-822553",
+      "aliases": [
+        "Tushar Deshpande"
+      ]
+    },
+    {
+      "id": "sandeep-sharma",
+      "providerPlayerId": "438362",
+      "canonicalName": "Sandeep Sharma",
+      "profileUrl": "https://www.cricinfo.com/cricketers/sandeep-sharma-438362",
+      "aliases": [
+        "Sandeep Sharma"
+      ]
+    },
+    {
+      "id": "digvesh-rathi",
+      "providerPlayerId": "1460529",
+      "canonicalName": "Digvesh Rathi",
+      "profileUrl": "https://www.cricinfo.com/cricketers/digvesh-rathi-1460529",
+      "aliases": [
+        "Digvesh Rathi"
+      ]
+    },
+    {
+      "id": "arshad-khan",
+      "providerPlayerId": "1244751",
+      "canonicalName": "Arshad Khan",
+      "profileUrl": "https://www.cricinfo.com/cricketers/arshad-khan-1244751",
+      "aliases": [
+        "Arshad Khan"
+      ]
+    },
+    {
+      "id": "ramandeep-singh",
+      "providerPlayerId": "1079470",
+      "canonicalName": "Ramandeep Singh",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ramandeep-singh-1079470",
+      "aliases": [
+        "Ramandeep Singh"
+      ]
+    },
+    {
+      "id": "anukul-roy",
+      "providerPlayerId": "1079839",
+      "canonicalName": "Anukul Roy",
+      "profileUrl": "https://www.cricinfo.com/cricketers/anukul-roy-1079839",
+      "aliases": [
+        "Anukul Roy"
+      ]
+    },
+    {
+      "id": "ramakrishna-ghosh",
+      "providerPlayerId": "1339053",
+      "canonicalName": "Ramakrishna Ghosh",
+      "profileUrl": "https://www.cricinfo.com/cricketers/ramakrishna-ghosh-1339053",
+      "aliases": [
+        "Ramakrishna Ghosh"
+      ]
+    },
+    {
+      "id": "prashant-veer",
+      "providerPlayerId": "1403197",
+      "canonicalName": "Prashant Veer",
+      "profileUrl": "https://www.cricinfo.com/cricketers/prashant-veer-1403197",
+      "aliases": [
+        "Prashant Veer"
+      ]
+    },
+    {
+      "id": "tripurana-vijay",
+      "providerPlayerId": "1292527",
+      "canonicalName": "Tripurana Vijay",
+      "profileUrl": "https://www.cricinfo.com/cricketers/tripurana-vijay-1292527",
+      "aliases": [
+        "Tripurana Vijay"
+      ]
+    },
+    {
+      "id": "madhav-tiwari",
+      "providerPlayerId": "1460385",
+      "canonicalName": "Madhav Tiwari",
+      "profileUrl": "https://www.cricinfo.com/cricketers/madhav-tiwari-1460385",
+      "aliases": [
+        "Madhav Tiwari"
+      ]
+    },
+    {
+      "id": "nishant-sindhu",
+      "providerPlayerId": "1292506",
+      "canonicalName": "Nishant Sindhu",
+      "profileUrl": "https://www.cricinfo.com/cricketers/nishant-sindhu-1292506",
+      "aliases": [
+        "Nishant Sindhu"
+      ]
+    },
+    {
+      "id": "suryansh-shedge",
+      "providerPlayerId": "1339698",
+      "canonicalName": "Suryansh Shedge",
+      "profileUrl": "https://www.cricinfo.com/cricketers/suryansh-shedge-1339698",
+      "aliases": [
+        "Suryansh Shedge"
+      ]
+    },
+    {
+      "id": "shivang-kumar",
+      "providerPlayerId": "1512089",
+      "canonicalName": "Shivang Kumar",
+      "profileUrl": "https://www.cricinfo.com/cricketers/shivang-kumar-1512089",
+      "aliases": [
+        "Shivang Kumar"
+      ]
+    },
+    {
+      "id": "harsh-dubey",
+      "providerPlayerId": "1216159",
+      "canonicalName": "Harsh Dubey",
+      "profileUrl": "https://www.cricinfo.com/cricketers/harsh-dubey-1216159",
+      "aliases": [
+        "Harsh Dubey"
+      ]
+    },
+    {
+      "id": "arshin-kulkarni",
+      "providerPlayerId": "1403153",
+      "canonicalName": "Arshin Kulkarni",
+      "profileUrl": "https://www.cricinfo.com/cricketers/arshin-kulkarni-1403153",
+      "aliases": [
+        "Arshin Kulkarni"
+      ]
+    },
+    {
+      "id": "mayank-rawat",
+      "providerPlayerId": "1079847",
+      "canonicalName": "Mayank Rawat",
+      "profileUrl": "https://www.cricinfo.com/cricketers/mayank-rawat-1079847",
+      "aliases": [
+        "Mayank Rawat"
+      ]
+    },
+    {
+      "id": "danish-malewar",
+      "providerPlayerId": "1421992",
+      "canonicalName": "Danish Malewar",
+      "profileUrl": "https://www.cricinfo.com/cricketers/danish-malewar-1421992",
+      "aliases": [
+        "Danish Malewar"
+      ]
+    }
+  ]
+}

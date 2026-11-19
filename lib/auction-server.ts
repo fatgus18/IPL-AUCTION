@@ -1,6 +1,6 @@
 import { and, eq, lt, sql } from "drizzle-orm";
 import { getDb, withDatabaseWrite } from "@/db";
-import { auctionRooms, catalogEditorSessions, roomCreationRequests, roomDeletions, sharedPlayerCatalog } from "@/db/schema";
+import { auctionRooms, auctionSeasons, catalogEditorSessions, roomCreationRequests, roomDeletions, sharedPlayerCatalog } from "@/db/schema";
 import {
   applyAction, AuctionError, cleanText, createDemoState, createRoomState, DEFAULT_SETTINGS, upgradeRoomCatalog, upgradeRoomTeams,
   type AuctionAction, type Member, type Player, type RoomState,
@@ -443,6 +443,7 @@ export async function deleteRoom(
     const room = JSON.parse(rows[0].stateJson) as StoredRoom;
     requireRoomCreator(room, identifyMember(room, hash));
     await tx.insert(roomDeletions).values({ code, hostTokenHash: hash, deletedAt: Date.now() });
+    await tx.delete(auctionSeasons).where(eq(auctionSeasons.roomCode, code));
     await tx.delete(auctionRooms).where(eq(auctionRooms.code, code));
     // Keep room_creation_requests: their old key now resolves to ROOM_DELETED.
     return { deleted: true as const, code };
@@ -467,6 +468,28 @@ export async function getRoom(rawCode: string, request: Request): Promise<RoomSt
   }
   pollCache.remember(room.state, room.tokenHashes);
   return snapshot(room, member.id);
+}
+
+/** Internal authenticated context for separate room resources. Transactions recheck
+ * membership against the same row they are about to modify; no credentials escape. */
+export async function getSeasonRoomContext(rawCode: string, request: Request, tx?: WriteTransaction): Promise<{ state: RoomState; member: Member }> {
+  const code = normalizeCode(rawCode);
+  const hash = await credentialHash(request);
+  let room: StoredRoom;
+  if (tx) {
+    const rows = await tx.select().from(auctionRooms).where(eq(auctionRooms.code, code)).limit(1);
+    if (!rows[0]) {
+      const deleted = await tx.select({ code: roomDeletions.code }).from(roomDeletions).where(eq(roomDeletions.code, code)).limit(1);
+      if (deleted[0]) throw deletedRoomError();
+      throw new AuctionError("That room was not found.", 404, "ROOM_NOT_FOUND");
+    }
+    room = JSON.parse(rows[0].stateJson) as StoredRoom;
+    room.state.version = rows[0].version;
+  } else room = await readStoredRoom(code);
+  const member = identifyMember(room, hash);
+  const state = { ...room.state };
+  delete state.myTargetPicks;
+  return { state, member };
 }
 
 /** Recover a saved seat without replacing its stable creator/member capability. */
@@ -590,9 +613,9 @@ export async function actInRoom(
   throw new AuctionError("The room changed while processing your request. Please try again.", 409, "ROOM_BUSY");
 }
 
-export async function readJsonBody(request: Request): Promise<Record<string, unknown>> {
+export async function readJsonBody(request: Request, maxBytes = MAX_BODY_BYTES): Promise<Record<string, unknown>> {
   if (!request.headers.get("content-type")?.toLowerCase().includes("application/json")) throw new AuctionError("Send a JSON request body.", 415);
-  if (Number(request.headers.get("content-length")) > MAX_BODY_BYTES) throw new AuctionError("Request is too large.", 413);
+  if (Number(request.headers.get("content-length")) > maxBytes) throw new AuctionError("Request is too large.", 413);
   const reader = request.body?.getReader();
   if (!reader) throw new AuctionError("Request body is required.");
   const decoder = new TextDecoder();
@@ -603,7 +626,7 @@ export async function readJsonBody(request: Request): Promise<Record<string, unk
       const chunk = await reader.read();
       if (chunk.done) break;
       length += chunk.value.byteLength;
-      if (length > MAX_BODY_BYTES) { await reader.cancel(); throw new AuctionError("Request is too large.", 413); }
+      if (length > maxBytes) { await reader.cancel(); throw new AuctionError("Request is too large.", 413); }
       text += decoder.decode(chunk.value, { stream: true });
     }
     text += decoder.decode();

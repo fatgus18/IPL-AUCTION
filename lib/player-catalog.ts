@@ -3,6 +3,7 @@ import profileSnapshot from "../data/player-profiles.json" with { type: "json" }
 import legacySnapshot from "../data/legacy-player-profiles.json" with { type: "json" };
 import type { Player, PlayerRole } from "./auction";
 import type { LookupPlayer } from "./player-lookup-types";
+import { alignVerifiedPlayerNames } from "./player-identities.ts";
 
 const profiles = profileSnapshot.profiles as Record<string, LookupPlayer>;
 export const CATALOG_VERSION = `${catalog.version}:${catalog.source.sha256.slice(0, 16)}`;
@@ -24,7 +25,7 @@ export function legacyPlayerDetails(id: string): Partial<Player> | undefined {
 }
 
 export function buildCatalogPool(knownCountries: Record<string, string> = {}): Player[] {
-  return catalog.players.map(entry => {
+  return alignVerifiedPlayerNames(catalog.players.map(entry => {
     const profile = profiles[entry.id];
     const country = profile?.country || knownCountries[entry.id] || "Unverified";
     const stats = profile?.stats ?? { matches: null, runs: null, wickets: null, strikeRate: null };
@@ -42,5 +43,5 @@ export function buildCatalogPool(knownCountries: Record<string, string> = {}): P
       birthDate: profile?.dateOfBirth || undefined,
       catalogSheets: [...new Set(entry.sourceRows.map(source => source.sheet))],
     };
-  });
+  }));
 }

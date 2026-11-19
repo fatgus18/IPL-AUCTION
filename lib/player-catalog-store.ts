@@ -3,6 +3,8 @@ import { getDb, withDatabaseWrite, type Database } from "@/db";
 import { sharedPlayerCatalog } from "@/db/schema";
 import { createPlayerPool } from "@/lib/auction";
 import { availableCatalogPlayers, type SharedPlayerCatalog } from "@/lib/shared-player-catalog";
+import { alignVerifiedPlayerNames } from "@/lib/player-identities";
+import type { Player } from "@/lib/auction";
 
 export const SHARED_CATALOG_ID = "common";
 export type CatalogStore = Pick<Database, "select" | "insert" | "update">;
@@ -32,7 +34,16 @@ export async function readSharedPlayerCatalog(store?: CatalogStore): Promise<Sha
     }).onConflictDoNothing();
     rows = await database.select().from(sharedPlayerCatalog).where(eq(sharedPlayerCatalog.id, SHARED_CATALOG_ID)).limit(1);
   }
-  const catalog = { players: JSON.parse(rows[0].playersJson), version: rows[0].version };
+  const existingPlayers: Player[] = JSON.parse(rows[0].playersJson);
+  const alignedPlayers = alignVerifiedPlayerNames(existingPlayers);
+  if (alignedPlayers !== existingPlayers) {
+    if (!store) return withDatabaseWrite(transaction => readSharedPlayerCatalog(transaction));
+    const version = rows[0].version + 1;
+    await database.update(sharedPlayerCatalog).set({ playersJson: JSON.stringify(alignedPlayers), version, updatedAt: Date.now() })
+      .where(eq(sharedPlayerCatalog.id, SHARED_CATALOG_ID));
+    return { players: alignedPlayers, version };
+  }
+  const catalog = { players: existingPlayers, version: rows[0].version };
   if (!store) committedCatalog = catalog;
   return catalog;
 }

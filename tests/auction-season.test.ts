@@ -147,3 +147,45 @@ test("dated reference projections and Excel preserve capture provenance rather t
   assert.ok(rules.some(value => value.includes("not a live fetch")));
   assert.ok(rules.some(value => value.includes("Captured 2026-11-19T20:00:31.557Z")));
 });
+
+test("season workbook includes every PDF statistics board plus precise player deviation and signed per-match points", async () => {
+  const { state, stored, players } = fixture();
+  const view = buildAuctionSeason(state, stored);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(new Uint8Array(await createSeasonWorkbook(view)).buffer);
+  const stats = workbook.getWorksheet("Season analytics")!;
+  const tournament = workbook.getWorksheet("Tournament stats")!;
+  assert.ok(stats); assert.ok(tournament);
+  const titles = new Set<string>();
+  stats.eachRow((row, number) => { if (number >= 5 && typeof row.getCell(1).value === "string") titles.add(row.getCell(1).value as string); });
+  assert.equal(view.analytics.boards.length, 20);
+  assert.equal(titles.size, 20);
+  for (const board of view.analytics.boards) assert.ok(titles.has(board.title), `${board.title} is included in the download even when empty`);
+  assert.equal(tournament.getCell("B5").value, 4);
+  assert.equal(tournament.getCell("B6").value, 8.13);
+  assert.equal(tournament.getCell("B7").value, 2.0325);
+  const points = workbook.getWorksheet("POINTS")!;
+  assert.equal(points.getCell("N4").value, "Deviation from source mean");
+  assert.equal(points.getCell("O4").value, "Weighted points / match");
+  assert.equal(points.getCell("N5").value, 8.2175, "deviation uses raw points even for the captain");
+  assert.equal(points.getCell("O5").value, 20.5 / 12);
+  assert.equal(points.getCell("O6").value, -5.025 / 12, "negative per-match values are preserved");
+  const missing = points.getRows(5, points.rowCount - 4)!.find(row => row.getCell(3).value === players[4].name)!;
+  assert.equal(missing.getCell(14).value, null); assert.equal(missing.getCell(15).value, null);
+  const overview: string[] = [];
+  tournament.eachRow(row => { if (typeof row.getCell(1).value === "string") overview.push(row.getCell(1).value as string); });
+  assert.ok(overview.includes("Highest MVP")); assert.ok(overview.includes("Lowest MVP"));
+  assert.ok(overview.some(value => value.startsWith("Podium")));
+});
+
+test("POINTS totals distinguish per-match coverage from MVP coverage", async () => {
+  const { state, stored } = fixture();
+  stored.snapshot!.rows[0].matches = null;
+  const view = buildAuctionSeason(state, stored);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(new Uint8Array(await createSeasonWorkbook(view)).buffer);
+  const points = workbook.getWorksheet("POINTS")!;
+  const total = points.getRows(5, points.rowCount - 4)!.find(row => row.getCell(3).value === "KNOWN TOTAL" && row.getCell(1).value === "Royal Challengers Bengaluru")!;
+  assert.equal(total.getCell(13).value, "4/5 MVP scores · 3/5 per-match rates");
+  assert.equal(total.getCell(15).value, view.analytics.boards.find(board => board.id === "points-per-match")!.rows.find(row => row.teamId === "rcb")!.value);
+});

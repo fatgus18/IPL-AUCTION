@@ -2,6 +2,7 @@ import type { Player, RoomState } from "./auction.ts";
 import type { SeasonSourceRow, SeasonSourceSnapshot } from "./season-source.ts";
 import { getPlayerSeasonIdentity, normalizeSeasonName } from "./player-identities.ts";
 import { getPlayingRole } from "./player-roles.ts";
+import { deriveSeasonAnalytics, type SeasonAnalytics } from "./season-analytics.ts";
 
 export const DEFAULT_SEASON_SOURCE_URL = "https://www.cricinfo.com/series/ipl-2026-1510719/most-valuable-players";
 export type SeasonMappings = Record<string, string>;
@@ -21,6 +22,7 @@ export type SeasonPlayer = {
   captain: boolean; viceCaptain: boolean; multiplier: 1 | 1.5 | 2;
   rawPoints: number | null; points: number | null; sourceKey: string | null; sourceName: string | null;
   matches: number | null; runs: number | null; wickets: number | null;
+  deviation: number | null; pointsPerMatch: number | null;
 };
 export type SeasonTeam = {
   id: string; name: string; shortName: string; color: string; manager: string; rank: number | null;
@@ -38,6 +40,7 @@ export type AuctionSeasonView = {
   sourceRows: SeasonSourceRowView[];
   unmatchedPlayers: { id: string; name: string; teamId: string; teamName: string }[];
   mappings: SeasonMappings;
+  analytics: SeasonAnalytics;
 };
 
 export function emptyAuctionSeason(): StoredAuctionSeason {
@@ -114,6 +117,7 @@ export function buildAuctionSeason(
 ): AuctionSeasonView {
   const sourceRows = matchSeasonRows(state.players, stored.snapshot?.rows ?? [], stored.mappings);
   const sourceByPlayer = new Map(sourceRows.filter(row => row.playerId).map(row => [row.playerId!, row]));
+  const tournamentMean = sourceRows.length ? sumSeasonPoints(sourceRows.map(row => row.points)) / sourceRows.length : null;
   const playersById = new Map(state.players.map(player => [player.id, player]));
   const teams: SeasonTeam[] = state.teams.map(team => {
     const seen = new Set<string>();
@@ -141,6 +145,8 @@ export function buildAuctionSeason(
         points: source ? weightedPoints(source.points, multiplier) : null,
         sourceKey: source?.key ?? null, sourceName: source?.name ?? null,
         matches: source?.matches ?? null, runs: source?.runs ?? null, wickets: source?.wickets ?? null,
+        deviation: source && tournamentMean !== null ? sumSeasonPoints([source.points, -tournamentMean]) : null,
+        pointsPerMatch: source && source.matches !== null && source.matches > 0 ? weightedPoints(source.points, multiplier) / source.matches : null,
       };
     });
     const matchedPlayers = players.filter(player => player.points !== null).length;
@@ -161,7 +167,7 @@ export function buildAuctionSeason(
   const unmatchedPlayers = teams.flatMap(team => team.players.filter(player => player.points === null).map(player => ({ id: player.id, name: player.name, teamId: team.id, teamName: team.name })));
   const matchedPlayers = teams.reduce((sum, team) => sum + team.matchedPlayers, 0);
   const totalPlayers = teams.reduce((sum, team) => sum + team.totalPlayers, 0);
-  return {
+  const view: Omit<AuctionSeasonView, "analytics"> = {
     code: state.code, name: state.name, revision: metadata.revision ?? 0, roomVersion: state.version,
     sourceUrl: stored.sourceUrl, canManage: metadata.canManage ?? false, provisional: !state.endedAt,
     updatedAt: metadata.updatedAt ?? null, lastFetchAttemptAt: stored.lastFetchAttemptAt,
@@ -173,4 +179,5 @@ export function buildAuctionSeason(
     teams, coverage: { matchedPlayers, totalPlayers, sourceRows: sourceRows.length, unmatchedPlayers: unmatchedPlayers.length },
     sourceRows, unmatchedPlayers, mappings: { ...stored.mappings },
   };
+  return { ...view, analytics: deriveSeasonAnalytics(view, state.players, sumSeasonPoints) };
 }

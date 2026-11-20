@@ -1,0 +1,169 @@
+.season-analytics { --sa-gold: #e6c48a; --sa-muted: #9aadc5; --sa-line: #c3d5ed19; margin-top: 38px; color: #eef0ed; }
+.sa-heading { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding-top: 28px; border-top: 1px solid var(--sa-line); margin-bottom: 24px; }
+.sa-heading h2 { font: 700 clamp(34px, 3.5vw, 46px)/1.1 var(--font-display), sans-serif; margin: 9px 0 8px; text-transform: uppercase; letter-spacing: -.015em; }
+.sa-heading h2 > span { color: var(--sa-gold); }
+.sa-heading p { color: var(--sa-muted); font-size: 15px; line-height: 1.6; margin: 0; }
+.sa-board-count { display: inline-flex; align-items: center; gap: 8px; color: #c1af8d; padding: 11px 14px; border: 1px solid #e6c48a29; background: #e6c48a05; border-radius: 9px; font-size: 13px; white-space: nowrap; }
+.sa-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 6px; gap: 6px; border: 1px solid #b9cbe41b; border-radius: 12px; background: #0c1520; }
+.sa-tabs > button { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 10px; min-height: 54px; border: 1px solid transparent; border-radius: 8px; color: #8fa4bd; font-size: 15px; font-weight: 600; cursor: pointer; transition: color .15s, background .15s; }
+.sa-tabs > button:hover { background: #ffffff05; color: #d5dfec; }
+.sa-tabs > button[aria-selected="true"] { background: linear-gradient(110deg, #e6c48a18, #e6c48a0b); border-color: #e6c48a3b; color: #edcfa0; box-shadow: inset 0 1px #ffffff06; }
+.sa-tabs b { font-size: 11px; font-weight: 500; color: #768ca7; border-radius: 4px; padding: 2px 5px; background: #ffffff05; }
+.sa-tabs > button[aria-selected="true"] b { color: #ddbd86; background: #e6c48a0b; }
+.sa-panel { padding-top: 22px; }
+.sa-tournament-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--sa-line); border-radius: 12px; overflow: hidden; background: linear-gradient(120deg, #172231, #111a26); }
+.sa-tournament-metrics > div { padding: 23px 25px; border-right: 1px solid var(--sa-line); min-width: 0; }
+.sa-tournament-metrics > div:last-child { border-right: 0; }
+.sa-tournament-metrics span { display: block; color: #9fb1c8; font-size: 13px; margin-bottom: 7px; }
+.sa-tournament-metrics strong { color: #e8d5b4; font: 650 clamp(30px, 3vw, 43px)/1.15 var(--font-display), sans-serif; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.sa-extremes { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 15px; }
+.sa-extreme { padding: 18px 22px; border: 1px solid #e6c48a28; border-radius: 11px; background: radial-gradient(ellipse at 100% 0, #e6c48a09, transparent 80%), #111b28; }
+.sa-extreme.is-low { border-color: #b9cbe419; background: #101924; }
+.sa-extreme-label { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: #d6b67f; font-weight: 650; }
+.sa-extreme.is-low .sa-extreme-label { color: #a7b6c9; }
+.sa-extreme-player { display: flex; align-items: center; gap: 13px; margin-top: 13px; min-width: 0; }
+.sa-extreme-player > span:nth-child(2) { flex: 1; min-width: 0; }
+.sa-extreme-player strong { display: block; color: #e0e6ef; font-size: 15px; line-height: 1.4; }
+.sa-extreme-player small { display: block; color: #8b9fb8; font-size: 12px; margin-top: 4px; }
+.sa-extreme-player > b { color: #e6c48a; font: 650 30px/1.1 var(--font-display), sans-serif; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; max-width: 38%; text-align: right; }
+.sa-extreme > p { color: #8da1ba; font-size: 13px; margin: 14px 0 0; }
+.sa-more-ties { display: block; min-height: 42px; margin-top: 9px; color: #e6c48a; font-size: 13px; cursor: pointer; }
+.sa-board-choices { display: flex; flex-wrap: wrap; gap: 9px; margin: 24px 0 18px; }
+.sa-board-choices > button { color: #a8bad0; font-size: 13px; line-height: 1.4; font-weight: 500; padding: 10px 14px; min-height: 43px; border-radius: 7px; border: 1px solid #b9cbe420; background: #121c29; cursor: pointer; }
+.sa-board-choices > button:hover { color: #e5e9ed; border-color: #e6c48a57; }
+.sa-board-choices > button[aria-pressed="true"] { color: #18140e; background: #e6c48a; border-color: #e6c48a; font-weight: 650; }
+.sa-board { border: 1px solid var(--sa-line); border-radius: 13px; overflow: hidden; background: #101925; }
+.sa-board-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 23px 25px; border-bottom: 1px solid #b9cbe416; background: linear-gradient(100deg, #1a2534, #131d2a); }
+.sa-board-heading h3 { font: 650 31px/1.15 var(--font-display), sans-serif; color: #edf0ed; }
+.sa-board-heading p { color: #9aadc5; font-size: 13px; line-height: 1.7; margin: 8px 0 0; max-width: 820px; }
+.sa-unit { color: #c5ae85; font-size: 11px; letter-spacing: .05em; white-space: nowrap; border: 1px solid #e6c48a29; border-radius: 5px; padding: 6px 9px; }
+.sa-leader-list { list-style: none; padding: 0; margin: 0; }
+.sa-leader-list.is-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sa-leader-row { position: relative; display: grid; grid-template-columns: 28px 49px minmax(0, 1fr) minmax(75px, 115px); gap: 13px; align-items: center; min-height: 98px; padding: 19px 24px; border-bottom: 1px solid #ffffff09; min-width: 0; }
+.sa-leader-list.is-split > li:nth-child(odd) { border-right: 1px solid #ffffff0e; }
+.sa-leader-row.is-own { background: linear-gradient(100deg, color-mix(in srgb, var(--sa-accent) 8%, transparent), transparent); }
+.sa-rank { font: 650 22px/1 var(--font-display), sans-serif; color: #7389a2; font-variant-numeric: tabular-nums; }
+.sa-leader-row:first-child .sa-rank { color: #e6c48a; }
+.sa-row-avatar { display: flex; align-items: flex-end; justify-content: center; width: 49px; height: 55px; overflow: hidden; border-radius: 6px; background: #ffffff04; flex-shrink: 0; }
+.sa-row-avatar.is-team { background: transparent; align-items: center; }
+.sa-row-avatar .player-portrait { width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
+.sa-row-avatar .portrait-fallback { width: 100%; height: 100%; min-width: 0; }
+.sa-row-avatar.is-team > img { width: 100%; height: 100%; object-fit: contain; }
+.sa-text-crest { font: 650 18px/1 var(--font-display), sans-serif; color: #a8bad0; }
+.sa-row-copy { min-width: 0; }
+.sa-identity { display: block; position: relative; text-align: left; min-width: 0; color: inherit; max-width: 100%; }
+button.sa-identity { cursor: pointer; padding-right: 17px; min-height: 40px; }
+button.sa-identity:hover > strong { color: #efcea0; }
+.sa-identity > strong { display: block; font-weight: 600; font-size: 15px; line-height: 1.45; color: #e1e7ef; overflow-wrap: anywhere; }
+.sa-identity > small { display: block; font-size: 12px; line-height: 1.55; color: #8dabc5; margin-top: 4px; overflow-wrap: anywhere; }
+.sa-identity > svg { position: absolute; right: 0; top: 5px; color: #7a91ad; }
+.sa-you { display: inline-block; border: 1px solid #e6c48a37; border-radius: 3px; margin-left: 6px; color: #dfbe87; font-size: 9px; font-weight: 500; padding: 1px 3px; vertical-align: middle; }
+.sa-row-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.sa-row-tags > span { font-size: 10px; color: #8da4be; padding: 2px 6px; border-radius: 4px; border: 1px solid #ffffff12; background: #ffffff03; }
+.sa-row-tags > span.sa-partial { color: #c8ad7b; border-color: #d2ac6330; }
+.sa-row-detail, .sa-row-related { color: #859bb6; line-height: 1.6; font-size: 11px; margin: 7px 0 0; overflow-wrap: anywhere; }
+.sa-row-related { color: #a3b4c9; }
+.sa-row-value { text-align: right; font-variant-numeric: tabular-nums; min-width: 0; }
+.sa-row-value > strong { display: block; color: #e9d2a9; font: 650 29px/1.1 var(--font-display), sans-serif; white-space: nowrap; overflow-wrap: normal; }
+.sa-row-value > small { display: block; margin-top: 6px; font-size: 10px; color: #8298b2; }
+.sa-negative, .sa-row-value.sa-negative > strong { color: #f2aaa1 !important; }
+.sa-row-meter { position: absolute; height: 2px; bottom: 0; left: 0; width: var(--sa-meter); max-width: 100%; background: var(--sa-accent); opacity: .16; pointer-events: none; }
+.sa-board-empty, .sa-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 11px; min-height: 220px; padding: 32px; color: #8da4bf; text-align: center; }
+.sa-board-empty h4, .sa-empty h3 { font: 600 27px/1.2 var(--font-display), sans-serif; color: #d2deec; margin: 3px 0 0; }
+.sa-board-empty p, .sa-empty p { font-size: 14px; line-height: 1.7; max-width: 480px; margin: 0; }
+.sa-more-results { width: 100%; min-height: 48px; border-top: 1px solid #b9cbe416; background: #e6c48a07; color: #e6c48a; font-size: 13px; font-weight: 600; cursor: pointer; }
+.sa-more-results:hover { background: #e6c48a12; }
+.sa-empty { background: #111c28; border: 1px solid var(--sa-line); border-radius: 12px; }
+.sa-method-note { display: flex; gap: 8px; align-items: flex-start; margin-top: 15px; color: #8199b4; font-size: 12px; line-height: 1.7; }
+.sa-method-note > svg { flex-shrink: 0; margin-top: 2px; }
+.sa-podium { display: grid; grid-template-columns: repeat(var(--sa-podium-columns), minmax(0, 1fr)); gap: 16px; align-items: start; margin: 6px 0 4px; }
+.sa-podium-place { min-width: 0; border: 1px solid #b9cbe427; border-radius: 12px; padding: 20px; background: radial-gradient(ellipse at 80% 0, #e6c48a0a, transparent 70%), #121c29; }
+.sa-podium-place.sa-place-1 { border-color: #e6c48a55; background: radial-gradient(ellipse at 80% 0, #e6c48a18, transparent 70%), #172230; order: 2; }
+.sa-podium-place.sa-place-2 { margin-top: 14px; order: 1; }
+.sa-podium-place.sa-place-3 { margin-top: 27px; order: 3; }
+.sa-podium-rank { display: flex; align-items: center; justify-content: center; gap: 9px; color: #a8bbd2; font-size: 12px; font-weight: 600; letter-spacing: .05em; }
+.sa-place-1 .sa-podium-rank { color: #e6c48a; }
+.sa-place-3 .sa-podium-rank { color: #c6a387; }
+.sa-podium-team { display: flex; width: 100%; align-items: center; flex-direction: column; gap: 12px; margin-top: 20px; text-align: center; color: #e6ecf3; cursor: pointer; }
+.sa-podium-team:disabled { cursor: default; }
+.sa-podium-team > img { width: 57px; height: 57px; object-fit: contain; }
+.sa-podium-team > span > strong { display: block; font-size: 15px; line-height: 1.5; }
+.sa-podium-team > span > small { display: block; font-size: 12px; color: #8fa7c2; margin-top: 4px; }
+.sa-podium-team > b { display: block; font: 650 35px/1.1 var(--font-display), sans-serif; color: #dfcaab; font-variant-numeric: tabular-nums; max-width: 100%; white-space: nowrap; overflow-wrap: normal; }
+.sa-place-1 .sa-podium-team > b { color: #f0d6a8; }
+.sa-podium-team > b > small { display: block; color: #8ba0b9; font: 400 11px/1.5 var(--font-body), sans-serif; margin-top: 5px; }
+.sa-podium-team + .sa-podium-team { border-top: 1px solid #ffffff10; padding-top: 20px; }
+.season-player-table.season-player-table-analytics { min-width: 1140px; }
+.season-col-deviation, .season-col-average { width: 130px; }
+.season-player-table td.season-player-deviation { color: #b5c7d9; }
+.season-player-table td.season-player-deviation.is-positive { color: #a3d7be; }
+.season-player-table td.season-player-deviation.is-negative { color: #f2aaa1; }
+.season-player-table tfoot .season-player-average-total { color: #e6c48a; font: 650 22px/1.25 var(--font-display), sans-serif; overflow-wrap: anywhere; }
+.season-player-average-total > small { display: block; color: #91a7c0; font: 400 10px/1.6 var(--font-body), sans-serif; margin-top: 5px; }
+@media (max-width: 1100px) {
+  .sa-leader-list.is-split { display: block; }
+  .sa-leader-list.is-split > li:nth-child(odd) { border-right: 0; }
+  .sa-leader-row { grid-template-columns: 28px 49px minmax(0, 1fr) minmax(75px, 130px); }
+  .sa-podium-place { padding-inline: 17px; }
+}
+@media (max-width: 640px) {
+  .season-analytics { margin-top: 28px; }
+  .sa-heading { display: block; padding-top: 23px; margin-bottom: 20px; }
+  .sa-heading h2 { font-size: 36px; }
+  .sa-heading p { font-size: 13px; }
+  .sa-board-count { border: 0; background: none; padding: 0; margin-top: 13px; font-size: 12px; }
+  .sa-tabs { gap: 4px; padding: 4px; border-radius: 10px; }
+  .sa-tabs > button { flex-direction: column; gap: 7px; padding: 12px 4px; font-size: 11px; min-height: 73px; white-space: normal; text-align: center; }
+  .sa-tabs > button > svg { width: 19px; }
+  .sa-tabs b { display: none; }
+  .sa-panel { padding-top: 17px; }
+  .sa-tournament-metrics { grid-template-columns: 1fr 1fr; }
+  .sa-tournament-metrics > div { padding: 17px; }
+  .sa-tournament-metrics > div:first-child { grid-row: span 2; display: flex; flex-direction: column; justify-content: center; }
+  .sa-tournament-metrics > div:nth-child(2) { border-right: 0; border-bottom: 1px solid var(--sa-line); }
+  .sa-tournament-metrics span { font-size: 11px; line-height: 1.6; }
+  .sa-tournament-metrics strong { font-size: var(--sa-podium-mobile, 30px); white-space: nowrap; overflow-wrap: normal; }
+  .sa-tournament-metrics > div:first-child strong { font-size: 44px; }
+  .sa-extremes { grid-template-columns: 1fr; gap: 11px; margin-top: 12px; }
+  .sa-extreme { padding: 15px 17px; }
+  .sa-extreme-player { gap: 11px; }
+  .sa-extreme-player strong { font-size: 13px; }
+  .sa-extreme-player > b { font-size: 26px; }
+  .sa-board-choices { gap: 7px; margin-top: 20px; }
+  .sa-board-choices > button { font-size: 11px; padding: 9px 11px; min-height: 40px; }
+  .sa-board-heading { padding: 20px 17px; gap: 12px; align-items: flex-start; }
+  .sa-board-heading h3 { font-size: 28px; }
+  .sa-board-heading p { font-size: 12px; }
+  .sa-unit { font-size: 9px; padding: 5px 6px; }
+  .sa-leader-row { grid-template-columns: 20px 36px minmax(0, 1fr) 104px; gap: 8px; padding: 17px 14px; min-height: 93px; }
+  .sa-row-avatar { width: 36px; height: 44px; }
+  .sa-rank { font-size: 19px; }
+  .sa-identity > strong { font-size: 12px; }
+  .sa-identity > small { font-size: 10px; }
+  button.sa-identity { padding-right: 0; }
+  .sa-identity > svg { display: none; }
+  .sa-you { font-size: 8px; margin-left: 4px; }
+  .sa-row-value > strong { font-size: var(--sa-number-mobile, 24px); }
+  .sa-leader-row.has-long-score .sa-row-copy { grid-column: 3 / -1; }
+  .sa-leader-row.has-long-score .sa-row-value { grid-column: 3 / -1; }
+  .sa-row-value > small { font-size: 9px; }
+  .sa-row-tags { gap: 4px; }
+  .sa-row-tags > span { font-size: 9px; padding: 2px 4px; }
+  .sa-row-detail, .sa-row-related { font-size: 10px; line-height: 1.6; }
+  .sa-method-note { font-size: 11px; }
+  .sa-podium { grid-template-columns: 1fr; gap: 12px; }
+  .sa-podium-place { margin-top: 0 !important; padding: 17px; }
+  .sa-podium-place.sa-place-1 { order: 1; }
+  .sa-podium-place.sa-place-2 { order: 2; }
+  .sa-podium-rank { justify-content: flex-start; font-size: 11px; }
+  .sa-podium-team { display: grid; grid-template-columns: 39px minmax(0, 1fr) 112px; gap: 10px; text-align: left; margin-top: 14px; }
+  .sa-podium-team > img { width: 39px; height: 43px; }
+  .sa-podium-team > span > strong { font-size: 12px; }
+  .sa-podium-team > span > small { font-size: 10px; }
+  .sa-podium-team > b { font-size: var(--sa-podium-mobile, 28px); text-align: right; }
+  .sa-podium-team.has-long-score > span, .sa-podium-team.has-long-score > b { grid-column: 2 / -1; }
+  .sa-podium-team > b > small { font-size: 9px; }
+  .season-player-table.season-player-table-analytics { width: 1070px; min-width: 1070px; }
+  .season-col-deviation, .season-col-average { width: 110px; }
+}
+@media (prefers-reduced-motion: reduce) { .season-analytics * { transition: none !important; } }

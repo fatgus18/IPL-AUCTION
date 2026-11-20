@@ -76,16 +76,69 @@ try {
   await hp.locator(".season-source-panel").screenshot({ path: resolve(output, "season-reference-360.png") });
   await hp.setViewportSize({ width: 1440, height: 1000 });
   console.log("PASS: the creator can explicitly load the real 202-row reference snapshot with its original timestamp and honest saved-data label.");
+  const analytics = hp.locator(".season-analytics");
+  assert.equal(await analytics.getByRole("tab").count(), 3);
+  assert.equal(await analytics.getByRole("region", { name: "Tournament stats", exact: true }).isVisible(), true);
+  assert.match(await analytics.locator(".sa-tournament-metrics").innerText(), /202/);
+  const visitedBoards = new Set();
+  for (const category of ["Tournament", "Squad analysis", "Auction value"]) {
+    await analytics.getByRole("tab", { name: category, exact: false }).click();
+    const choices = await analytics.locator(".sa-board-choices button").evaluateAll(buttons => buttons.map(button => button.getAttribute("data-board")));
+    for (const id of choices) {
+      await analytics.locator(`.sa-board-choices button[data-board="${id}"]`).click();
+      await analytics.locator(`.sa-board[data-board-id="${id}"]`).waitFor();
+      assert.equal(await analytics.locator(`.sa-board-choices button[data-board="${id}"]`).getAttribute("aria-pressed"), "true");
+      visitedBoards.add(id);
+    }
+  }
+  assert.equal(visitedBoards.size, 20, "Every PDF analytics leaderboard is accessible through the three groups.");
+  for (const width of [1440, 360]) {
+    await hp.setViewportSize({ width, height: 1000 });
+    for (const [category, boardId, suffix] of [["Tournament", "top-mvp", "tournament"], ["Squad analysis", "overall", "squad"], ["Auction value", "best-value", "value"]]) {
+      await analytics.getByRole("tab", { name: category, exact: false }).click();
+      await analytics.locator(`.sa-board-choices button[data-board="${boardId}"]`).click();
+      await paint(hp); await noOverflow(hp);
+      const choices = await analytics.locator(".sa-board-choices").evaluate(element => ({ scroll: element.scrollWidth, width: element.clientWidth }));
+      assert.ok(choices.scroll <= choices.width + 1, `${width}px: board choices must wrap instead of creating a horizontal scrollbar`);
+      if (width === 360) {
+        const scores = await analytics.locator(".sa-row-value > strong, .sa-podium-team > b, .sa-tournament-metrics strong").evaluateAll(elements => elements.map(element => {
+          const text = [...element.childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+          if (!text) return { text: "", lines: 0, fits: true };
+          const range = document.createRange(); range.selectNodeContents(text);
+          const rects = [...range.getClientRects()]; const box = element.getBoundingClientRect();
+          return { text: text.textContent, lines: new Set(rects.map(rect => Math.round(rect.top))).size, fits: rects.every(rect => rect.left >= box.left - 1 && rect.right <= box.right + 1) };
+        }));
+        for (const score of scores) { assert.equal(score.lines, 1, `360px score ${score.text} must stay on one line`); assert.equal(score.fits, true, `360px score ${score.text} must fit its allocated column`); }
+      }
+      await analytics.screenshot({ path: resolve(output, `season-analytics-${suffix}-${width}.png`) });
+    }
+  }
+  await analytics.getByRole("tab", { name: "Squad analysis", exact: false }).click();
+  assert.equal(await analytics.getByRole("region", { name: "Season podium", exact: true }).locator(".sa-podium-team").count(), 2, "Only purchased teams occupy the podium.");
+  await analytics.locator('.sa-board[data-board-id="overall"] button.sa-identity').first().click();
+  await hp.locator(".season-team-dialog[open]").waitFor(); await closeTeam(hp);
+  await analytics.getByRole("tab", { name: "Tournament", exact: false }).click();
+  await analytics.getByRole("tab", { name: "Tournament", exact: false }).focus();
+  await hp.keyboard.press("ArrowRight");
+  assert.equal(await analytics.getByRole("tab", { name: "Squad analysis", exact: false }).getAttribute("aria-selected"), "true");
+  await hp.setViewportSize({ width: 1440, height: 1000 });
+  console.log("PASS: all 20 PDF boards and tournament stats are accessible, podium teams open full squads, keyboard tabs work, and board controls wrap at 360px.");
   await hp.locator(".season-import-tools summary").click();
-  await hp.getByLabel("Player points table", { exact: true }).fill(`name,points,matches,runs,wickets\n${players[0].name},100.25,5,213,2\n${players[1].name},10.25,4,185,1\n${players[2].name},-8.5,3,50,0\nSource player alternate,12,2,30,1\n${players[4].name},90,4,200,2`);
+  await hp.getByLabel("Player points table", { exact: true }).fill(`name,points,matches,runs,wickets\n${players[0].name},100.25,5,213,2\n${players[1].name},10.25,4,185,1\n${players[2].name},-8.5,,50,0\nSource player alternate,12,2,30,1\n${players[4].name},90,4,200,2`);
   let season = await seasonAction(hp, "import", () => hp.getByRole("button", { name: "Save imported points", exact: true }).click());
   assert.equal(season.teams.find(team => team.id === "rcb").knownPoints, 207.375);
   let dialog = await showTeam(hp, "Royal Challengers Bengaluru");
   assert.equal(await dialog.locator("tbody tr").count(), 4, "Every signing appears, including a substitute and a player outside the XI.");
   const captainRow = dialog.locator("tbody tr").filter({ hasText: players[0].name });
   assert.equal(await captainRow.locator(".season-weighted-points").innerText(), "200.5");
+  assert.equal(await captainRow.locator(".season-player-deviation").innerText(), "+59.45", "Deviation uses raw MVP minus the complete source average.");
+  assert.equal(await captainRow.locator(".season-player-average").innerText(), "40.1", "Points per match uses weighted points.");
   const viceRow = dialog.locator("tbody tr").filter({ hasText: players[1].name });
   assert.equal(await viceRow.locator(".season-weighted-points").innerText(), "15.375", "Half multiplier preserves third decimal.");
+  assert.equal(await viceRow.locator(".season-player-deviation").innerText(), "-30.55");
+  assert.equal(await viceRow.locator(".season-player-average").innerText(), "3.84375");
+  assert.match(await dialog.locator(".season-player-average-total").innerText(), /43\.94375/);
+  assert.match(await dialog.locator(".season-player-average-total").innerText(), /2 \/ 4 rates known/);
   assert.match(await dialog.locator("tbody tr").filter({ hasText: players[3].name }).innerText(), /Pending/);
   assert.match(await dialog.locator("tbody tr").filter({ hasText: players[2].name }).innerText(), /-8\.5/);
   await closeTeam(hp);

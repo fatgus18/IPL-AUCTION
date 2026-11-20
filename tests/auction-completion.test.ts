@@ -157,6 +157,20 @@ test("same-team price edits preserve squad order and the complete lineup even at
   rejects(state, correction(state, { teamId: "csk", amount: 500 }), "NO_CORRECTION_CHANGE");
 });
 
+test("correcting a reserve captain's sale clears leadership and invalidates stale captaincy saves", () => {
+  const state = fixture();
+  team(state).lineup!.playingXI = [];
+  team(state).lineup!.substitutes = [];
+  for (const teamId of ["mi", null]) {
+    const result = act(state, correction(state, { teamId }));
+    assert.equal(team(result).lineup!.captainId, null);
+    assert.equal(team(result).lineup!.viceCaptainId, team(state).lineup!.viceCaptainId);
+    assert.equal(team(result).lineup!.revision, 5);
+    assert.deepEqual(team(result).lineup!.playingXI, []);
+    rejects(result, { type: "set_captaincy", teamId: "csk", captainId: null, viceCaptainId: null, expectedRevision: 4 }, "LINEUP_CONFLICT", CSK);
+  }
+});
+
 test("cancelling a sale returns the player to the pool, refunds exactly once and permits a later auction", () => {
   const state = fixture(); const result = act(state, correction(state, { teamId: null, amount: undefined }));
   const player = result.players.find(entry => entry.id === state.currentPlayerId)!;

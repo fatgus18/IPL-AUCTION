@@ -1,3 +1,4 @@
+import { navigateTo } from "./browser-navigation.mjs";
 import assert from "node:assert/strict";
 import { mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -47,9 +48,8 @@ try {
   const downloadPromise = page.waitForEvent("download"); await downloadLink.click(); const download = await downloadPromise;
   const metadata = await sharp(await readFile(await download.path())).metadata(); assert.equal(metadata.width, 1440); assert.equal(metadata.height, 1800);
   const oldUrl = await downloadLink.getAttribute("href");
-  const nav = name => page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name });
-  await nav(/Player pool/).click(); await page.locator(".app-shell.tab-players").waitFor();
-  await nav("My Squad").click(); await page.locator(".app-shell.tab-my-squad").waitFor(); await downloadLink.waitFor();
+  await navigateTo(page, /Player pool/); await page.locator(".app-shell.tab-players").waitFor();
+  await navigateTo(page, "My Squad"); await page.locator(".app-shell.tab-my-squad").waitFor(); await downloadLink.waitFor();
   await page.waitForFunction(old => document.querySelector('.franchise-poster-actions a[download]')?.getAttribute("href") !== old, oldUrl);
   assert.equal(await page.evaluate(async url => (await fetch(url)).status, await downloadLink.getAttribute("href")), 200, "restoring a retained page recreates its image URL");
   assert.equal(posterRequests, 1, "restoring a generated poster does not rerender it on the server");

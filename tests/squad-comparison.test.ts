@@ -93,6 +93,20 @@ test("saved XI and leaders respect independent positions and current squad owner
   assert.equal(corrected.viceCaptain?.id, axar.id);
 });
 
+test("squad summaries include leaders selected before an XI and ignore invalid assignments", () => {
+  const state = room();
+  const team = state.teams.find(team => team.id === "rcb")!;
+  const captain = purchase(state, team.id, "marco-jansen", 200);
+  const viceCaptain = purchase(state, team.id, "axar-patel", 200);
+  team.lineup = { playingXI: [], substitutes: [viceCaptain.id], captainId: captain.id, viceCaptainId: viceCaptain.id, revision: 1 };
+  assert.equal(summarizeSquad(state, team).captain?.id, captain.id);
+  assert.equal(summarizeSquad(state, team).viceCaptain?.id, viceCaptain.id);
+  team.lineup.viceCaptainId = captain.id;
+  assert.equal(summarizeSquad(state, team).viceCaptain, null);
+  captain.soldTo = "mi";
+  assert.equal(summarizeSquad(state, team).captain, null);
+});
+
 test("completed auctions keep the recorded manager after leaving and ignore later changes", () => {
   const state = room();
   const manager = state.members.find(member => member.teamId === "rcb")!;

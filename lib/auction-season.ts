@@ -3,6 +3,7 @@ import type { SeasonSourceRow, SeasonSourceSnapshot } from "./season-source.ts";
 import { getPlayerSeasonIdentity, normalizeSeasonName } from "./player-identities.ts";
 import { getPlayingRole } from "./player-roles.ts";
 import { deriveSeasonAnalytics, type SeasonAnalytics } from "./season-analytics.ts";
+import { getSquadCaptaincy } from "./squad-captaincy.ts";
 
 export const DEFAULT_SEASON_SOURCE_URL = "https://www.cricinfo.com/series/ipl-2026-1510719/most-valuable-players";
 export type SeasonMappings = Record<string, string>;
@@ -126,9 +127,7 @@ export function buildAuctionSeason(
       if (!player || player.status !== "sold" || player.soldTo !== team.id || seen.has(player.id)) return false;
       seen.add(player.id); return true;
     });
-    const xi = new Set((team.lineup?.playingXI ?? []).filter(id => id && seen.has(id)));
-    const captainId = team.lineup?.captainId && xi.has(team.lineup.captainId) ? team.lineup.captainId : null;
-    const viceCaptainId = team.lineup?.viceCaptainId && xi.has(team.lineup.viceCaptainId) && team.lineup.viceCaptainId !== captainId ? team.lineup.viceCaptainId : null;
+    const { captainId, viceCaptainId } = getSquadCaptaincy(team, state.players);
     const players: SeasonPlayer[] = purchases.map(purchase => {
       const player = playersById.get(purchase.playerId)!;
       const source = sourceByPlayer.get(player.id);

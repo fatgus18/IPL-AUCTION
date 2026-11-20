@@ -100,6 +100,12 @@ try {
   let state = ok(await request(roomPath(host), { token: host.token })).state;
   state = await act(host, { type: "end_auction", expectedResultsRevision: state.resultsRevision });
   season = await get(spectator); assert.equal(season.provisional, false); assert.equal(season.teams.find(team => team.id === "rcb").manager, "Season manager");
+  const snapshotBeforeCaptaincy = season.snapshot;
+  await act(manager, { type: "set_captaincy", teamId: "rcb", expectedRevision: 2, captainId: players[2].id, viceCaptainId: players[0].id });
+  season = await get(spectator);
+  assert.equal(season.teams.find(team => team.id === "rcb").points, 14.485, "a purchased substitute appointed after auction completion receives captain points");
+  assert.deepEqual(season.snapshot, snapshotBeforeCaptaincy, "captaincy changes use the existing season snapshot without a fetch");
+  await act(manager, { type: "set_captaincy", teamId: "rcb", expectedRevision: 3, captainId: players[1].id, viceCaptainId: players[0].id });
   await act(host, { type: "correct_sale", playerId: players[0].id, expectedTeamId: "rcb", expectedAmount: 500, expectedResultsRevision: state.resultsRevision, teamId: "mi", amount: 500, reason: "Testing a reviewed franchise correction." });
   season = await get(spectator); assert.equal(season.teams.find(team => team.id === "mi").points, 10.25);
   assert.equal(season.teams.find(team => team.id === "rcb").points, -5.47);

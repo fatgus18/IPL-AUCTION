@@ -25,6 +25,7 @@ const read = member => request(pathFor(member), { token: member.token }).then(ok
 const team = state => state.teams.find(entry => entry.id === "rcb");
 const empty = () => ({ playingXI: [], substitutes: [], captainId: null, viceCaptainId: null });
 const save = (lineup, expectedRevision = 0) => ({ type: "set_lineup", teamId: "rcb", lineup, expectedRevision });
+const captaincy = (captainId, viceCaptainId, expectedRevision = 0) => ({ type: "set_captaincy", teamId: "rcb", captainId, viceCaptainId, expectedRevision });
 const stored = async member => JSON.parse((await database.execute({ sql: "SELECT state_json FROM auction_rooms WHERE code = ?", args: [member.state.code] })).rows[0].state_json).state;
 const financials = state => ({
   players: state.players, teams: state.teams.map(value => ({ ...value, lineup: undefined })),
@@ -79,7 +80,7 @@ try {
     { ...empty(), substitutes: allIds.slice(0, 6) },
     { ...empty(), playingXI: [allIds[0], allIds[0]] },
     { ...empty(), playingXI: [allIds[0]], substitutes: [allIds[0]] },
-    { ...complete, captainId: allIds[11] },
+    { ...complete, captainId: "unknown-player" },
     { ...complete, viceCaptainId: allIds[0] },
     { ...empty(), playingXI: ["unknown-player"] },
     { ...empty(), substitutes: [host.state.players.find(player => !allIds.includes(player.id)).id] },
@@ -119,7 +120,48 @@ try {
   const final = ok(await act(replacement, save(complete, 4))).state;
   assert.equal(team(final).lineup.revision, 5);
   assert.deepEqual(financials(final), financials(afterPurchases));
-  console.log("PASS: owned XI plus five substitutes and C/VC persist across purchases and fresh sessions; ownership, malformed drafts and concurrent tab conflicts are enforced by the API.");
+
+  const leadership = captaincy(allIds[16], allIds[11], 5);
+  const beforeCaptaincy = await stored(host);
+  assert.equal((await request(`${pathFor(host)}/action`, { body: { action: leadership } })).status, 401);
+  for (const member of [host, opponent, spectator, owner]) assert.equal((await act(member, leadership)).status, 403, "only the current authenticated team owner can choose squad leaders");
+  assert.equal((await request(`${pathFor(host)}/action`, { token: spectator.token, body: { action: leadership, memberId: replacement.memberId } })).status, 403);
+  for (const invalid of [
+    { ...leadership, teamId: "mi" },
+    { ...leadership, captainId: "unknown-player" },
+    { ...leadership, viceCaptainId: host.state.players.find(player => !allIds.includes(player.id)).id },
+    { ...leadership, viceCaptainId: allIds[16] },
+    { ...leadership, captainId: undefined },
+    { ...leadership, viceCaptainId: {} },
+    { ...leadership, expectedRevision: "5" },
+  ]) assert.ok([400, 403].includes((await act(replacement, invalid)).status));
+  const staleCaptaincy = await act(replacement, { ...leadership, expectedRevision: 4 });
+  assert.equal(staleCaptaincy.status, 409); assert.equal(staleCaptaincy.data.code, "LINEUP_CONFLICT");
+  assert.deepEqual(await stored(host), beforeCaptaincy, "invalid captaincy requests leave persistent data unchanged");
+
+  ok(await act(host, { type: "pause_auction" }));
+  const leadersSaved = ok(await act(replacement, leadership)).state;
+  assert.deepEqual(team(leadersSaved).lineup, { ...complete, captainId: allIds[16], viceCaptainId: allIds[11], revision: 6 });
+  assert.deepEqual(financials(leadersSaved), financials(final), "leadership does not modify XI/substitute slots, sales or bidding during a break");
+  assert.deepEqual(team(await stored(host)).lineup, team(leadersSaved).lineup);
+  const mixedRace = await Promise.all([
+    act(replacement, captaincy(allIds[11], allIds[16], 6)),
+    act(replacement, save({ ...team(leadersSaved).lineup, playingXI: [] }, 6)),
+  ]);
+  assert.equal(mixedRace.filter(result => result.status === 200).length, 1);
+  assert.equal(mixedRace.filter(result => result.status === 409 && result.data.code === "LINEUP_CONFLICT").length, 1, "Build XI and My Squad share one revision guard");
+  const resumed = ok(await act(host, { type: "resume_auction" })).state;
+  ok(await act(host, { type: "end_auction", expectedResultsRevision: resumed.resultsRevision ?? 0 }));
+  const completed = ok(await act(replacement, captaincy(allIds[16], allIds[11], 7))).state;
+  assert.equal(team(completed).lineup.revision, 8);
+  assert.ok(completed.endedAt);
+  for (const member of [replacement, host, opponent, spectator]) assert.deepEqual(team(await read(member)).lineup, team(completed).lineup, "fresh sessions see captaincy changed after completion");
+  assert.deepEqual(team(await stored(host)).lineup, team(completed).lineup, "captaincy is durable room data");
+  const completedPoll = await request(`${pathFor(replacement)}?since=${resumed.version}`, { token: replacement.token });
+  assert.deepEqual(team(ok(completedPoll).state).lineup, team(completed).lineup);
+  const noXI = ok(await act(replacement, save({ ...team(completed).lineup, playingXI: [], substitutes: [] }, 8))).state;
+  assert.equal(team(noXI).lineup.captainId, allIds[16]); assert.equal(team(noXI).lineup.viceCaptainId, allIds[11]);
+  console.log("PASS: purchased squad captaincy and free-position XI persist across reloads, auction breaks and completion; owner authorization and shared revision conflicts are enforced by the API.");
 } finally {
   database.close();
 }

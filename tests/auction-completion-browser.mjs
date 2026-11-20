@@ -1,3 +1,4 @@
+import { navigateTo } from "./browser-navigation.mjs";
 import assert from "node:assert/strict";
 import { mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -23,10 +24,8 @@ const request = async (path, { token, body } = {}) => {
 const pathFor = member => `/api/rooms/${member.state.code}`;
 const act = (member, action) => request(`${pathFor(member)}/action`, { token: member.token, body: { action } }).then(value => value.state);
 const read = member => request(pathFor(member), { token: member.token }).then(value => value.state);
-const nav = (page, name) => page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name });
 const clickNav = async (page, name, view) => {
-  if (!await nav(page, name).isVisible()) await page.getByRole("button", { name: "Open navigation", exact: true }).click();
-  await nav(page, name).click();
+  await navigateTo(page, name);
   if (view) await page.locator(`.app-shell.tab-${view}`).waitFor();
 };
 const paint = page => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));

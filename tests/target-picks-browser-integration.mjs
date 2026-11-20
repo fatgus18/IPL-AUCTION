@@ -1,3 +1,4 @@
+import { navigateTo, navigationItem as nav } from "./browser-navigation.mjs";
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -28,10 +29,8 @@ const financials = state => ({
   currentPlayerId: state.currentPlayerId, currentBid: state.currentBid, leadingTeamId: state.leadingTeamId,
   phase: state.phase, bidHistory: state.bidHistory, players: state.players, teams: state.teams,
 });
-const nav = (page, name) => page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name });
 const clickNav = async (page, name, view) => {
-  if (!await nav(page, name).isVisible()) await page.getByRole("button", { name: "Open navigation", exact: true }).click();
-  await nav(page, name).click();
+  await navigateTo(page, name);
   if (view) await page.locator(`.app-shell.tab-${view}`).waitFor();
 };
 const openMember = async (member, view = "targets") => {
@@ -123,7 +122,7 @@ try {
   const page = ownerBrowser.page;
   await page.getByRole("heading", { name: /^My Target Picks\.?$/ }).waitFor();
   assert.equal(await nav(page, "My Target Picks").getAttribute("aria-current"), "page");
-  assert.equal(await page.getByRole("navigation", { name: "Main navigation" }).getByRole("button").count(), 7);
+  assert.equal(await page.getByRole("navigation", { name: "Main navigation" }).locator("button[data-destination]").count(), 8);
   await assertSelected(page, []);
   assert.equal(await pool(page).locator(".target-player-card").count(), 24, "the full catalog starts with a lightweight page of 24 cards");
   await page.getByRole("button", { name: /^Load more players/ }).click();

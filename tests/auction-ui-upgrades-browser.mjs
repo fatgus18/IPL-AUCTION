@@ -1,3 +1,4 @@
+import { navigateTo } from "./browser-navigation.mjs";
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -40,10 +41,8 @@ const openMember = async (member, view = "room") => {
   await page.locator(".app-shell.in-auction").waitFor();
   return { context, page };
 };
-const nav = (page, name) => page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name });
 const clickNav = async (page, name) => {
-  if (!await nav(page, name).isVisible()) await page.getByRole("button", { name: "Open navigation", exact: true }).click();
-  await nav(page, name).click();
+  await navigateTo(page, name);
 };
 const noOverflow = async page => {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), false);

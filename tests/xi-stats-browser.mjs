@@ -1,3 +1,4 @@
+import { navigateTo } from "./browser-navigation.mjs";
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -128,7 +129,7 @@ try {
   assert.ok(await seventh.evaluate(element => element === document.activeElement), "filling an empty slot preserves picker focus restoration");
   await seventh.hover();
   await popup.waitFor();
-  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name: "My Squad" }).click();
+  await navigateTo(page, "My Squad");
   await popup.waitFor({ state: "hidden" });
   console.log("PASS: stats preserve picker focus when filling an empty slot, do not obstruct selections, and disappear after leaving Build my XI.");
 

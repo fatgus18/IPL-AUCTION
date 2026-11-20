@@ -9,6 +9,10 @@ function fixture(count = 3) {
   const state = createDemoState(); state.endedAt = Date.UTC(2026, 10, 18, 14); state.resultsRevision = 5;
   const team = state.teams.find(team => team.id === "rcb")!;
   team.squad = state.players.slice(0, count).map((player, index) => ({ playerId: player.id, amount: 200 + index * 10 }));
+  for (const purchase of team.squad) {
+    const player = state.players.find(player => player.id === purchase.playerId)!;
+    player.status = "sold"; player.soldTo = team.id; player.soldFor = purchase.amount;
+  }
   team.lineup = { playingXI: Array.from({ length: 11 }, (_, index) => index === 0 ? team.squad[1]?.playerId ?? null : index === 6 ? team.squad[0]?.playerId ?? null : null), substitutes: [null, team.squad[2]?.playerId ?? null], captainId: team.squad[0]?.playerId ?? null, viceCaptainId: team.squad[1]?.playerId ?? null, revision: 2 };
   state.completedManagers = { rcb: { id: "archived", name: "Archived franchise manager" } };
   state.members = state.members.filter(member => member.teamId !== "rcb");
@@ -45,6 +49,18 @@ test("all twelve franchises have local crests and distinct poster palettes", asy
     assert.match((await loadPosterAsset(poster.logo)) ?? "", /^data:image\/png;base64,/, team.name);
   }
   assert.equal(state.teams.length, 12); assert.equal(palettes.size, 12);
+});
+
+test("posters display purchased captaincy even when leaders have no XI positions", () => {
+  const state = fixture();
+  const team = state.teams.find(team => team.id === "rcb")!;
+  team.lineup!.playingXI = [];
+  team.lineup!.captainId = team.squad[2].playerId;
+  const poster = buildFranchisePoster(state, team.id);
+  assert.equal(poster.players.find(player => player.captain)!.selection, "SUB 2");
+  assert.equal(poster.players.find(player => player.viceCaptain)!.selection, "SQUAD");
+  team.lineup!.viceCaptainId = team.lineup!.captainId;
+  assert.equal(buildFranchisePoster(state, team.id).players.filter(player => player.viceCaptain).length, 0);
 });
 
 test("asset loader refuses arbitrary local paths, data URIs and remote URLs; unknown portraits use a safe fallback", async () => {

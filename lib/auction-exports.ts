@@ -5,6 +5,7 @@ import path from "node:path";
 import { AuctionError, type RoomState } from "./auction.ts";
 import { getPlayingRole, PLAYING_ROLES } from "./player-roles.ts";
 import { getAuctionAwards, type AuctionAwards } from "./auction-awards.ts";
+import { getSquadCaptaincy } from "./squad-captaincy.ts";
 
 /** Only this allowlisted projection enters a download. Never serialize a room snapshot. */
 export type RecapPlayer = {
@@ -32,6 +33,7 @@ export function buildAuctionRecap(state: RoomState, exportedAt = Date.now()): Au
   if (state.endedAt === undefined) throw new AuctionError("End the auction to download its recap.", 409, "AUCTION_NOT_ENDED");
   const byId = new Map(state.players.map(player => [player.id, player]));
   const teams: RecapTeam[] = state.teams.map(team => {
+    const { captainId, viceCaptainId } = getSquadCaptaincy(team, state.players);
     const manager = state.completedManagers?.[team.id]?.name
       ?? state.members.find(member => member.role === "bidder" && member.teamId === team.id)?.name
       ?? "No manager assigned";
@@ -45,8 +47,8 @@ export function buildAuctionRecap(state: RoomState, exportedAt = Date.now()): Au
         overseas: player?.isOverseas ?? false, amountLakhs: purchase.amount,
         selection: xiPosition >= 0 ? "Playing XI" : subPosition >= 0 ? "Substitute" : "Squad",
         position: xiPosition >= 0 ? xiPosition + 1 : subPosition >= 0 ? subPosition + 1 : null,
-        captain: xiPosition >= 0 && team.lineup?.captainId === purchase.playerId,
-        viceCaptain: xiPosition >= 0 && team.lineup?.viceCaptainId === purchase.playerId,
+        captain: captainId === purchase.playerId,
+        viceCaptain: viceCaptainId === purchase.playerId,
       };
     });
     const order = { "Playing XI": 0, Substitute: 1, Squad: 2 };

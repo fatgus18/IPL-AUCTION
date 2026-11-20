@@ -81,7 +81,7 @@ export async function createSeasonWorkbook(season: AuctionSeasonView): Promise<B
   const rules = sheet(workbook, "Rules", [30, 110], "SCORING & PROVENANCE", subtitle, ["Setting", "Value"]);
   for (const entry of [
     ["Scoring", "Every purchased player contributes the source MVP points. Captain ×2, vice captain ×1.5; all other players ×1, including substitutes and reserves."],
-    ["Captain eligibility", "Captain and vice captain use the team's latest saved Playing XI. Missing or invalid assignments receive no extra multiplier."],
+    ["Captain eligibility", "Captain and vice captain use the team's latest saved squad captaincy, including substitutes and reserves. Managers can update them from My Squad during or after the auction. Missing or invalid assignments receive no extra multiplier."],
     ["No extra bonuses", "Runs, wickets and matches are source information only. They are not added again to MVP points."],
     ["Unmatched players", "Blank points are unknown, not zero. Standings show known totals; negative source scores remain negative."],
     ["Squad changes", "Saved lineup changes and creator sale corrections recompute standings against the latest successful source snapshot."],

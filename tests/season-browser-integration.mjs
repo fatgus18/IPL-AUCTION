@@ -267,9 +267,9 @@ try {
     await mp.setViewportSize({ width, height: 1000 }); await mp.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" })); await paint(mp); await noOverflow(mp);
     if (width >= 1280) {
       const navigation = mp.getByRole("navigation", { name: "Main navigation", exact: true });
-      assert.equal(await navigation.getByRole("button").count(), 8, "Managers retain all eight navigation destinations.");
+      assert.equal(await navigation.locator("button[data-destination]").count(), 8, "Managers retain all eight navigation destinations.");
       const geometry = await navigation.evaluate(element => {
-        const buttons = [...element.querySelectorAll("button")].map(button => ({ label: button.textContent, left: button.getBoundingClientRect().left, right: button.getBoundingClientRect().right }));
+        const buttons = [...element.querySelectorAll("button")].filter(button => button.getClientRects().length > 0).map(button => ({ label: button.textContent, left: button.getBoundingClientRect().left, right: button.getBoundingClientRect().right }));
         return { right: element.getBoundingClientRect().right, buttons, viewport: innerWidth };
       });
       assert.ok(geometry.right <= geometry.viewport, `Navigation fits ${width}px`);

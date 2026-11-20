@@ -1,3 +1,4 @@
+import { navigateTo, navigationItem as nav } from "./browser-navigation.mjs";
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -21,10 +22,8 @@ const newPage = async (width = 1440) => {
   page.on("request", request => calls.push({ page, path: new URL(request.url()).pathname, method: request.method() }));
   return page;
 };
-const nav = (page, name) => page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name, exact: typeof name === "string" });
 const clickNav = async (page, name) => {
-  if (!await nav(page, name).isVisible()) await page.getByRole("button", { name: "Open navigation", exact: true }).click();
-  await nav(page, name).click();
+  await navigateTo(page, name);
 };
 const joinDialog = page => page.getByRole("dialog", { name: "Join auction room", exact: true });
 const roomAccess = (page, code) => page.evaluate(code => JSON.parse(localStorage.getItem(`pavilion-session-${code}`)), code);

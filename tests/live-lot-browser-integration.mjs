@@ -1,3 +1,4 @@
+import { navigateTo } from "./browser-navigation.mjs";
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -53,9 +54,7 @@ const openMember = async (member, view = "room") => {
   return { page, context };
 };
 const clickNav = async (page, name, view) => {
-  const button = page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name });
-  if (!await button.isVisible()) await page.getByRole("button", { name: "Open navigation", exact: true }).click();
-  await button.click();
+  await navigateTo(page, name);
   await page.locator(`.app-shell.tab-${view}`).waitFor();
 };
 const noNotice = async page => assert.equal(await page.locator(".new-lot-notice").count(), 0);

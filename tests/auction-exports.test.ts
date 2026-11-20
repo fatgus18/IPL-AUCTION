@@ -124,6 +124,21 @@ test("latest lineup changes, corrected prices and cancellation audit are reflect
   assert.equal(latest.corrections.at(-1)!.afterTeam, "Sale voided"); assert.equal(latest.corrections.at(-1)!.afterAmountLakhs, null);
 });
 
+test("fresh recap downloads include squad leaders without requiring a saved XI", async () => {
+  const state = fixture();
+  const team = state.teams.find(team => team.id === "rcb")!;
+  team.lineup!.playingXI = [];
+  team.lineup!.captainId = "abhishek-sharma";
+  const recap = buildAuctionRecap(state);
+  const exported = recap.teams.find(entry => entry.id === team.id)!;
+  assert.equal(exported.players.find(player => player.captain)!.selection, "Substitute");
+  assert.equal(exported.players.find(player => player.viceCaptain)!.selection, "Squad");
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(new Uint8Array(await createAuctionWorkbook(recap)).buffer);
+  assert.match(strings(workbook), /Abhishek Sharma \(C\)/);
+  assert.match(strings(workbook), /Sanju Samson \(VC\)/);
+});
+
 test("Excel audit shows the full multiline reason with a bounded expanded row height", async () => {
   const state = fixture();
   const reason = ("The agreed bid was confirmed by both managers before correcting the purchase.\n".repeat(8)).slice(0, 500);

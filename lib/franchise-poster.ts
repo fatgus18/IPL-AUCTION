@@ -7,6 +7,7 @@ import { AuctionError, type RoomState } from "./auction.ts";
 import { getPlayingRole } from "./player-roles.ts";
 import { PLAYER_IMAGES, TEAM_LOGOS } from "./visual-assets.ts";
 import { createPosterComposition } from "./poster-composition.ts";
+import { getSquadCaptaincy } from "./squad-captaincy.ts";
 
 export const POSTER_WIDTH = 1440;
 export const POSTER_HEIGHT = 1800;
@@ -32,6 +33,7 @@ export function buildFranchisePoster(state: RoomState, teamId: string): Franchis
   if (!team.squad.length) throw new AuctionError("This franchise has no signings to include in a poster.", 409, "POSTER_EMPTY_SQUAD");
   if (team.squad.length > 30) throw new AuctionError("This squad exceeds the supported poster size.", 409, "POSTER_SQUAD_TOO_LARGE");
   const byId = new Map(state.players.map(player => [player.id, player]));
+  const { captainId, viceCaptainId } = getSquadCaptaincy(team, state.players);
   const players = team.squad.map(purchase => {
     const player = byId.get(purchase.playerId);
     const xi = team.lineup?.playingXI.indexOf(purchase.playerId) ?? -1;
@@ -41,8 +43,8 @@ export function buildFranchisePoster(state: RoomState, teamId: string): Franchis
       id: purchase.playerId, name: safeText(player?.name ?? "Player unavailable"), role: getPlayingRole(player) ?? "Player",
       portrait: PLAYER_IMAGES[purchase.playerId] ?? PLAYER_IMAGES[slug] ?? null,
       selection: xi >= 0 ? `XI ${String(xi + 1).padStart(2, "0")}` : sub >= 0 ? `SUB ${sub + 1}` : "SQUAD",
-      captain: xi >= 0 && team.lineup?.captainId === purchase.playerId,
-      viceCaptain: xi >= 0 && team.lineup?.viceCaptainId === purchase.playerId,
+      captain: captainId === purchase.playerId,
+      viceCaptain: viceCaptainId === purchase.playerId,
       order: xi >= 0 ? xi : sub >= 0 ? 11 + sub : 16 + team.squad.indexOf(purchase),
     };
   }).sort((a, b) => a.order - b.order).map(player => ({ id: player.id, name: player.name, role: player.role, portrait: player.portrait, selection: player.selection, captain: player.captain, viceCaptain: player.viceCaptain }));

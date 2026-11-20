@@ -1,5 +1,6 @@
 import type { RoomState, Team } from "./auction";
 import { countPlayingRoles } from "./player-roles.ts";
+import { getSquadCaptaincy } from "./squad-captaincy.ts";
 
 /** Ended auctions retain the manager recorded at completion, even after they leave. */
 export function getSquadManager(state: RoomState, teamId: string): { id: string; name: string } | null {
@@ -15,7 +16,8 @@ export function summarizeSquad(state: RoomState, team: Team) {
   const players = team.squad.map(purchase => playerMap.get(purchase.playerId));
   const playingXI = new Set((team.lineup?.playingXI ?? []).filter((id): id is string => !!id && purchased.has(id)));
   const substitutes = new Set((team.lineup?.substitutes ?? []).filter((id): id is string => !!id && purchased.has(id) && !playingXI.has(id)));
-  const leader = (id: string | null | undefined) => id && playingXI.has(id) ? playerMap.get(id) ?? null : null;
+  const { captainId, viceCaptainId } = getSquadCaptaincy(team, state.players);
+  const leader = (id: string | null) => id ? playerMap.get(id) ?? null : null;
   const spent = team.squad.reduce((total, purchase) => total + purchase.amount, 0);
   return {
     manager: getSquadManager(state, team.id),
@@ -28,7 +30,7 @@ export function summarizeSquad(state: RoomState, team: Team) {
     roles: countPlayingRoles(players),
     playingXI: playingXI.size,
     substitutes: substitutes.size,
-    captain: leader(team.lineup?.captainId),
-    viceCaptain: leader(team.lineup?.viceCaptainId),
+    captain: leader(captainId),
+    viceCaptain: leader(viceCaptainId),
   };
 }

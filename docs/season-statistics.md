@@ -4,6 +4,8 @@ The Auction Season page includes all 21 named sections in the supplied three-pag
 
 Let **raw** mean a player's source Total Impact; **weighted** means raw ×2 for the saved captain, ×1.5 for the saved vice captain, or ×1 otherwise. **Source mean** is the raw MVP average across every row in the source snapshot. Prices are stored in lakhs and converted to crores by dividing by 100.
 
+Managers can appoint either leader directly in **My Squad**, from any purchased player, before or after the auction ends. Captaincy does not depend on filling the Playing XI. These shared selections also appear in **Build my XI**, public team lineups, recap downloads and posters. A saved change recalculates season points without fetching the source again; moving a player within the XI or bench does not remove their leadership role.
+
 | PDF section | Calculation |
 | --- | --- |
 | Overall Leaderboard | Sum of known weighted points across every purchased player, including substitutes and reserves. |

@@ -1,3 +1,4 @@
+import { navigateTo } from "./browser-navigation.mjs";
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -94,9 +95,7 @@ const refreshState = async (page, member, version) => {
 };
 const nav = async (page, label, tab) => {
   await page.bringToFront();
-  const button = page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name: label });
-  if (!await button.isVisible()) await page.getByRole("button", { name: "Open navigation", exact: true }).click();
-  await button.click();
+  await navigateTo(page, label);
   await page.locator(`.app-shell.tab-${tab}`).waitFor();
   await paint(page);
 };

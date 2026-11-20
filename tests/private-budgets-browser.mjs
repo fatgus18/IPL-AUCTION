@@ -1,3 +1,4 @@
+import { navigateTo } from "./browser-navigation.mjs";
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -32,11 +33,9 @@ const openMember = async (member, view = "targets") => {
   await page.locator(".connection").filter({ hasText: "Connected" }).waitFor();
   return { page, context };
 };
-const nav = (page, name) => page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name });
 const clickNav = async (page, name, tab) => {
   await page.bringToFront();
-  if (!await nav(page, name).isVisible()) await page.getByRole("button", { name: "Open navigation", exact: true }).click();
-  await nav(page, name).click();
+  await navigateTo(page, name);
   if (tab) await page.locator(`.app-shell.tab-${tab}`).waitFor();
 };
 const target = async (page, player) => {

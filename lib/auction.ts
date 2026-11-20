@@ -105,6 +105,7 @@ export type AuctionAction =
   | { type: "update_settings"; settings: Partial<RoomSettings> }
   | { type: "chat"; text: string }
   | { type: "set_lineup"; teamId: string; lineup: TeamLineupInput; expectedRevision: number }
+  | { type: "set_captaincy"; teamId: string; captainId: string | null; viceCaptainId: string | null; expectedRevision: number }
   | { type: "set_target_picks"; teamId: string; playerIds: string[]; expectedRevision: number; maxBids?: Record<string, number> }
   | { type: "end_auction"; expectedResultsRevision: number }
   | { type: "correct_sale"; playerId: string; expectedTeamId: string; expectedAmount: number; expectedResultsRevision: number; teamId: string | null; amount?: number; reason: string }
@@ -332,6 +333,20 @@ function validateTeamBid(state: RoomState, team: Team, player: Player, amount: n
   requireCondition(!player.isOverseas || overseas < state.settings.maxOverseas, `${team.shortName} has reached the overseas player limit.`, 409, "OVERSEAS_LIMIT");
 }
 
+function validateCaptaincy(input: { captainId?: unknown; viceCaptainId?: unknown }, state: RoomState, team: Team): Pick<TeamLineupInput, "captainId" | "viceCaptainId"> {
+  const owned = new Set(team.squad.map(sale => sale.playerId));
+  const purchased = new Set(state.players.filter(player => player.status === "sold" && player.soldTo === team.id).map(player => player.id));
+  const captain = (id: unknown, label: string): string | null => {
+    requireCondition(id === null || (typeof id === "string" && id.length > 0 && id.length <= 100), `Choose a valid player for ${label}.`);
+    requireCondition(id === null || (owned.has(id as string) && purchased.has(id as string)), "Captain and vice-captain must be players purchased by your team.", 400, "LINEUP_PLAYER_NOT_OWNED");
+    return id as string | null;
+  };
+  const captainId = captain(input.captainId, "captain");
+  const viceCaptainId = captain(input.viceCaptainId, "vice-captain");
+  requireCondition(captainId === null || captainId !== viceCaptainId, "Choose different players as captain and vice-captain.");
+  return { captainId, viceCaptainId };
+}
+
 function validateLineup(input: unknown, state: RoomState, team: Team): TeamLineupInput {
   requireCondition(input && typeof input === "object" && !Array.isArray(input), "Lineup details are required.");
   const value = input as Record<string, unknown>;
@@ -353,14 +368,7 @@ function validateLineup(input: unknown, state: RoomState, team: Team): TeamLineu
   const playingXI = playerIds(value.playingXI, "the playing XI", 11);
   const substitutes = playerIds(value.substitutes, "the substitutes", 5);
   requireCondition(!substitutes.some(id => id !== null && playingXI.includes(id)), "A player cannot be in both the playing XI and substitutes.");
-  const captain = (id: unknown, label: string): string | null => {
-    requireCondition(id === null || (typeof id === "string" && playingXI.includes(id)), `${label} must be selected from your playing XI.`);
-    return id as string | null;
-  };
-  const captainId = captain(value.captainId, "The captain");
-  const viceCaptainId = captain(value.viceCaptainId, "The vice-captain");
-  requireCondition(captainId === null || captainId !== viceCaptainId, "Choose different players as captain and vice-captain.");
-  return { playingXI, substitutes, captainId, viceCaptainId };
+  return { playingXI, substitutes, ...validateCaptaincy(value, state, team) };
 }
 
 /** Pure authoritative transition, shared with the interactive demo. Throws AuctionError on rejection. */
@@ -371,7 +379,7 @@ export function applyAction(source: RoomState, action: AuctionAction, memberId: 
   requireCondition(member, "Join this room to continue.", 401, "UNAUTHORIZED");
   const hostActions = ["select_player", "start", "pause", "resume", "pause_auction", "resume_auction", "lock", "unlock", "sell", "unsold", "add_player", "update_player", "delete_player", "update_settings", "end_auction", "correct_sale"];
   if (hostActions.includes(action.type)) requireCondition(member.id === state.hostId && member.role === "auctioneer", "Only the auctioneer can do that.", 403, "FORBIDDEN");
-  if (state.endedAt !== undefined && !["end_auction", "correct_sale", "set_lineup", "chat", "ping", "leave"].includes(action.type)) {
+  if (state.endedAt !== undefined && !["end_auction", "correct_sale", "set_lineup", "set_captaincy", "chat", "ping", "leave"].includes(action.type)) {
     throw new AuctionError("This auction has ended. Its results remain available in the recap.", 409, "AUCTION_ENDED");
   }
   if (state.auctionPausedAt !== undefined && ["select_player", "start", "pause", "resume", "lock", "unlock", "sell", "unsold", "bid", "end_auction", "correct_sale"].includes(action.type)) {
@@ -577,6 +585,7 @@ export function applyAction(source: RoomState, action: AuctionAction, memberId: 
       requireCondition(!recent || now - recent.at >= 1000, "Please wait a moment before sending another message.", 429);
       log("chat", text); break;
     }
+    case "set_captaincy":
     case "set_lineup": {
       requireCondition(typeof action.teamId === "string" && action.teamId.length > 0, "Choose a valid team.");
       requireCondition(member.role === "bidder" && member.id !== state.hostId && member.teamId === action.teamId, "Only this team's manager can edit its lineup.", 403, "FORBIDDEN");
@@ -584,9 +593,18 @@ export function applyAction(source: RoomState, action: AuctionAction, memberId: 
       requireCondition(team, "Team not found.", 404);
       requireCondition(Number.isSafeInteger(action.expectedRevision) && action.expectedRevision >= 0 && action.expectedRevision < Number.MAX_SAFE_INTEGER, "A valid lineup revision is required.");
       const revision = team.lineup?.revision ?? 0;
-      requireCondition(action.expectedRevision === revision, "Your lineup changed in another tab. Review the latest lineup before saving again.", 409, "LINEUP_CONFLICT");
-      team.lineup = { ...validateLineup(action.lineup, state, team), revision: revision + 1 };
-      log("lineup", `${team.shortName} updated their playing XI and substitutes.`); break;
+      requireCondition(action.expectedRevision === revision, "Your lineup or captaincy changed in another tab. Review the latest selections before saving again.", 409, "LINEUP_CONFLICT");
+      if (action.type === "set_captaincy") {
+        team.lineup = {
+          playingXI: team.lineup?.playingXI ?? [], substitutes: team.lineup?.substitutes ?? [],
+          ...validateCaptaincy(action, state, team), revision: revision + 1,
+        };
+        log("captaincy", `${team.shortName} updated their captain and vice-captain.`);
+      } else {
+        team.lineup = { ...validateLineup(action.lineup, state, team), revision: revision + 1 };
+        log("lineup", `${team.shortName} updated their playing XI and substitutes.`);
+      }
+      break;
     }
     case "claim_team": {
       requireCondition(action.teamId === null || state.teams.some((team) => team.id === action.teamId), "Choose a valid team.");

@@ -1,3 +1,4 @@
+import { navigateTo } from "./browser-navigation.mjs";
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -67,9 +68,7 @@ const exit = async (page, view) => {
   assert.equal(new URL(page.url()).searchParams.get("view"), view);
 };
 const navigate = async (page, name, view) => {
-  const button = page.getByRole("navigation", { name: "Main navigation", exact: true }).getByRole("button", { name, exact: true });
-  if (!await button.isVisible()) await page.getByRole("button", { name: "Open navigation", exact: true }).click();
-  await button.click();
+  await navigateTo(page, name);
   await page.locator(`.app-shell.in-auction.tab-${view}`).waitFor();
 };
 const privacy = async (page, password) => {

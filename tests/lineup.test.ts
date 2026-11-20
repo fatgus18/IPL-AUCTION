@@ -11,6 +11,7 @@ const empty = (): TeamLineupInput => ({ playingXI: [], substitutes: [], captainI
 const getTeam = (state: RoomState) => state.teams.find(team => team.id === "rcb")!;
 const ids = (state: RoomState) => getTeam(state).squad.map(sale => sale.playerId);
 const save = (lineup: TeamLineupInput, expectedRevision = 0): AuctionAction => ({ type: "set_lineup", teamId: "rcb", lineup, expectedRevision });
+const captaincy = (captainId: string | null, viceCaptainId: string | null, expectedRevision = 0): AuctionAction => ({ type: "set_captaincy", teamId: "rcb", captainId, viceCaptainId, expectedRevision });
 const act = (room: RoomState, action: AuctionAction, member = managerId) => applyAction(room, action, member, NOW);
 
 function roomWithPurchases(count = 18): RoomState {
@@ -103,7 +104,7 @@ test("blank slots are independent, while repeated player IDs and out-of-range po
   rejects(room, save({ ...empty(), playingXI: [null, first], substitutes: [null, first] }), 400);
   rejects(room, save({ ...empty(), playingXI: [...Array(11).fill(null), first] }), 400);
   rejects(room, save({ ...empty(), substitutes: [...Array(5).fill(null), first] }), 400);
-  rejects(room, save({ ...sparse, captainId: second }), 400);
+  assert.equal(getTeam(act(room, save({ ...sparse, captainId: second }))).lineup!.captainId, second);
   rejects(room, save({ ...sparse, viceCaptainId: first }), 400);
 });
 
@@ -149,12 +150,13 @@ test("lineups cannot include unknown, unpurchased or another team's players", ()
   rejects(room, save({ ...empty(), playingXI: [otherTeamPlayer.id] }), 400, "LINEUP_PLAYER_NOT_OWNED");
 });
 
-test("captain and vice-captain must be distinct members of the XI", () => {
+test("captain and vice-captain can be distinct purchased substitutes or reserves", () => {
   const room = roomWithPurchases();
   const [first, sub, reserve] = ids(room);
   const base = { ...empty(), playingXI: [first], substitutes: [sub] };
-  for (const captainId of [sub, reserve, "unknown", ""]) rejects(room, save({ ...base, captainId }), 400);
-  for (const viceCaptainId of [sub, reserve, "unknown", ""]) rejects(room, save({ ...base, viceCaptainId }), 400);
+  assert.deepEqual(getTeam(act(room, save({ ...base, captainId: sub, viceCaptainId: reserve }))).lineup, { ...base, captainId: sub, viceCaptainId: reserve, revision: 1 });
+  for (const captainId of ["unknown", ""]) rejects(room, save({ ...base, captainId }), 400);
+  for (const viceCaptainId of ["unknown", ""]) rejects(room, save({ ...base, viceCaptainId }), 400);
   rejects(room, save({ ...base, captainId: first, viceCaptainId: first }), 400);
 });
 
@@ -225,4 +227,93 @@ test("lineup editing never invents playing-XI overseas restrictions", () => {
   room.players.forEach(player => { if (owned.includes(player.id)) player.isOverseas = true; });
   const result = act(room, save({ ...empty(), playingXI: owned }));
   assert.equal(getTeam(result).lineup!.playingXI.length, 11);
+});
+
+test("captaincy can be saved before building an XI and survives serialized room reloads", () => {
+  const room = roomWithPurchases();
+  const [captainId, viceCaptainId] = ids(room);
+  const before = structuredClone(room);
+  const result = act(room, captaincy(captainId, viceCaptainId));
+  assert.deepEqual(getTeam(result).lineup, { ...empty(), captainId, viceCaptainId, revision: 1 });
+  assert.deepEqual(getTeam(JSON.parse(JSON.stringify(result))).lineup, getTeam(result).lineup);
+  assert.deepEqual(result.players, before.players);
+  assert.deepEqual(result.bidHistory, before.bidHistory);
+  assert.deepEqual(getTeam(result).squad, getTeam(before).squad);
+  assert.equal(getTeam(result).purse, getTeam(before).purse);
+  assert.deepEqual(room, before);
+  assert.equal(result.activity.at(-1)?.type, "captaincy");
+});
+
+test("captaincy updates preserve every XI and substitute slot, and XI edits preserve squad leaders", () => {
+  const room = roomWithPurchases();
+  const [first, second, reserve] = ids(room);
+  const lineup = { playingXI: [null, first], substitutes: [null, null, second], captainId: first, viceCaptainId: second };
+  const saved = act(room, save(lineup));
+  const updated = act(saved, captaincy(reserve, second, 1));
+  assert.deepEqual(getTeam(updated).lineup, { ...lineup, captainId: reserve, revision: 2 });
+  const edited = act(updated, save({ ...getTeam(updated).lineup!, playingXI: [second], substitutes: [] }, 2));
+  assert.deepEqual(getTeam(edited).lineup, { playingXI: [second], substitutes: [], captainId: reserve, viceCaptainId: second, revision: 3 });
+  const cleared = act(edited, captaincy(null, null, 3));
+  assert.deepEqual(getTeam(cleared).lineup, { ...empty(), playingXI: [second], revision: 4 });
+});
+
+test("captaincy requires the authenticated team owner, including after leaving their seat", () => {
+  const room = roomWithPurchases();
+  const action = captaincy(ids(room)[0], null);
+  rejects(room, action, 401, "UNAUTHORIZED", "unknown-member");
+  for (const member of ["demo-host", "spectator", "demo-mi"]) rejects(room, action, 403, "FORBIDDEN", member);
+  rejects(room, { ...action, teamId: "mi" }, 403, "FORBIDDEN");
+  for (const teamId of [null, undefined, 12, {}, ""]) rejects(room, { ...action, teamId }, 400);
+  const corruptHost = structuredClone(room);
+  corruptHost.members[0].role = "bidder"; corruptHost.members[0].teamId = "rcb";
+  rejects(corruptHost, action, 403, "FORBIDDEN", "demo-host");
+  rejects(act(room, { type: "claim_team", teamId: null }), action, 403, "FORBIDDEN");
+  rejects(act(room, { type: "leave" }), action, 401, "UNAUTHORIZED");
+});
+
+test("captaincy rejects malformed, duplicate, unpurchased and other-team leaders", () => {
+  const room = roomWithPurchases();
+  const [first, second] = ids(room);
+  const unpurchased = room.players.find(player => player.status === "available")!.id;
+  for (const property of ["captainId", "viceCaptainId"]) {
+    for (const value of [undefined, {}, [], false, 0, "", "x".repeat(101)]) rejects(room, { ...captaincy(null, null), [property]: value }, 400);
+    for (const value of ["unknown-player", unpurchased]) rejects(room, { ...captaincy(null, null), [property]: value }, 400, "LINEUP_PLAYER_NOT_OWNED");
+  }
+  rejects(room, captaincy(first, first), 400);
+  const sold = room.players.find(player => player.id === first)!;
+  sold.soldTo = "mi";
+  rejects(room, captaincy(first, second), 400, "LINEUP_PLAYER_NOT_OWNED");
+  sold.soldTo = "rcb"; sold.status = "unsold";
+  rejects(room, captaincy(first, second), 400, "LINEUP_PLAYER_NOT_OWNED");
+  sold.status = "sold"; getTeam(room).squad = getTeam(room).squad.filter(sale => sale.playerId !== first);
+  rejects(room, captaincy(first, second), 400, "LINEUP_PLAYER_NOT_OWNED");
+  room.players = room.players.filter(player => player.id !== second);
+  rejects(room, captaincy(null, second), 400, "LINEUP_PLAYER_NOT_OWNED");
+});
+
+test("lineup and captaincy saves share revision conflicts across tabs", () => {
+  const room = roomWithPurchases();
+  const [first, second] = ids(room);
+  for (const expectedRevision of [undefined, null, "0", -1, 0.5, Number.NaN, Infinity, Number.MAX_SAFE_INTEGER]) rejects(room, { ...captaincy(first, second), expectedRevision }, 400);
+  const latest = act(room, captaincy(first, second));
+  rejects(latest, captaincy(second, first), 409, "LINEUP_CONFLICT");
+  rejects(latest, save(empty()), 409, "LINEUP_CONFLICT");
+  const updated = act(latest, save({ ...getTeam(latest).lineup!, playingXI: [first] }, 1));
+  rejects(updated, captaincy(second, first, 1), 409, "LINEUP_CONFLICT");
+  assert.equal(getTeam(act(updated, captaincy(second, first, 2))).lineup!.revision, 3);
+});
+
+test("captaincy remains editable during auction breaks, unsettled rounds and after completion", () => {
+  for (const phase of ["waiting", "live", "paused", "locked", "sold", "unsold"] as const) {
+    const room = roomWithPurchases();
+    const [first, second] = ids(room);
+    room.phase = phase; room.auctionPausedAt = NOW - 100;
+    const saved = act(room, captaincy(first, second));
+    assert.equal(saved.phase, phase); assert.equal(saved.auctionPausedAt, room.auctionPausedAt);
+    saved.endedAt = NOW; saved.completedManagers = { rcb: { id: managerId, name: "Saved manager" } };
+    const ended = act(saved, captaincy(second, first, 1));
+    assert.equal(ended.endedAt, NOW);
+    assert.deepEqual(ended.completedManagers, saved.completedManagers);
+    assert.equal(getTeam(ended).lineup!.captainId, second);
+  }
 });

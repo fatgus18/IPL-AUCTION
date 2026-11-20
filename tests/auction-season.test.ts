@@ -3,7 +3,7 @@ import test from "node:test";
 import ExcelJS from "exceljs";
 import type { Player } from "../lib/auction";
 import type { SeasonSourceRow } from "../lib/season-source";
-const { createDemoState }: typeof import("../lib/auction") = await import(new URL("../lib/auction.ts", import.meta.url).href);
+const { applyAction, createDemoState }: typeof import("../lib/auction") = await import(new URL("../lib/auction.ts", import.meta.url).href);
 const { buildAuctionSeason, emptyAuctionSeason, matchSeasonRows, sumSeasonPoints, seasonSourceKey }: typeof import("../lib/auction-season") = await import(new URL("../lib/auction-season.ts", import.meta.url).href);
 const { createSeasonWorkbook }: typeof import("../lib/season-export") = await import(new URL("../lib/season-export.ts", import.meta.url).href);
 const { getSeasonReference, SEASON_REFERENCE_METADATA }: typeof import("../lib/season-reference") = await import(new URL("../lib/season-reference.ts", import.meta.url).href);
@@ -53,10 +53,10 @@ test("current saved lineups and corrected sales recompute without changing sourc
   state.completedManagers = { rcb: { id: "former-manager", name: "Original captain" } };
   state.myTargetPicks = { teamId: "rcb", playerIds: ["SECRET-TARGET"], maxBids: { "SECRET-TARGET": 900 }, revision: 1 };
   state.activity.push({ id: "private", type: "chat", text: "SECRET-CHAT", at: Date.now() });
-  team.lineup!.captainId = players[2].id; // In subs: invalid captain never doubles.
+  team.lineup!.captainId = players[2].id;
   team.lineup!.viceCaptainId = players[1].id;
   let view = buildAuctionSeason(state, stored);
-  assert.equal(view.teams.find(entry => entry.id === "rcb")!.players.find(entry => entry.id === players[2].id)!.multiplier, 1);
+  assert.equal(view.teams.find(entry => entry.id === "rcb")!.players.find(entry => entry.id === players[2].id)!.multiplier, 2, "a purchased substitute can captain the squad");
   assert.equal(view.provisional, false);
   assert.equal(view.teams.find(entry => entry.id === "rcb")!.manager, "Original captain");
   team.lineup!.captainId = players[1].id;
@@ -69,6 +69,29 @@ test("current saved lineups and corrected sales recompute without changing sourc
   assert.equal(view.teams.find(entry => entry.id === "rcb")!.totalPlayers, 4);
   assert.equal(view.teams.find(entry => entry.id === "mi")!.points, 10.25);
   assert.doesNotMatch(JSON.stringify(view), /SECRET|myTargetPicks|memberId|tokenHashes|password|fetchRequestId|activity/);
+});
+
+test("captaincy changes after the season starts recalculate reserve points and workbook leadership", async () => {
+  const { state, players, team, stored } = fixture();
+  state.endedAt = Date.now();
+  team.lineup!.playingXI = []; team.lineup!.substitutes = [];
+  const sourceBefore = structuredClone(stored);
+  const saved = applyAction(state, { type: "set_captaincy", teamId: team.id, captainId: players[1].id, viceCaptainId: players[0].id, expectedRevision: 1 }, "demo-rcb");
+  const view = buildAuctionSeason(saved, stored);
+  const scored = view.teams.find(entry => entry.id === team.id)!;
+  assert.equal(scored.players.find(player => player.id === players[1].id)!.points, -6.7, "reserve captain preserves signed scoring");
+  assert.equal(scored.players.find(player => player.id === players[0].id)!.points, 15.375);
+  assert.equal(scored.points, 9.905);
+  assert.ok(scored.players.every(player => player.selection === "Squad"));
+  assert.deepEqual(stored, sourceBefore, "captaincy recomputes against the existing season snapshot");
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(new Uint8Array(await createSeasonWorkbook(view)).buffer);
+  const points = workbook.getWorksheet("POINTS")!;
+  const captain = points.getRows(5, points.rowCount - 4)!.find(row => row.getCell(3).value === players[1].name)!;
+  assert.equal(captain.getCell(5).value, "Squad"); assert.equal(captain.getCell(6).value, "C");
+  assert.equal(captain.getCell(8).value, 2); assert.equal(captain.getCell(9).value, -6.7);
+  const invalid = structuredClone(saved); invalid.teams.find(entry => entry.id === team.id)!.lineup!.captainId = "unknown-player";
+  assert.equal(buildAuctionSeason(invalid, stored).teams.find(entry => entry.id === team.id)!.players.filter(player => player.captain).length, 0);
 });
 
 test("stable IDs override spelling, exact names work and ambiguous identities require mapping", () => {

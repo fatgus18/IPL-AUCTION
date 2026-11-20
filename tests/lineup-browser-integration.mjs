@@ -1,3 +1,4 @@
+import { navigateTo, navigationItem as nav } from "./browser-navigation.mjs";
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -33,10 +34,8 @@ const act = (member, action) => request(`${pathFor(member)}/action`, { token: me
 const read = member => request(pathFor(member), { token: member.token }).then(value => value.state);
 const team = state => state.teams.find(entry => entry.id === "rcb");
 const accessFor = member => ({ code: member.state.code, token: member.token, memberId: member.memberId });
-const nav = (page, name) => page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name });
 const clickNav = async (page, name) => {
-  if (!await nav(page, name).isVisible()) await page.getByRole("button", { name: "Open navigation", exact: true }).click();
-  await nav(page, name).click();
+  await navigateTo(page, name);
 };
 const overflow = page => page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
 const navigationGeometry = async page => {
@@ -44,10 +43,10 @@ const navigationGeometry = async page => {
     await page.setViewportSize({ width, height: 1000 });
     await page.evaluate(() => { window.scrollTo({ top: 0, behavior: "instant" }); });
     await page.getByRole("button", { name: "Open navigation", exact: true }).click();
-    const items = page.getByRole("navigation", { name: "Main navigation" }).getByRole("button");
-    assert.equal(await items.count(), 7);
+    const items = page.getByRole("navigation", { name: "Main navigation" }).locator("button[data-destination]");
+    assert.equal(await items.count(), 8);
     for (const item of await items.all()) {
-      assert.equal(await item.isVisible(), true, `all seven destinations must be reachable in the ${width}px drawer`);
+      assert.equal(await item.isVisible(), true, `all eight destinations must be reachable in the ${width}px drawer`);
       const box = await item.boundingBox();
       assert.ok(box && box.x >= 0 && box.x + box.width <= width + 0.5 && box.y >= 0 && box.y + box.height <= 1000);
     }
@@ -58,8 +57,9 @@ const navigationGeometry = async page => {
     await page.setViewportSize({ width, height: 1000 });
     await page.evaluate(() => { window.scrollTo({ top: 0, behavior: "instant" }); });
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
-    const items = page.getByRole("navigation", { name: "Main navigation" }).getByRole("button");
-    assert.equal(await items.count(), 7, `all participant destinations should be present at ${width}px`);
+    const navigation = page.getByRole("navigation", { name: "Main navigation" });
+    assert.equal(await navigation.locator("button[data-destination]").count(), 8, `all participant destinations should be present at ${width}px`);
+    const items = navigation.getByRole("button");
     const boxes = [];
     for (const item of await items.all()) {
       assert.equal(await item.isVisible(), true, `desktop navigation must remain visible at ${width}px`);
@@ -289,7 +289,10 @@ try {
   await page.keyboard.press("Escape");
   assert.equal(await slot(page, "Playing XI", 1).locator(".lineup-slot-pick").evaluate(element => element === document.activeElement), true, "Escape returns keyboard focus to the position that opened the picker");
   await manage(page, candidates[1]);
-  assert.equal(await page.getByRole("button", { name: `Make ${candidates[1].name} captain`, exact: true }).isDisabled(), true, "the vice-captain cannot simultaneously be captain");
+  await page.getByRole("button", { name: `Make ${candidates[1].name} captain`, exact: true }).click();
+  await assertLineup(page, { ...complete, captainId: ids[1], viceCaptainId: ids[0] });
+  await appoint(page, candidates[0]);
+  await assertLineup(page, complete);
   await clickNav(page, "Auction room");
   await page.locator(".auction-layout").waitFor();
   await clickNav(page, "Build my XI");
@@ -336,7 +339,7 @@ try {
   const remote = await saveThroughUI(second);
   assert.equal(team(remote).lineup.revision, 3);
   await page.bringToFront();
-  await page.locator(".lineup-warning").filter({ hasText: "A newer lineup was saved in another tab." }).waitFor();
+  await page.locator(".lineup-warning").filter({ hasText: "Your lineup or captaincy changed elsewhere." }).waitFor();
   assert.equal(await captain(page).getAttribute("data-player-id"), ids[2], "a remote save must preserve the local draft until the manager chooses to reload it");
   assert.equal(await page.getByRole("button", { name: "Save lineup", exact: true }).isDisabled(), true);
   await page.getByRole("button", { name: "Reload saved lineup", exact: true }).click();
@@ -354,11 +357,10 @@ try {
   assert.equal(await captain(page).getAttribute("data-player-id"), ids[3], "reordering must preserve leadership by player identity");
   await manage(page, candidates[3]);
   await page.getByRole("button", { name: `Remove ${candidates[3].name} from playing XI`, exact: true }).click();
-  assert.equal(await captain(page).getAttribute("data-player-id"), "", "removing the captain from the XI clears that appointment");
+  assert.equal(await captain(page).getAttribute("data-player-id"), ids[3], "removing the captain from the XI preserves their team appointment");
   assert.equal(await slot(page, "Playing XI", 4).getAttribute("data-player-id"), "", "removing position four leaves its slot empty");
   assert.equal(await slot(page, "Playing XI", 5).getAttribute("data-player-id"), ids[4], "removing one player never shifts the remaining batting order");
   await choose(page, "Playing XI", 4, candidates[3]);
-  await appoint(page, candidates[3]);
   const mobileSaved = await saveThroughUI(page);
   assert.equal(team(mobileSaved).lineup.revision, 4);
   assert.equal(team(mobileSaved).lineup.playingXI.length, 11);

@@ -1,3 +1,4 @@
+import { navigateTo, navigationItem as nav } from "./browser-navigation.mjs";
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -20,10 +21,8 @@ const context = async (width = 1440) => {
   page.on("request", request => requests.push({ url: new URL(request.url()).pathname, method: request.method() }));
   return { context, page };
 };
-const nav = (page, name) => page.getByRole("navigation", { name: "Main navigation" }).getByRole("button", { name });
 const clickNav = async (page, name) => {
-  if (!await nav(page, name).isVisible()) await page.getByRole("button", { name: "Open navigation", exact: true }).click();
-  await nav(page, name).click();
+  await navigateTo(page, name);
 };
 const counts = async () => (await database.execute("SELECT (SELECT COUNT(*) FROM auction_rooms) AS rooms, (SELECT COUNT(*) FROM catalog_editor_sessions) AS editors")).rows[0];
 const overflow = page => page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
@@ -147,7 +146,7 @@ try {
     await join.getByLabel("Your name", { exact: true }).fill("Recovery name");
     await join.getByLabel("Room code", { exact: true }).fill(code);
     await join.getByRole("button", { name: "Join auction room", exact: true }).click();
-    await nav(page, "Team squads").waitFor();
+    await nav(page, "Team squads").waitFor({ state: "attached" });
     assert.deepEqual(await roomAccess(page, code), access, "rejoining must retain the exact original credential");
   }
   assert.equal((await roomState(hostAccess)).members.length, 2);

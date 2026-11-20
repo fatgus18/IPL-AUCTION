@@ -3,6 +3,7 @@ import { ArrowDown, ArrowLeftRight, ArrowUp, Check, ChevronRight, Crown, Globe2,
 import type { AuctionAction, Player, Team, TeamLineupInput } from "@/lib/auction";
 import { AuctionRequestError } from "@/lib/auction-client";
 import { countPlayingRoles, getPlayingRole } from "@/lib/player-roles";
+import { getSquadCaptaincy } from "@/lib/squad-captaincy";
 import { PlayerImage, TeamCrest } from "./ipl-visuals";
 import { LineupPlayerStats, LineupPlayerTooltip, LineupStatsProvider } from "./lineup-player-stats";
 import "./lineup-builder.css";
@@ -16,18 +17,21 @@ const LIMITS = { playingXI: 11, substitutes: 5 };
 const filled = (ids: Array<string | null>) => ids.filter((id): id is string => Boolean(id));
 const pad = (ids: Array<string | null> | undefined, length: number) => Array.from({ length }, (_, index) => ids?.[index] ?? null);
 
-function readLineup(team: Team): Lineup {
+function readLineup(team: Team, players: Player[]): Lineup {
   return {
     playingXI: pad(team.lineup?.playingXI, 11),
     substitutes: pad(team.lineup?.substitutes, 5),
-    captainId: team.lineup?.captainId ?? null,
-    viceCaptainId: team.lineup?.viceCaptainId ?? null,
+    ...getSquadCaptaincy(team, players),
   };
 }
 
 function sameLineup(left: Lineup, right: Lineup) {
   return left.captainId === right.captainId && left.viceCaptainId === right.viceCaptainId
-    && pad(left.playingXI, 11).every((id, index) => id === (right.playingXI[index] ?? null))
+    && samePositions(left, right);
+}
+
+function samePositions(left: Lineup, right: Lineup) {
+  return pad(left.playingXI, 11).every((id, index) => id === (right.playingXI[index] ?? null))
     && pad(left.substitutes, 5).every((id, index) => id === (right.substitutes[index] ?? null));
 }
 
@@ -47,13 +51,26 @@ export function LineupBuilder({ team, players, connected, onAction }: LineupBuil
   const pickerTriggerRef = useRef<HTMLElement | null>(null);
   const manageTriggerRef = useRef<HTMLButtonElement | null>(null);
   const savingRef = useRef(false);
-  const saved = readLineup(team);
+  const saved = readLineup(team, players);
   const savedRevision = team.lineup?.revision ?? 0;
   const acknowledged = Boolean(local && savedRevision > local.revision && sameLineup(local.value, saved));
-  const activeDraft = local && !sameLineup(local.value, local.baseline) && !acknowledged ? local : null;
+  const pendingDraft = local && !sameLineup(local.value, local.baseline) && !acknowledged ? local : null;
+  // My Squad may update leadership while this XI draft is kept in a hidden tab.
+  // Merge that update only when neither side changed the same part of the team.
+  const mergeCaptaincy = pendingDraft && pendingDraft.revision !== savedRevision
+    && samePositions(pendingDraft.baseline, saved)
+    && pendingDraft.value.captainId === pendingDraft.baseline.captainId
+    && pendingDraft.value.viceCaptainId === pendingDraft.baseline.viceCaptainId;
+  const activeDraft = mergeCaptaincy ? {
+    ...pendingDraft,
+    value: { ...pendingDraft.value, captainId: saved.captainId, viceCaptainId: saved.viceCaptainId },
+    baseline: saved,
+    revision: savedRevision,
+  } : pendingDraft;
   const draft = activeDraft?.value ?? saved;
   const dirty = Boolean(activeDraft);
   const remoteChanged = Boolean(activeDraft && activeDraft.revision !== savedRevision);
+  const blockingConflict = conflict && !mergeCaptaincy && !acknowledged;
   const revision = activeDraft?.revision ?? savedRevision;
   const playerMap = new Map(players.map((player) => [player.id, player]));
   const roster = team.squad.map(({ playerId }) => playerMap.get(playerId)).filter((player): player is Player => Boolean(player));
@@ -82,12 +99,18 @@ export function LineupBuilder({ team, players, connected, onAction }: LineupBuil
 
   function edit(next: Lineup) {
     if (savingRef.current) return;
-    if (!next.playingXI.includes(next.captainId ?? "")) next.captainId = null;
-    if (!next.playingXI.includes(next.viceCaptainId ?? "")) next.viceCaptainId = null;
     setLocal({ value: next, baseline: activeDraft?.baseline ?? saved, revision });
     setNotice("");
     setError("");
-    if (acknowledged) setConflict(false);
+    if (acknowledged || mergeCaptaincy) setConflict(false);
+  }
+
+  function chooseLeader(playerId: string, role: "captainId" | "viceCaptainId") {
+    if (role === "captainId") {
+      edit({ ...draft, captainId: draft.captainId === playerId ? null : playerId, viceCaptainId: draft.viceCaptainId === playerId ? draft.captainId : draft.viceCaptainId });
+    } else {
+      edit({ ...draft, captainId: draft.captainId === playerId ? draft.viceCaptainId : draft.captainId, viceCaptainId: draft.viceCaptainId === playerId ? null : playerId });
+    }
   }
 
   function openPicker(group: Group, index: number) {
@@ -149,9 +172,10 @@ export function LineupBuilder({ team, players, connected, onAction }: LineupBuil
   }
 
   async function save() {
-    if (savingRef.current || !dirty || !connected || remoteChanged || conflict) return;
+    if (savingRef.current || !dirty || !connected || remoteChanged || blockingConflict) return;
     savingRef.current = true;
     setSaving(true);
+    setConflict(false);
     setError("");
     setNotice("");
     try {
@@ -215,12 +239,12 @@ export function LineupBuilder({ team, players, connected, onAction }: LineupBuil
       <div className="lineup-header-progress"><span className={`lineup-readiness ${ready ? "lineup-ready" : ""}`}>{ready ? <Check size={17} /> : <Users size={17} />}{ready ? "Matchday ready" : `${xiCount} / 11 starters`}</span><span>{subCount} / 5 substitutes</span></div>
     </header>
 
-    {(remoteChanged || (conflict && !acknowledged)) && <div className="lineup-warning" role="alert">A newer lineup was saved in another tab. Your draft is preserved. Reload the saved lineup to discard these edits and use the latest version.</div>}
+    {(remoteChanged || blockingConflict) && <div className="lineup-warning" role="alert">Your lineup or captaincy changed elsewhere. Your draft is preserved. Reload the saved lineup to discard these edits and use the latest team selection.</div>}
     {unavailable && <div className="lineup-warning" role="alert">A selected player is no longer in your squad. Remove them before saving.</div>}
-    {error && !acknowledged && <p className="lineup-error" role="alert">{error}</p>}
+    {error && !acknowledged && !(conflict && mergeCaptaincy) && <p className="lineup-error" role="alert">{error}</p>}
     <div className="lineup-save-bar">
-      <p className={`lineup-save-status ${dirty ? "lineup-save-pending" : ""}`} role="status" aria-live="polite">{!connected ? "Reconnecting · Draft kept" : dirty ? "Unsaved changes" : acknowledged ? "Lineup saved to your room." : notice || (savedRevision ? "Your saved lineup is up to date." : "Partial lineups can be saved.")}</p>
-      <div>{(dirty || conflict) && <button type="button" className="lineup-reload" onClick={reload} disabled={saving} aria-label="Reload saved lineup" title="Reload saved lineup"><RotateCcw size={16} /><span>Reload saved lineup</span></button>}<button type="button" className="lineup-save" onClick={save} disabled={!dirty || saving || !connected || remoteChanged || conflict || unavailable}>{saving ? <span className="lineup-spinner" aria-hidden="true" /> : <Save size={17} />}{saving ? "Saving lineup…" : "Save lineup"}</button></div>
+      <p className={`lineup-save-status ${dirty ? "lineup-save-pending" : ""}`} role="status" aria-live="polite">{!connected ? "Reconnecting · Draft kept" : dirty && mergeCaptaincy ? "Captaincy updated. Your XI edits are kept and ready to save." : dirty ? "Unsaved changes" : acknowledged ? "Lineup saved to your room." : notice || (savedRevision ? "Your saved lineup is up to date." : "Partial lineups can be saved.")}</p>
+      <div>{(dirty || blockingConflict) && <button type="button" className="lineup-reload" onClick={reload} disabled={saving} aria-label="Reload saved lineup" title="Reload saved lineup"><RotateCcw size={16} /><span>Reload saved lineup</span></button>}<button type="button" className="lineup-save" onClick={save} disabled={!dirty || saving || !connected || remoteChanged || blockingConflict || unavailable}>{saving ? <span className="lineup-spinner" aria-hidden="true" /> : <Save size={17} />}{saving ? "Saving lineup…" : "Save lineup"}</button></div>
     </div>
 
     <div className="lineup-studio">
@@ -241,10 +265,11 @@ export function LineupBuilder({ team, players, connected, onAction }: LineupBuil
             const leader = draft[key] ? playerMap.get(draft[key]) : undefined;
             return <div className="lineup-leader" key={key} data-leadership={key} data-player-id={draft[key] ?? ""}>
               <span className="lineup-leader-art" aria-hidden="true">{leader ? <PlayerImage player={leader} /> : badge === "C" ? <Crown size={24} strokeWidth={1.2} /> : <Shield size={24} strokeWidth={1.2} />}</span>
-              <span className="lineup-leader-copy"><span>{label}</span><strong>{draft[key] ? leader?.name ?? "Player unavailable" : "Choose your leader"}</strong></span>
+              <span className="lineup-leader-copy"><span>{label}</span><strong>{draft[key] ? leader?.name ?? "Player unavailable" : "Choose your leader"}</strong>{draft[key] && !draft.playingXI.includes(draft[key]) && <small>Outside this XI</small>}</span>
               <span className="lineup-leader-badge" aria-hidden="true">{badge}</span>
             </div>;
           })}
+          <p className="lineup-leadership-note">Choose from your full squad in My Squad. Moving a player keeps their leadership role.</p>
         </div>
 
         <div className={`lineup-inspector ${controlsOpen ? "lineup-controls-open" : ""}`} ref={inspectorRef} tabIndex={-1} role="region" aria-label="Selected position" onKeyDown={(event) => { if (event.key === "Escape" && controlsOpen) { event.preventDefault(); event.stopPropagation(); closeControls(); } }}>
@@ -252,10 +277,10 @@ export function LineupBuilder({ team, players, connected, onAction }: LineupBuil
             <div className="lineup-inspector-top"><span>{focusedXI ? "Batting position" : "Substitute"} <strong>{String(inspected.index + 1).padStart(2, "0")}</strong></span><button type="button" aria-label="Close player controls" onClick={closeControls}><X size={17} /></button></div>
             <div className="lineup-inspector-player"><span className="lineup-inspector-photo"><PlayerImage player={focusedPlayer} /></span><span><strong>{focusedPlayer.name}</strong><span>{getPlayingRole(focusedPlayer) ?? "Role unavailable"}</span><span className="lineup-inspector-country">{focusedPlayer.isOverseas && <Globe2 size={13} />}{focusedPlayer.country}</span></span></div>
             <LineupPlayerStats player={focusedPlayer} />
-            {focusedXI && <div className="lineup-leader-choices" aria-label={`Leadership for ${focusedPlayer.name}`}>
-              <button type="button" aria-label={`Make ${focusedPlayer.name} captain`} aria-pressed={focusedCaptain} disabled={busy || focusedVice} onClick={() => edit({ ...draft, captainId: focusedCaptain ? null : focusedId })}><Crown size={16} />Captain</button>
-              <button type="button" aria-label={`Make ${focusedPlayer.name} vice captain`} aria-pressed={focusedVice} disabled={busy || focusedCaptain} onClick={() => edit({ ...draft, viceCaptainId: focusedVice ? null : focusedId })}><Shield size={16} />Vice captain</button>
-            </div>}
+            <div className="lineup-leader-choices" aria-label={`Leadership for ${focusedPlayer.name}`}>
+              <button type="button" aria-label={`${focusedCaptain ? "Clear" : "Make"} ${focusedPlayer.name} ${focusedCaptain ? "as " : ""}captain`} aria-pressed={focusedCaptain} disabled={busy} onClick={() => chooseLeader(focusedPlayer.id, "captainId")}><Crown size={16} />Captain</button>
+              <button type="button" aria-label={`${focusedVice ? "Clear" : "Make"} ${focusedPlayer.name} ${focusedVice ? "as " : ""}vice captain`} aria-pressed={focusedVice} disabled={busy} onClick={() => chooseLeader(focusedPlayer.id, "viceCaptainId")}><Shield size={16} />Vice captain</button>
+            </div>
             <div className="lineup-order-controls"><span>{focusedXI ? "Batting order" : "Bench order"}</span><div><button type="button" disabled={busy || inspected.index === 0} onClick={() => reorder(inspected.group, inspected.index, -1)} aria-label={`Move ${focusedPlayer.name} up in ${focusedXI ? "batting order" : "substitute order"}`} title="Move up"><ArrowUp size={17} /></button><button type="button" disabled={busy || inspected.index === LIMITS[inspected.group] - 1} onClick={() => reorder(inspected.group, inspected.index, 1)} aria-label={`Move ${focusedPlayer.name} down in ${focusedXI ? "batting order" : "substitute order"}`} title="Move down"><ArrowDown size={17} /></button></div></div>
             <div className="lineup-slot-actions"><button type="button" disabled={busy || !draft[focusedXI ? "substitutes" : "playingXI"].includes(null)} onClick={() => move(inspected.group, inspected.index)} aria-label={`Move ${focusedPlayer.name} to ${focusedXI ? "substitutes" : "playing XI"}`}><ArrowLeftRight size={15} />{focusedXI ? "Move to bench" : "Move to XI"}</button><button className="lineup-remove" type="button" disabled={busy} onClick={() => remove(inspected.group, inspected.index)} aria-label={`Remove ${focusedPlayer.name} from ${focusedXI ? "playing XI" : "substitutes"}`}><X size={15} />Remove</button></div>
           </> : <div className="lineup-inspector-empty"><span className="lineup-inspector-diagram" aria-hidden="true"><i /><i /><i /><i /><i /><i /></span><h3>{roster.length ? "Every position is yours." : "Your team starts here."}</h3><p>{roster.length ? "Pick a position on the ground. Manage a selected player to set leadership or change the order." : "Players you buy will be available to place in your XI."}</p></div>}

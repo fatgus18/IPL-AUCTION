@@ -82,4 +82,3 @@ test("sale corrections change future target notifications without replaying an e
   nominate(backup); assert.equal(observe(), null, "voiding the sale puts the backup on standby again");
   nominate(first); assert.equal(observe()?.isTarget, true);
 });
-

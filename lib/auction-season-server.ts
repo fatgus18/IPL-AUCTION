@@ -4,7 +4,7 @@ import { getDb, withDatabaseWrite } from "@/db";
 import { auctionSeasons } from "@/db/schema";
 import { AuctionError, type Member, type RoomState } from "./auction";
 import { getSeasonRoomContext } from "./auction-server";
-import { buildAuctionSeason, emptyAuctionSeason, matchSeasonRows, seasonSourceKey, type StoredAuctionSeason, type SeasonMappings } from "./auction-season";
+import { buildAuctionSeason, checkpointAuctionSeason, emptyAuctionSeason, matchSeasonRows, seasonSourceKey, type StoredAuctionSeason, type SeasonMappings } from "./auction-season";
 import { normalizeSeasonSourceUrl, parseSeasonSourceImport, SeasonSourceError, type SeasonSourceSnapshot } from "./season-source";
 import { getPlayerSeasonIdentity } from "./player-identities";
 import { getSeasonReference, SEASON_REFERENCE_METADATA } from "./season-reference";
@@ -126,14 +126,19 @@ export async function updateAuctionSeason(code: string, request: Request, body: 
       throw error;
     }
     await withDatabaseWrite(async tx => {
-      requireCreator(await getSeasonRoomContext(roomCode, request, tx));
+      const freshContext = await getSeasonRoomContext(roomCode, request, tx);
+      requireCreator(freshContext);
       const record = await readSeason(roomCode, tx);
       requireCurrent(record.revision, expectedRevision);
       if (record.stored.sourceUrl !== reservation.sourceUrl || record.stored.fetchRequestId !== requestId) {
         throw new AuctionError("The source changed during this refresh. Fetch the selected source again.", 409, "SEASON_CONFLICT");
       }
       const mappings = retainedMappings(record.stored, snapshot);
-      await writeSeason(tx, roomCode, { ...record.stored, snapshot, method: "fetch", mappings, fetchRequestId: undefined }, record.revision + 1, Date.now());
+      const now = Date.now();
+      const stored = checkpointAuctionSeason(freshContext.state, { ...record.stored, snapshot, method: "fetch", mappings, fetchRequestId: undefined }, {
+        revision: record.revision + 1, recordedAt: now, reason: "fetch",
+      });
+      await writeSeason(tx, roomCode, stored, record.revision + 1, now);
     });
     return getAuctionSeason(roomCode, request);
   }
@@ -159,7 +164,7 @@ export async function updateAuctionSeason(code: string, request: Request, body: 
     requireCreator(freshContext);
     const record = await readSeason(roomCode, tx);
     requireCurrent(record.revision, expectedRevision);
-    let stored = { ...record.stored, fetchRequestId: undefined };
+    let stored: StoredAuctionSeason = { ...record.stored, fetchRequestId: undefined };
     if (configuredUrl) stored = { ...stored, sourceUrl: configuredUrl };
     if (imported) {
       if (initial.stored.sourceUrl !== record.stored.sourceUrl) throw new AuctionError("The source changed. Import the table again.", 409, "SEASON_CONFLICT");
@@ -170,7 +175,10 @@ export async function updateAuctionSeason(code: string, request: Request, body: 
       stored = { ...stored, snapshot: reference, method: "reference", mappings: retainedMappings(record.stored, reference) };
     }
     if (body.type === "map") stored = { ...stored, mappings: validateMappings(body.mappings, record, freshContext.state) };
-    await writeSeason(tx, roomCode, stored, record.revision + 1, Date.now());
+    const now = Date.now();
+    if (body.type === "import" || body.type === "reference" || body.type === "map") stored =
+      checkpointAuctionSeason(freshContext.state, stored, { revision: record.revision + 1, recordedAt: now, reason: body.type });
+    await writeSeason(tx, roomCode, stored, record.revision + 1, now);
   });
   return getAuctionSeason(roomCode, request);
 }

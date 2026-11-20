@@ -1,0 +1,152 @@
+/* Shared visual language: existing portraits and CSS surfaces, with no media loop. */
+.app-shell {
+  --desk-base: color-mix(in srgb, var(--franchise-bg, #080f18) 40%, #080c12);
+  --desk-surface: color-mix(in srgb, var(--franchise-surface, #142032) 32%, #111a24);
+  --desk-raised: color-mix(in srgb, var(--franchise-raised, #243144) 28%, #1b2733);
+  --desk-line: color-mix(in srgb, var(--desk-accent) 12%, #d7e7f112);
+  background: radial-gradient(ellipse at 90% 0, color-mix(in srgb, var(--desk-accent) 5%, transparent), transparent 38%), var(--desk-base);
+  -webkit-font-smoothing: antialiased;
+}
+.app-shell .main-shell > main { max-width: 1650px; margin-inline: auto; }
+.app-shell .sidebar { border-bottom-color: #dbe4f015; box-shadow: 0 6px 25px #00000014; }
+.app-shell .brand-word { letter-spacing: -.025em; }
+.app-shell .brand-mark { border-radius: 9px 3px 9px 3px; box-shadow: inset 0 1px #ffffff24; }
+.app-shell .topbar { background: transparent; }
+.app-shell .topbar-left > strong { font-weight: 500; color: #b4bfce; }
+.app-shell .season-tag { border-radius: 30px; font-size: 11px; letter-spacing: .075em; padding: 6px 11px; }
+.app-shell .sidebar nav .nav-item::before { content: none; display: none; }
+.app-shell.in-auction .sidebar nav.room-navigation .nav-item.active { background: color-mix(in srgb, var(--desk-accent) 9%, #111922); border-color: color-mix(in srgb, var(--desk-accent) 25%, #ffffff06); }
+.app-shell.in-auction .sidebar nav.room-navigation .nav-item.active::after { display: none; content: none; }
+.app-shell.in-auction .room-navigation .room-nav-submenu { border-color: #d2deed24; box-shadow: 0 22px 60px #0009; }
+.app-shell .account-entry, .app-shell .broadcast-entry, .app-shell .room-break-trigger, .app-shell .sound-toggle { border-radius: 9px; border-color: #ffffff16; background: #ffffff02; }
+.app-shell .cinematic-hero { border-radius: 22px; border-color: #d6e4f227; box-shadow: 0 24px 60px #0003, inset 0 1px #ffffff07; }
+.app-shell .cinematic-content h1 { letter-spacing: -.025em; text-shadow: 0 5px 30px #0008; }
+.app-shell .cinematic-content h1 em { color: #ead1a3; }
+.app-shell .cinematic-kicker { color: #e4c794; letter-spacing: .14em; }
+.app-shell .cinematic-description { color: #c3cedc; font-size: 16px; }
+.app-shell .cinematic-actions { gap: 14px; }
+.app-shell .cinematic-actions .button { border-radius: 10px; min-height: 54px; padding-inline: 24px; }
+.app-shell .cinematic-foot { background: #0a111b; border-color: #d5b47720; padding-block: 22px; }
+.app-shell .cinematic-franchises img { opacity: 1; }
+.app-shell .cinematic-pool-count { color: #a8b8ca; }
+.app-shell .cinematic-pool-count strong { color: #f1dbb5; }
+.app-shell .franchise-hero { position: relative; overflow: hidden; padding: 29px 32px; margin-bottom: 28px; border-radius: 16px; border: 1px solid var(--desk-line); background: radial-gradient(ellipse at 100% 10%, color-mix(in srgb, var(--desk-accent) 10%, transparent), transparent 70%), linear-gradient(105deg, var(--desk-surface), var(--desk-base)); }
+.app-shell .franchise-hero-crest { position: relative; z-index: 1; width: 66px; }
+.app-shell .franchise-hero-copy { position: relative; z-index: 1; }
+.app-shell .franchise-hero h1 { font-size: clamp(32px, 3.2vw, 43px); letter-spacing: -.02em; color: #f0ede6; }
+.app-shell .franchise-hero-owner { margin-top: 5px; font-size: 14px; color: #aebed1; }
+.franchise-hero-monogram { position: absolute; pointer-events: none; right: 26px; top: 50%; transform: translateY(-54%); font: 750 clamp(100px, 12vw, 180px)/1 var(--font-display), sans-serif; letter-spacing: -.04em; color: color-mix(in srgb, var(--desk-accent) 5%, transparent); user-select: none; }
+.app-shell .metrics { margin-top: 8px; margin-bottom: 34px; border-radius: 16px; background: linear-gradient(105deg, var(--desk-surface), #101821); border-color: #dde7f117; box-shadow: 0 10px 35px #00000010; }
+.app-shell .metric { padding: 26px; min-height: 122px; border-right-color: #ffffff0b; }
+.app-shell .metric strong { font-size: 43px; color: #eae5d9; }
+.app-shell .metric-icon { align-self: flex-start; margin-top: 4px; width: 32px; height: 32px; opacity: .8; }
+.app-shell .metric > div > span { font-size: 12px; color: #96a8bd; font-weight: 500; letter-spacing: .07em; }
+.app-shell .auction-titlebar { align-items: end; padding-top: 5px; }
+.app-shell .auction-titlebar h2 { letter-spacing: -.02em; font-size: clamp(29px, 3vw, 40px); }
+.app-shell .player-card { border-radius: 18px; border-color: #dbe5ef20; box-shadow: 0 20px 45px #00000026; background: radial-gradient(ellipse at 82% 10%, color-mix(in srgb, var(--desk-accent) 8%, transparent), transparent 70%), linear-gradient(135deg, #162431, var(--desk-surface)); }
+.app-shell .card-topline { padding: 25px 28px 0; }
+.app-shell .player-bio h2 { letter-spacing: -.01em; }
+.app-shell .player-bio h2 > span { letter-spacing: -.025em; color: #f1eee4; }
+.app-shell .player-country { color: #a7bbcf; }
+.app-shell .player-tags > span { border-color: #ced8e025; background: #07111b2b; padding: 6px 10px; }
+.app-shell .player-stats { padding-block: 23px; background: #0b141c90; border-color: #d7e7f10f; }
+.app-shell .player-stats > div { border-color: #ffffff12; }
+.app-shell .player-stats strong { color: #e5e6df; font-size: 32px; }
+.app-shell .player-stats span { color: #90a6bd; font-size: 11px; }
+.app-shell .bid-card { border-radius: 18px; border-color: color-mix(in srgb, var(--desk-accent) 23%, #ffffff0b); background: linear-gradient(155deg, var(--desk-raised), var(--desk-surface) 55%); box-shadow: 0 16px 44px #0003; }
+.app-shell .bid-card-heading { background: transparent; border-bottom-color: #ffffff0e; padding: 23px 25px; }
+.app-shell .bid-card-heading h3 { color: #ddd8cd; font-size: 24px; letter-spacing: 0; }
+.app-shell .bid-price > strong { color: #f0d6a7; font-size: clamp(65px, 5.6vw, 84px); letter-spacing: -.035em; text-shadow: 0 5px 28px #d0ab5a0d; }
+.app-shell .bid-price { padding-block: 36px; }
+.app-shell .bid-controls .button.primary, .app-shell .bid-controls .lock-button { min-height: 51px; font-size: 15px; }
+.app-shell .bid-history { background: #080f1855; border-color: #ffffff10; }
+.app-shell .activity-card { border-radius: 16px; border-color: #dbe5ee16; }
+.app-shell .team-table { border-radius: 16px; border-color: #ffffff14; background: radial-gradient(ellipse at 0 0, color-mix(in srgb, var(--team-color) 13%, transparent), transparent 70%), var(--desk-surface); }
+.app-shell .team-table.your-table { border-color: color-mix(in srgb, var(--desk-accent) 45%, transparent); }
+.app-shell .team-table.leading { border-color: var(--team-color); box-shadow: inset 0 2px var(--team-color), 0 10px 32px #0002; }
+.app-shell .team-squad-summary { border-radius: 18px; background: radial-gradient(ellipse at 100% 0, color-mix(in srgb, var(--summary-team-color) 11%, transparent), transparent 70%), var(--desk-surface); padding: 29px; }
+.app-shell .team-squad-summary-name > strong { font-size: clamp(19px, 2vw, 24px); line-height: 1.25; }
+.app-shell .team-squad-summary-crest { width: 65px; height: 65px; }
+.app-shell .team-squad-summary-stats strong { font: 650 36px/1.25 var(--font-display), sans-serif; letter-spacing: -.02em; }
+.app-shell .personal-squad-header { border-color: #ffffff12; margin-bottom: 22px; }
+.app-shell .personal-squad-header h2, .app-shell .team-squads-heading h2, .app-shell .manage-section-heading h2 { font-size: clamp(34px, 3.8vw, 49px); letter-spacing: -.02em; }
+.app-shell .personal-squad-totals { border-radius: 15px; background: linear-gradient(110deg, var(--desk-surface), #0e1720); border-color: #ffffff14; }
+.app-shell .personal-squad-totals dd { font-family: var(--font-display), sans-serif; font-size: 35px; }
+.app-shell .personal-squad-player { border-radius: 16px; border-color: #e0e9f019; box-shadow: 0 12px 32px #00000020; }
+.app-shell .personal-squad-player-art { background: radial-gradient(ellipse at 50% 25%, color-mix(in srgb, var(--squad-color) 12%, #1c2938), var(--desk-surface) 80%); }
+.app-shell .personal-squad-player-info { padding: 22px; }
+.app-shell .personal-squad-player-info h4 { font-size: 21px; }
+.app-shell .personal-squad-purchase strong { font-family: var(--font-display), sans-serif; font-size: 28px; }
+.app-shell .personal-squad-leadership { border-color: color-mix(in srgb, var(--desk-accent) 20%, #ffffff08); background: linear-gradient(110deg, color-mix(in srgb, var(--desk-accent) 6%, var(--desk-surface)), var(--desk-base)); }
+.app-shell .personal-squad-leader { background: #080f1730; border-color: #d9e3ed17; }
+.app-shell .personal-squad-captaincy-actions button { border-radius: 8px; }
+.app-shell .season-heading { padding-block: 20px 24px; }
+.app-shell .season-heading h1 { letter-spacing: -.035em; font-size: clamp(48px, 5vw, 68px); }
+.app-shell .season-rules { border-radius: 12px; background: #ffffff02; border-color: #ffffff10; padding-block: 15px; }
+.app-shell .season-leader-card, .app-shell .season-player-spotlight { border-radius: 20px; border-color: #deebf11f; box-shadow: 0 16px 40px #00000024; }
+.app-shell .season-leader-card { background: radial-gradient(ellipse at 100% 0, color-mix(in srgb, var(--season-team) 18%, transparent), transparent 70%), linear-gradient(120deg, #192839, #0e1926); }
+.app-shell .season-player-spotlight { background: radial-gradient(ellipse at 90% 40%, #c6a66e18, transparent 70%), #111b28; }
+.app-shell .season-leader-score strong { color: #efdfc1; letter-spacing: -.035em; }
+.app-shell .season-summary-strip { border-radius: 15px; border-color: #ffffff13; background: #101a25; }
+.app-shell .season-standings-panel, .app-shell .season-source-panel { border-radius: 17px; border-color: #dbe5f017; background: #101a25; }
+.app-shell .season-standing { border-color: #d8e2f00c; }
+.app-shell .season-standing.is-first { background: linear-gradient(90deg, #d6b47a0a, transparent); }
+.app-shell .season-standings-legend { background: #080f172e; }
+.app-shell .sa-tabs { background: #0b141f; border-color: #d0dff017; }
+.app-shell .sa-board { border-radius: 17px; border-color: #ffffff13; }
+.app-shell .sa-board-heading { background: linear-gradient(100deg, #1d2b3a, #13202d); padding-block: 26px; }
+.app-shell .sa-leader-row { border-bottom-color: #ffffff0a; }
+.app-shell .room-dock { background: var(--desk-base); border-top-color: #ffffff13; box-shadow: 0 -10px 35px #00000018; }
+.app-shell .dock-icon { border: 0; background: color-mix(in srgb, var(--desk-accent) 7%, transparent); border-radius: 10px; }
+.app-shell .dock-button { background: #ffffff02; border-color: #ffffff16; }
+.app-shell.in-auction .room-dock { left: 50%; right: auto; bottom: 14px; transform: translateX(-50%); width: min(calc(100% - 48px), 1574px); height: 66px; padding-inline: 22px; border: 1px solid #dbe7f11d; border-radius: 14px; box-shadow: 0 14px 45px #0008, inset 0 1px #ffffff04; }
+@media (hover: hover) {
+  .app-shell :is(.team-squad-summary, .personal-squad-player) { transition: border-color .18s, transform .18s; }
+  .app-shell :is(.team-squad-summary, .personal-squad-player):hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--desk-accent) 35%, #ffffff15); }
+  .app-shell .button.primary { transition: filter .16s, transform .16s; }
+  .app-shell .button.primary:hover:not(:disabled) { filter: brightness(1.07); transform: translateY(-1px); }
+}
+@media (max-width: 1100px) {
+  .app-shell .metric { padding: 22px 17px; gap: 11px; }
+  .app-shell .metric strong { font-size: 35px; }
+  .app-shell .metric > div > span { font-size: 11px; letter-spacing: .02em; }
+  .app-shell .team-squad-summary { padding: 24px; }
+}
+@media (max-width: 600px) {
+  .app-shell.in-auction .room-dock { width: calc(100% - 24px); bottom: 10px; height: 64px; padding-inline: 12px; border-radius: 12px; }
+  .app-shell .cinematic-hero { border-radius: 15px; }
+  .app-shell .cinematic-content h1 { letter-spacing: -.015em; }
+  .app-shell .cinematic-description { font-size: 14px; }
+  .app-shell .cinematic-actions { gap: 9px; }
+  .app-shell .cinematic-actions .button { min-height: 48px; padding-inline: 15px; font-size: 13px; }
+  .app-shell .cinematic-foot { padding-block: 18px; }
+  .app-shell .franchise-hero { padding: 21px; margin-bottom: 22px; border-radius: 13px; }
+  .app-shell .franchise-hero-crest { width: 50px; }
+  .app-shell .franchise-hero h1 { font-size: 32px; }
+  .app-shell .franchise-hero-owner { font-size: 13px; }
+  .franchise-hero-monogram { right: 12px; font-size: 112px; opacity: .7; }
+  .app-shell .metrics { border-radius: 13px; }
+  .app-shell .metric { padding: 18px 15px; min-height: 110px; }
+  .app-shell .metric strong { font-size: 33px; }
+  .app-shell .metric-icon { width: 24px; height: 30px; margin-top: 2px; }
+  .app-shell .metric > div > span { font-size: 11px; }
+  .app-shell .auction-titlebar h2 { font-size: 28px; }
+  .app-shell .card-topline { padding: 21px 20px 0; }
+  .app-shell .player-card, .app-shell .bid-card { border-radius: 15px; }
+  .app-shell .player-stats { padding-block: 20px; }
+  .app-shell .player-stats strong { font-size: 28px; }
+  .app-shell .player-stats span { font-size: 10px; }
+  .app-shell .bid-price > strong { font-size: 72px; }
+  .app-shell .bid-price { padding-block: 29px; }
+  .app-shell .team-squad-summary { padding: 21px; border-radius: 15px; }
+  .app-shell .team-squad-summary-name > strong { font-size: 19px; }
+  .app-shell .team-squad-summary-crest { width: 48px; height: 48px; }
+  .app-shell .team-squad-summary-stats strong { font-size: 30px; }
+  .app-shell .personal-squad-totals dd { font-size: 30px; }
+  .app-shell .personal-squad-player-info { padding: 17px; }
+  .app-shell .personal-squad-player-info h4 { font-size: 18px; }
+  .app-shell .personal-squad-purchase strong { font-size: 24px; }
+  .app-shell .season-heading h1 { font-size: 47px; }
+  .app-shell .season-leader-card, .app-shell .season-player-spotlight { border-radius: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .app-shell :is(.team-squad-summary, .personal-squad-player, .button.primary) { transition: none; transform: none !important; } }

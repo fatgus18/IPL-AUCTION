@@ -41,3 +41,13 @@ Managers can appoint either leader directly in **My Squad**, from any purchased 
 - The workbook's **POINTS** sheet includes deviation and weighted points/match. **Tournament stats** includes source totals/extremes and podium; **Season analytics** contains every leaderboard, including its formula and coverage. Empty sections remain identifiable in the workbook.
 
 No extra ESPN request, database migration, chart library or scoring bonus is introduced. New source snapshots, corrected sales and saved XI/captaincy changes recalculate the statistics through the existing season read path.
+
+## Season race timeline
+
+Successful fetches, imports, verified snapshot loads and saved player mappings create an immutable checkpoint in the same database transaction as the updated season. Each checkpoint freezes public squad points, competition ranks, coverage, managers and captaincy at that moment. Reads, source-link configuration, failed requests and rejected stale writes do not add checkpoints. Existing rooms start recording on their next successful points update; earlier results are not reconstructed.
+
+The chart can show points or position and exposes exact recorded standings through its checkpoint slider. Positive rank movement means a climb. Overtakes require a strict reversal of two known scores; joining or leaving a tie is not an overtake. Points differences may include source, squad, captaincy or coverage changes, which are labelled separately. Historical scores never change when current captains or purchases change.
+
+A different source URL, series or provider begins a separate segment, including returning to an earlier source after switching away. No delta or connecting line compares different segments or retained-history gaps. Source capture time stays separate from the time the room saved the checkpoint, especially for dated reference data.
+
+The first checkpoint and latest 239 are retained, with an explicit omitted-checkpoint count. Public history excludes private targets and budgets, and internal comparison signatures are not sent to the browser. The **Season race** Excel worksheet contains the same frozen results, movements, dates and captaincy.

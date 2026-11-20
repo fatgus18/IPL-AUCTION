@@ -84,7 +84,7 @@ try {
   await dialog.getByLabel("Your name", { exact: true }).fill("Browser Host");
   await dialog.getByLabel("Room name", { exact: true }).fill("Lobby navigation verification");
   await dialog.getByRole("button", { name: "Create auction room", exact: true }).click();
-  await nav(host, "Team squads").waitFor();
+  await nav(host, "Team squads").waitFor({ state: "attached" });
   const code = new URL(host.url()).searchParams.get("room");
   const hostAccess = await roomAccess(host, code);
   assert.ok(hostAccess?.token);
@@ -102,7 +102,7 @@ try {
   await dialog.locator("select").selectOption("rcb");
   await dialog.getByLabel("Team password", { exact: true }).fill(teamPassword);
   await dialog.getByRole("button", { name: "Join auction room", exact: true }).click();
-  await nav(owner, "My Squad").waitFor();
+  await nav(owner, "My Squad").waitFor({ state: "attached" });
   const ownerAccess = await roomAccess(owner, code);
   await clickNav(owner, "My Squad");
   await owner.getByRole("heading", { name: "Your first signing starts here.", exact: true }).waitFor();

@@ -94,6 +94,10 @@ try {
   }));
   assert.ok(navGeometry.every(button => Math.abs(button.center - navGeometry[0].center) < 2), 'Header controls share a consistent vertical center.');
   assert.ok(navGeometry.every(button => button.visibleIcon), 'Navigation icons, including settings, remain visible.');
+  assert.ok(await nav.locator('.nav-item.active').evaluateAll(buttons => buttons.every(button => {
+    const pseudo = getComputedStyle(button, '::before');
+    return pseudo.display === 'none' || pseudo.content === 'none';
+  })), 'Selected navigation uses one complete button surface, with no stray highlight stripe.');
   const teamTrigger = nav.getByRole('button', { name: 'My team navigation', exact: true });
   await teamTrigger.focus(); await page.keyboard.press('ArrowDown');
   assert.equal(await nav.locator('button[data-destination="targets"]').isVisible(), true);

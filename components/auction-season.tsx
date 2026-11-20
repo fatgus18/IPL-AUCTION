@@ -9,6 +9,7 @@ import { requestAuction } from "@/lib/auction-client";
 import { formatMoney } from "@/lib/auction-display";
 import { PlayerImage, TeamCrest } from "./ipl-visuals";
 import { SeasonAnalytics } from "./season-analytics";
+import { SeasonRaceTimeline } from "./season-race";
 import "./auction-season.css";
 
 type Props = { state: RoomState; token: string; memberId: string; isCreator: boolean; connected: boolean; ownTeamId?: string };
@@ -188,6 +189,8 @@ export function AuctionSeason({ state, token, memberId, isCreator, connected, ow
       </div>
 
       <div className="season-summary-strip"><div><span>Franchises</span><strong>{activeTeams.toString().padStart(2, "0")}</strong></div><div><span>Players with points</span><strong>{season?.coverage.matchedPlayers ?? 0}<small> / {season?.coverage.totalPlayers ?? 0}</small></strong></div><div><span>{ownTeam ? "Your points" : "Scoring"}</span><strong>{ownTeam ? points(ownTeam.points ?? (ownTeam.matchedPlayers ? ownTeam.knownPoints : null)) : "MVP"}{ownTeam && !ownTeam.complete && ownTeam.matchedPlayers > 0 && <small> partial</small>}</strong></div><div><span>Last data update</span><strong className="season-summary-date">{season?.snapshot ? dateTime(season.snapshot.fetchedAt) : "Not fetched yet"}</strong></div></div>
+
+      {season?.raceHistory && <SeasonRaceTimeline history={season.raceHistory} ownTeamId={ownTeamId}/>}
 
       <div className="season-main-grid">
         <section className="season-standings-panel" aria-labelledby="season-standings-title">

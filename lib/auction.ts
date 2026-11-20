@@ -38,6 +38,8 @@ export type TeamLineup = TeamLineupInput & { revision: number };
 /** Private to the authenticated manager; never stored in the shared room state. */
 export type TargetPicks = {
   teamId: string; playerIds: string[]; revision: number;
+  /** Each first choice can have one optional, private backup player. */
+  backups?: Record<string, string>;
   /** Private planning limits in integer lakhs; these never restrict an actual bid. */
   maxBids?: Record<string, number>;
 };
@@ -106,7 +108,7 @@ export type AuctionAction =
   | { type: "chat"; text: string }
   | { type: "set_lineup"; teamId: string; lineup: TeamLineupInput; expectedRevision: number }
   | { type: "set_captaincy"; teamId: string; captainId: string | null; viceCaptainId: string | null; expectedRevision: number }
-  | { type: "set_target_picks"; teamId: string; playerIds: string[]; expectedRevision: number; maxBids?: Record<string, number> }
+  | { type: "set_target_picks"; teamId: string; playerIds: string[]; expectedRevision: number; backups?: Record<string, string>; maxBids?: Record<string, number> }
   | { type: "end_auction"; expectedResultsRevision: number }
   | { type: "correct_sale"; playerId: string; expectedTeamId: string; expectedAmount: number; expectedResultsRevision: number; teamId: string | null; amount?: number; reason: string }
   | { type: "claim_team"; teamId: string | null; teamPassword?: string };

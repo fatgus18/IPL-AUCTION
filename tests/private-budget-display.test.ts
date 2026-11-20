@@ -128,3 +128,57 @@ test("prototype-named targets and inherited limits cannot crash inputs or poison
   state.myTargetPicks = { teamId: "rcb", revision: 1, playerIds: [player.id], maxBids: Object.create({ constructor: 100 }) };
   assert.equal(currentPrivateBudget(state, owner.id), null);
 });
+
+test("a backup plan reserves the larger eligible alternative once per unresolved chain", () => {
+  const { state, player } = fixture();
+  const backup: Player = { ...player, id: "backup", status: "available" };
+  const standalone: Player = { ...player, id: "standalone", status: "unsold" };
+  const players = [player, backup, standalone];
+  const ids = [player.id, standalone.id];
+  const backups = { [player.id]: backup.id };
+  const limits = { [player.id]: 500, backup: 700, standalone: 300 };
+  const plan = () => privateBudgetPlan(players, ids, limits, 900, backups, "rcb");
+  assert.deepEqual(plan(), { planned: 1000, unpriced: 0, remaining: 2, overallocated: 100, unallocated: 0 });
+  player.status = "sold"; player.soldTo = "mi";
+  assert.equal(plan().planned, 1000, "only backup and standalone remain after losing the first choice");
+  player.soldTo = "rcb";
+  assert.deepEqual(plan(), { planned: 300, unpriced: 0, remaining: 1, overallocated: 0, unallocated: 600 });
+  player.status = "available"; delete player.soldTo; backup.catalogArchived = true;
+  assert.equal(plan().planned, 800, "an archived backup no longer reserves its larger limit");
+  player.eligibilityVerified = false;
+  assert.equal(plan().planned, 300);
+  delete backup.catalogArchived;
+  assert.equal(plan().planned, 1000);
+  assert.equal(state.currentBid, 200, "planning never changes actual bids");
+});
+
+test("a chain with an unpriced alternative is marked once and counts any saved eligible limit", () => {
+  const { player } = fixture();
+  const backup: Player = { ...player, id: "backup" };
+  const plan = privateBudgetPlan([player, backup], [player.id], { [player.id]: 500 }, 1000, { [player.id]: backup.id }, "rcb");
+  assert.deepEqual(plan, { planned: 500, unpriced: 1, remaining: 1, overallocated: 0, unallocated: 500 });
+  assert.deepEqual(privateBudgetPlan([player, backup], [player.id], {}, 1000, { [player.id]: backup.id }, "rcb"), { planned: 0, unpriced: 1, remaining: 1, overallocated: 0, unallocated: 1000 });
+});
+
+test("private current-lot warnings use an active backup's own limit and ignore a standby backup", () => {
+  const { state, owner, player } = fixture();
+  const backup: Player = { ...player, id: "backup" };
+  state.players.push(backup);
+  state.myTargetPicks!.backups = { [player.id]: backup.id };
+  state.myTargetPicks!.maxBids![backup.id] = 490;
+  state.currentPlayerId = backup.id; state.currentBid = 475;
+  assert.equal(currentPrivateBudget(state, owner.id), null);
+  player.status = "sold"; player.soldTo = "csk";
+  const reminder = currentPrivateBudget(state, owner.id)!;
+  assert.equal(reminder.player.id, backup.id);
+  assert.equal(reminder.limit, 490);
+  assert.equal(reminder.nextBid, 500, "quarter-crore bid increments remain unchanged");
+  assert.equal(reminder.warning, "next-over");
+  assert.equal(currentPrivateBudget(state, state.hostId), null);
+  assert.equal(currentPrivateBudget(state, "demo-csk"), null);
+  player.soldTo = "rcb";
+  assert.equal(currentPrivateBudget(state, owner.id), null, "securing the first choice disables the backup warning");
+  player.status = "available"; delete player.soldTo;
+  state.currentPlayerId = player.id;
+  assert.equal(currentPrivateBudget(state, owner.id)?.limit, 500, "a voided sale restores the first choice's own limit");
+});

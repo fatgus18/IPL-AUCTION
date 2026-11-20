@@ -10,5 +10,6 @@ export function FranchiseHero({ team, ownerName }: {
       <h1>{ownerName}</h1>
       <p className="franchise-hero-owner">{team.name}</p>
     </div>
+    <span className="franchise-hero-monogram" aria-hidden="true">{team.shortName}</span>
   </section>;
 }

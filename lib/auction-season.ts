@@ -4,6 +4,7 @@ import { getPlayerSeasonIdentity, normalizeSeasonName } from "./player-identitie
 import { getPlayingRole } from "./player-roles.ts";
 import { deriveSeasonAnalytics, type SeasonAnalytics } from "./season-analytics.ts";
 import { getSquadCaptaincy } from "./squad-captaincy.ts";
+import { appendSeasonRaceCheckpoint, deriveSeasonRaceHistory, type SeasonRaceHistory, type SeasonRaceReason, type StoredSeasonRaceHistory } from "./season-race.ts";
 
 export const DEFAULT_SEASON_SOURCE_URL = "https://www.cricinfo.com/series/ipl-2026-1510719/most-valuable-players";
 export type SeasonMappings = Record<string, string>;
@@ -13,6 +14,7 @@ export type SeasonSourceAvailability = { mode: "cloud" | "direct" | "worker"; av
 export type StoredAuctionSeason = {
   sourceUrl: string; snapshot: SeasonSourceSnapshot | null; method: SeasonAcquisition | null;
   mappings: SeasonMappings; lastFetchAttemptAt: number | null; fetchRequestId?: string;
+  raceHistory?: StoredSeasonRaceHistory;
 };
 export type SeasonSourceRowView = SeasonSourceRow & {
   key: string; playerId: string | null; match: "id" | "name" | "alias" | "manual" | null;
@@ -42,6 +44,7 @@ export type AuctionSeasonView = {
   unmatchedPlayers: { id: string; name: string; teamId: string; teamName: string }[];
   mappings: SeasonMappings;
   analytics: SeasonAnalytics;
+  raceHistory: SeasonRaceHistory;
 };
 
 export function emptyAuctionSeason(): StoredAuctionSeason {
@@ -177,6 +180,19 @@ export function buildAuctionSeason(
       && !(stored.method === "reference" && metadata.reference?.seriesId === stored.snapshot.seriesId),
     teams, coverage: { matchedPlayers, totalPlayers, sourceRows: sourceRows.length, unmatchedPlayers: unmatchedPlayers.length },
     sourceRows, unmatchedPlayers, mappings: { ...stored.mappings },
+    raceHistory: deriveSeasonRaceHistory(stored.raceHistory, teams, sumSeasonPoints),
   };
   return { ...view, analytics: deriveSeasonAnalytics(view, state.players, sumSeasonPoints) };
+}
+
+/** The returned state and its checkpoint are saved together in one season JSON write. */
+export function checkpointAuctionSeason(
+  state: RoomState, stored: StoredAuctionSeason,
+  metadata: { revision: number; recordedAt: number; reason: SeasonRaceReason },
+): StoredAuctionSeason {
+  if (!stored.snapshot) return stored;
+  const view = buildAuctionSeason(state, stored);
+  return { ...stored, raceHistory: appendSeasonRaceCheckpoint(stored.raceHistory, stored.snapshot, view.teams, {
+    ...metadata, roomVersion: state.version, method: stored.method ?? "fetch", provisional: !state.endedAt,
+  }) };
 }

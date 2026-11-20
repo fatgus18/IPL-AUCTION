@@ -78,6 +78,29 @@ export async function createSeasonWorkbook(season: AuctionSeasonView): Promise<B
   }
   analytics.autoFilter = { from: { row: 4, column: 1 }, to: { row: Math.max(4, analytics.rowCount), column: 15 } };
 
+  const history = season.raceHistory;
+  const race = sheet(workbook, "Season race", [12, 29, 29, 23, 25, 19, 34, 27, 10, 20, 18, 16, 15, 15, 26, 26, 70, 80], "SEASON RACE HISTORY",
+    `${history.checkpoints.length} of ${history.totalCheckpoints} successful updates retained${history.omittedCheckpoints ? ` · ${history.omittedCheckpoints} middle checkpoints omitted; first and latest ${history.limit - 1} retained` : ""}. Source capture time is distinct from the time this room saved the update.`,
+    ["Checkpoint", "Recorded in room (UTC)", "Source captured (UTC)", "Update reason", "Series", "Segment", "Franchise", "Manager", "Rank", "Known points", "Points change", "Places gained", "Matched players", "Squad players", "Captain", "Vice captain", "Change context", "Source URL"]);
+  for (const checkpoint of history.checkpoints) {
+    for (const team of checkpoint.teams) {
+      const change = checkpoint.teamChanges.find(entry => entry.teamId === team.id);
+      const context = [
+        checkpoint.reason === "map" ? "Player mapping correction" : "", checkpoint.provisional ? "Provisional squads" : "",
+        !checkpoint.previousCheckpointId ? checkpoint.comparisonGap ? "Retained history gap; no comparison" : "First checkpoint in segment; no comparison" : "",
+        change?.squadChanged ? "Squad changed" : "", change?.captaincyChanged ? "Captaincy changed" : "",
+        change?.coverageChanged ? "Score coverage changed" : "", change?.managerChanged ? "Manager changed" : "",
+        ...checkpoint.overtakes.filter(entry => entry.teamId === team.id).map(entry => `Passed ${checkpoint.teams.find(other => other.id === entry.passedTeamId)?.name ?? entry.passedTeamId}`),
+      ].filter(Boolean).join(" · ");
+      row(race, [checkpoint.sequence, new Date(checkpoint.recordedAt).toISOString(), checkpoint.sourceCapturedAt, checkpoint.reason,
+        checkpoint.seriesName, checkpoint.segmentId, team.name, team.manager, team.rank, team.points,
+        change?.pointsDelta ?? null, change?.rankDelta ?? null, team.matchedPlayers, team.totalPlayers,
+        team.captainName, team.viceCaptainName, context, checkpoint.sourceUrl]);
+    }
+  }
+  if (!history.checkpoints.length) row(race, [null, null, null, "No saved checkpoints", null, null, null, null, null, null, null, null, null, null, null, null, "History begins with the next successful source refresh, import, reference load or mapping save. Earlier scores are not reconstructed.", null]);
+  race.autoFilter = { from: { row: 4, column: 1 }, to: { row: Math.max(4, race.rowCount), column: 18 } };
+
   const rules = sheet(workbook, "Rules", [30, 110], "SCORING & PROVENANCE", subtitle, ["Setting", "Value"]);
   for (const entry of [
     ["Scoring", "Every purchased player contributes the source MVP points. Captain ×2, vice captain ×1.5; all other players ×1, including substitutes and reserves."],
@@ -85,6 +108,9 @@ export async function createSeasonWorkbook(season: AuctionSeasonView): Promise<B
     ["No extra bonuses", "Runs, wickets and matches are source information only. They are not added again to MVP points."],
     ["Unmatched players", "Blank points are unknown, not zero. Standings show known totals; negative source scores remain negative."],
     ["Squad changes", "Saved lineup changes and creator sale corrections recompute standings against the latest successful source snapshot."],
+    ["Season race", "Successful source refreshes, imports, reference loads and mapping saves freeze public totals, ranks, managers and captaincy in the same season write. Reads and source configuration do not add checkpoints. Historical scores never recalculate with current captaincy."],
+    ["Race comparisons", "Changes compare consecutive retained checkpoints within one source segment. Positive places gained means a better competition rank. An overtake requires a strict reversal; ties and unknown scores do not create overtakes. Mapping, squad, captaincy and coverage changes are labeled because deltas are not necessarily match performance."],
+    ["Race retention", `At most ${history.limit} checkpoints are retained: the first plus the latest ${history.limit - 1}. ${history.omittedCheckpoints} checkpoints omitted. Comparisons across omitted updates or source segments remain blank.`],
     ["Deviation", "Player raw MVP minus the average raw MVP across every source player. Captaincy does not change this comparison."],
     ["Points per match", "Player weighted points divided by positive known matches. Squad per-match score sums these individual rates. Missing/zero match counts stay pending; negative rates remain negative."],
     ["Value signings", "Raw MVP divided by actual purchase price in crores. Best value includes positive prices; worst value requires at least INR 2 Cr. Zero-price purchases are excluded."],

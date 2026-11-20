@@ -39,6 +39,48 @@ test("old list-only clients preserve surviving budgets; deleting targets prunes 
   assert.equal(Object.hasOwn(cleared, "maxBids"), false);
 });
 
+test("deployed clients sending first-choice budgets preserve unseen backup limits", () => {
+  const { ids: [first, backup, standalone], validate } = fixture();
+  const saved = validate({ playerIds: [first, standalone], backups: { [first]: backup }, maxBids: { [first]: 500, [backup]: 350, [standalone]: 800 } });
+  // This is the deployed UI payload: explicit first-choice maxBids, no backups.
+  const legacyEdit = { playerIds: [first, standalone], maxBids: { [first]: 575 }, expectedRevision: saved.revision };
+  const edited = validate(legacyEdit, saved);
+  assert.deepEqual(edited.backups, { [first]: backup });
+  assert.deepEqual(edited.maxBids, { [first]: 575, [backup]: 350 }, "the primary edit and explicit removal apply while the unseen backup limit survives");
+  const clearedPrimaries = validate({ playerIds: [first, standalone], maxBids: {}, expectedRevision: edited.revision }, edited);
+  assert.deepEqual(clearedPrimaries.maxBids, { [backup]: 350 });
+  const explicitBackupEdit = validate({ playerIds: [first, standalone], maxBids: { [first]: 600, [backup]: 375 }, expectedRevision: saved.revision }, saved);
+  assert.deepEqual(explicitBackupEdit.maxBids, { [first]: 600, [backup]: 375 }, "an explicitly supplied backup limit takes precedence over its old value");
+  assert.throws(() => validate(legacyEdit, edited), code("TARGET_PICKS_CONFLICT"));
+  assert.deepEqual(saved.maxBids, { [first]: 500, [backup]: 350, [standalone]: 800 });
+});
+
+test("legacy first-choice removals and backup promotions do not retain obsolete backup limits", () => {
+  const { ids: [first, backup, standalone], validate } = fixture();
+  const saved = validate({ playerIds: [first, standalone], backups: { [first]: backup }, maxBids: { [first]: 500, [backup]: 350, [standalone]: 800 } });
+  const removed = validate({ playerIds: [standalone], maxBids: { [standalone]: 825 }, expectedRevision: saved.revision }, saved);
+  assert.equal(removed.backups, undefined);
+  assert.deepEqual(removed.maxBids, { [standalone]: 825 }, "removing the chain removes its unseen backup limit too");
+  const promoted = validate({ playerIds: [first, backup, standalone], maxBids: { [first]: 575, [standalone]: 825 }, expectedRevision: saved.revision }, saved);
+  assert.equal(promoted.backups, undefined);
+  assert.deepEqual(promoted.maxBids, { [first]: 575, [standalone]: 825 }, "a promoted backup now follows explicit first-choice budget replacement");
+  const promotedWithLimit = validate({ playerIds: [backup, standalone], maxBids: { [backup]: 400, [standalone]: 825 }, expectedRevision: saved.revision }, saved);
+  assert.equal(promotedWithLimit.backups, undefined);
+  assert.deepEqual(promotedWithLimit.maxBids, { [backup]: 400, [standalone]: 825 });
+});
+
+test("clients sending backups can explicitly replace or clear every backup budget", () => {
+  const { ids: [first, backup, standalone], validate } = fixture();
+  const backups = { [first]: backup };
+  const saved = validate({ playerIds: [first, standalone], backups, maxBids: { [first]: 500, [backup]: 350, [standalone]: 800 } });
+  const replaced = validate({ playerIds: [first, standalone], backups, maxBids: { [first]: 625 }, expectedRevision: saved.revision }, saved);
+  assert.deepEqual(replaced.backups, backups);
+  assert.deepEqual(replaced.maxBids, { [first]: 625 });
+  const cleared = validate({ playerIds: [first, standalone], backups, maxBids: {}, expectedRevision: saved.revision }, saved);
+  assert.deepEqual(cleared.backups, backups);
+  assert.equal(cleared.maxBids, undefined);
+});
+
 test("an explicit map replaces all previous limits, and an empty map clears them", () => {
   const { ids, validate } = fixture();
   const saved = validate({ maxBids: { [ids[0]]: 500, [ids[1]]: 800 } });

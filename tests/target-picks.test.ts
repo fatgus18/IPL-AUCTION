@@ -98,3 +98,85 @@ test("ownership, revision checks and malformed selections cannot be bypassed", (
   member.role = "spectator";
   rejects(state, member, save([]), 403, "FORBIDDEN");
 });
+
+test("each first choice can save one optional private backup and independent budgets", () => {
+  const { state, member } = fixture();
+  const [first, backup, standalone] = state.players.filter(player => player.eligibilityVerified !== false);
+  const action = { ...save([first.id, standalone.id]), backups: { [first.id]: backup.id }, maxBids: { [first.id]: 525, [backup.id]: 350 } };
+  const before = structuredClone(state);
+  const saved = validateTargetPicks(state, member, action);
+  assert.deepEqual(saved.backups, action.backups);
+  assert.deepEqual(saved.maxBids, action.maxBids);
+  assert.deepEqual(saved.playerIds, [first.id, standalone.id], "the backup is not a second first choice");
+  const projection = ownTargetPicks(state, member.id, { [member.id]: saved })!;
+  projection.backups![first.id] = "caller-mutation";
+  projection.maxBids![backup.id] = 1;
+  assert.equal(saved.backups![first.id], backup.id);
+  assert.equal(saved.maxBids![backup.id], 350);
+  assert.deepEqual(state, before);
+  assert.equal(ownTargetPicks(state, state.hostId, { [member.id]: saved }), undefined);
+  assert.deepEqual(ownTargetPicks(state, "demo-csk", { [member.id]: saved }), { teamId: "csk", playerIds: [], revision: 0 });
+});
+
+test("backup pairs reject self links, shared backups, nested chains, cycles and malformed maps", () => {
+  const { state, member } = fixture();
+  const [a, b, c] = state.players.filter(player => player.eligibilityVerified !== false).map(player => player.id);
+  const invalid = [null, false, "backup", [], new Date(), Object.create({ [a]: c }),
+    { [a]: a }, { [a]: b }, { [a]: b, [b]: a }, { [a]: b, [b]: c }, { [a]: c, [b]: c },
+    { absent: c }, { [a]: [] }, { [a]: null }, { [a]: "" }, { [a]: "x".repeat(201) },
+    { [a]: "constructor" }, JSON.parse(`{"__proto__":"${c}"}`),
+  ];
+  for (const backups of invalid) rejects(state, member, { ...save([a, b]), backups }, 400, "INVALID_TARGET_BACKUP");
+});
+
+test("new backups must be eligible but existing unavailable pairs remain readable and removable", () => {
+  const { state, member } = fixture();
+  const [first, backup] = state.players.filter(player => player.eligibilityVerified !== false);
+  const action = { ...save([first.id]), backups: { [first.id]: backup.id } };
+  const previous = validateTargetPicks(state, member, action);
+  for (const patch of [{ status: "sold", soldTo: "csk" }, { status: "unsold", catalogArchived: true }, { catalogArchived: false, eligibilityVerified: false }] as const) {
+    Object.assign(backup, patch);
+    rejects(state, member, action, 409, "TARGET_UNAVAILABLE");
+    const kept = validateTargetPicks(state, member, { ...action, expectedRevision: previous.revision }, { [member.id]: previous });
+    assert.deepEqual(kept.backups, previous.backups);
+  }
+  state.players = state.players.filter(player => player.id !== backup.id);
+  rejects(state, member, action, 409, "TARGET_UNAVAILABLE");
+  assert.deepEqual(validateTargetPicks(state, member, save([first.id], 1), { [member.id]: previous }).backups, previous.backups);
+  const cleared = validateTargetPicks(state, member, { ...save([first.id], 1), backups: {} }, { [member.id]: previous });
+  assert.equal(Object.hasOwn(cleared, "backups"), false);
+});
+
+test("legacy saves preserve surviving pairs and limits while removals or promotions prune obsolete data", () => {
+  const { state, member } = fixture();
+  const [a, b, c] = state.players.filter(player => player.eligibilityVerified !== false).map(player => player.id);
+  const previous = validateTargetPicks(state, member, { ...save([a, c]), backups: { [a]: b }, maxBids: { [a]: 500, [b]: 350, [c]: 700 } });
+  const kept = validateTargetPicks(state, member, save([a], 1), { [member.id]: previous });
+  assert.deepEqual(kept.backups, { [a]: b });
+  assert.deepEqual(kept.maxBids, { [a]: 500, [b]: 350 });
+  const unlinked = validateTargetPicks(state, member, { ...save([a], 2), backups: {} }, { [member.id]: kept });
+  assert.equal(unlinked.backups, undefined);
+  assert.deepEqual(unlinked.maxBids, { [a]: 500 });
+  const removed = validateTargetPicks(state, member, save([c], 1), { [member.id]: previous });
+  assert.equal(removed.backups, undefined);
+  assert.deepEqual(removed.maxBids, { [c]: 700 });
+  const promoted = validateTargetPicks(state, member, save([a, b], 1), { [member.id]: previous });
+  assert.equal(promoted.backups, undefined);
+  assert.deepEqual(promoted.maxBids, { [a]: 500, [b]: 350 });
+});
+
+test("backup changes share owner authorization and revisions and remain read-only after completion", () => {
+  const { state, member } = fixture();
+  const [a, b, c] = state.players.filter(player => player.eligibilityVerified !== false).map(player => player.id);
+  const action = { ...save([a]), backups: { [a]: b } };
+  const previous = validateTargetPicks(state, member, action);
+  rejects(state, member, { ...action, backups: { [a]: c } }, 409, "TARGET_PICKS_CONFLICT", previous);
+  rejects(state, member, { ...action, teamId: "csk", expectedRevision: 1 }, 403, "FORBIDDEN", previous);
+  rejects(state, state.members[0], action, 403, "FORBIDDEN");
+  member.role = "spectator";
+  rejects(state, member, action, 403, "FORBIDDEN", previous);
+  member.role = "bidder";
+  state.endedAt = Date.now();
+  rejects(state, member, { ...action, expectedRevision: 1, backups: {} }, 409, "AUCTION_ENDED", previous);
+  assert.deepEqual(ownTargetPicks(state, member.id, { [member.id]: previous }), previous);
+});

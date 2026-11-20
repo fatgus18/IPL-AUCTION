@@ -1,4 +1,5 @@
 .in-auction .room-navigation .room-nav-group { position: relative; }
+.app-shell .sidebar nav .nav-item::before { content: none; display: none; }
 .in-auction .room-navigation .room-nav-copy { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; gap: 4px; }
 .in-auction .room-navigation .room-nav-copy small { color: #8e9eb2; font-size: 12px; font-weight: 400; line-height: 1.5; }
 .in-auction .room-navigation .room-nav-drawer-heading,

@@ -178,9 +178,6 @@
 
 @media (min-width: 1280px) {
   .app-shell .sidebar nav .nav-item { isolation: isolate; }
-  .app-shell .sidebar nav .nav-item::before { content: ""; position: absolute; z-index: -1; inset: 16px -7px; border-radius: 7px; pointer-events: none; background: transparent; transition: background-color .16s; }
-  .app-shell .sidebar nav .nav-item.active::before { background: color-mix(in srgb, var(--desk-accent) 7%, transparent); }
-  .app-shell .sidebar nav .nav-item:hover::before { background: #ffffff04; }
 }
 @media (max-width: 1279px) {
   .app-shell.in-auction .sidebar nav { background: var(--desk-base); border-color: var(--desk-line); }

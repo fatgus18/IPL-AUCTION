@@ -58,7 +58,7 @@ try {
   }
   assert.ok(ready, `The isolated server did not become ready: ${serverOutput}`);
   const suites = process.argv.slice(2);
-  if (!suites.length) suites.push("tests/api-integration.mjs", "tests/practice-api-integration.mjs", "tests/shared-catalog-api-integration.mjs", "tests/room-recovery-api-integration.mjs", "tests/historic-teams-api-integration.mjs", "tests/lobby-catalog-api-integration.mjs", "tests/room-access-api-integration.mjs", "tests/lineup-api-integration.mjs", "tests/auction-interactions-api-integration.mjs", "tests/auction-pause-api.mjs", "tests/accounts-api.mjs", "tests/auction-season-api.mjs", "tests/player-identities-api.mjs", "tests/target-picks-api-integration.mjs", "tests/unlock-api-integration.mjs", "tests/auction-completion-api.mjs", "tests/auction-exports-api.mjs", "tests/private-budgets-api.mjs", "tests/franchise-posters-api.mjs", "tests/auction-awards-api.mjs");
+  if (!suites.length) suites.push("tests/api-integration.mjs", "tests/practice-api-integration.mjs", "tests/shared-catalog-api-integration.mjs", "tests/room-recovery-api-integration.mjs", "tests/historic-teams-api-integration.mjs", "tests/lobby-catalog-api-integration.mjs", "tests/room-access-api-integration.mjs", "tests/lineup-api-integration.mjs", "tests/auction-interactions-api-integration.mjs", "tests/auction-pause-api.mjs", "tests/accounts-api.mjs", "tests/auction-season-api.mjs", "tests/player-identities-api.mjs", "tests/target-picks-api-integration.mjs", "tests/target-chains-api.mjs", "tests/unlock-api-integration.mjs", "tests/auction-completion-api.mjs", "tests/auction-exports-api.mjs", "tests/private-budgets-api.mjs", "tests/franchise-posters-api.mjs", "tests/auction-awards-api.mjs");
   for (const suite of suites) {
     const child = spawn(process.execPath, [suite], { env, windowsHide: true, stdio: "inherit" });
     const [code] = await once(child, "exit");
@@ -128,6 +128,7 @@ try {
   assert.equal(savedSeason.season.revision, seasonBeforeRestart.revision);
   assert.deepEqual(savedSeason.season.snapshot, seasonBeforeRestart.snapshot);
   assert.deepEqual(savedSeason.season.sourceRows, seasonBeforeRestart.sourceRows);
+  assert.deepEqual(savedSeason.season.raceHistory, seasonBeforeRestart.raceHistory, "recorded season checkpoints survive a complete server restart");
   console.log('PASS: source links, season points and provider matching survive a server restart.');
   const deletedRetry = await createDeleted();
   assert.equal(deletedRetry.status, 410, "a deleted creation key must stay revoked across server restart");

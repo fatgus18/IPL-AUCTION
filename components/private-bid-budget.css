@@ -1,11 +1,13 @@
-.private-bid-budget { display: flex; align-items: flex-start; gap: 12px; padding: 16px; margin: 0 0 18px; color: #c5d0dc; border: 1px solid #ffffff20; border-radius: 9px; background: #ffffff04; }
-.private-budget-icon { display: inline-grid; place-items: center; width: 30px; height: 30px; flex-shrink: 0; color: var(--franchise-secondary, #e6c48a); }
+.private-bid-budget { display: flex; align-items: flex-start; gap: 14px; padding: 19px; margin: 0 0 18px; color: #c5d0dc; border: 1px solid #ffffff20; border-left: 3px solid color-mix(in srgb, var(--franchise-secondary, #e6c48a) 65%, transparent); border-radius: 12px; background: linear-gradient(115deg, color-mix(in srgb, var(--franchise-secondary, #e6c48a) 4%, transparent), #ffffff02); }
+.private-budget-icon { display: inline-grid; place-items: center; width: 36px; height: 38px; flex-shrink: 0; color: var(--franchise-secondary, #e6c48a); border: 1px solid #ffffff12; border-radius: 9px; background: #ffffff03; }
 .private-budget-copy { min-width: 0; flex: 1; }
 .private-budget-copy p { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 5px 14px; margin: 0 0 7px; color: #edf0ec; font-size: 14px; font-weight: 550; line-height: 1.5; }
 .private-budget-copy strong { color: var(--franchise-secondary, #e6c48a); font-size: 17px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .private-budget-copy > span { display: block; color: #aebdcb; font-size: 14px; line-height: 1.6; }
+.private-budget-copy > .private-budget-eyebrow { color: #9daebf; font-size: 10px; letter-spacing: 1.1px; text-transform: uppercase; margin: 0 0 7px; }
+.private-bid-budget.is-backup .private-budget-eyebrow { color: var(--franchise-secondary, #e6c48a); }
 .private-bid-budget.is-warning { border-color: #e6b86a5c; background: #e6b86a09; }
-.private-bid-budget.is-warning .private-budget-icon, .private-bid-budget.is-warning .private-budget-copy > span { color: #e9c994; }
+.private-bid-budget.is-warning .private-budget-icon, .private-bid-budget.is-warning .private-budget-copy > span:not(.private-budget-eyebrow) { color: #e9c994; }
 .private-bid-budget.is-compact { align-items: center; margin-bottom: 24px; padding: 14px 18px; }
 .private-bid-budget.is-compact .private-budget-copy p { justify-content: flex-start; }
 .private-bid-budget button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; min-height: 44px; padding: 10px 13px; border: 1px solid #e6b86a4d; border-radius: 6px; color: #f0d39d; font-size: 14px; }

@@ -1,6 +1,7 @@
 import type { Player, RoomState } from "./auction.ts";
 import { getNextBid } from "./auction-display.ts";
 import { parseCroreBid } from "./bid-input.ts";
+import { getActiveTargetIds, getTargetChains, isTargetPlayerEligible } from "./target-chains.ts";
 
 export type BudgetInputs = Record<string, string>;
 export const MAX_PRIVATE_BUDGET = 100_000;
@@ -43,19 +44,21 @@ export function sameBudgetInputs(a: BudgetInputs, b: BudgetInputs): boolean {
   return keys.length === Object.keys(b).filter((id) => budgetInputValue(b, id).trim()).length && keys.every((id) => budgetInputValue(a, id) === budgetInputValue(b, id));
 }
 
-/** A plan includes all remaining targets; purchases and archived entries no longer reserve any plan. */
-export function privateBudgetPlan(players: readonly Player[], playerIds: readonly string[], maxBids: Record<string, number>, purse: number) {
+/** Alternatives reserve the larger eligible limit once per chain, never both limits. */
+export function privateBudgetPlan(players: readonly Player[], playerIds: readonly string[], maxBids: Record<string, number>, purse: number, backups: Record<string, string> = {}, teamId?: string) {
   const playerMap = new Map(players.map((player) => [player.id, player]));
   let planned = 0;
   let unpriced = 0;
   let remaining = 0;
-  for (const id of new Set(playerIds)) {
-    const player = playerMap.get(id);
-    if (!player || player.catalogArchived || player.status === "sold") continue;
+  for (const chain of getTargetChains(players, { playerIds: [...playerIds], backups, teamId: teamId ?? "" })) {
+    if (chain.status === "secured") continue;
+    const ids = [chain.firstChoiceId, ...(chain.backupId ? [chain.backupId] : [])].filter(id => isTargetPlayerEligible(playerMap.get(id)));
+    if (!ids.length) continue;
     remaining += 1;
-    const limit = budgetLimitValue(maxBids, id);
-    if (limit !== undefined && Number.isSafeInteger(limit) && limit > 0 && limit <= MAX_PRIVATE_BUDGET) planned += limit;
-    else unpriced += 1;
+    const limits = ids.map(id => budgetLimitValue(maxBids, id));
+    const validLimits = limits.filter((limit): limit is number => limit !== undefined && Number.isSafeInteger(limit) && limit > 0 && limit <= MAX_PRIVATE_BUDGET);
+    planned += Math.max(0, ...validLimits);
+    if (validLimits.length !== ids.length) unpriced += 1;
   }
   return { planned, unpriced, remaining, overallocated: Math.max(0, planned - purse), unallocated: Math.max(0, purse - planned) };
 }
@@ -70,7 +73,7 @@ export function currentPrivateBudget(state: RoomState, memberId: string) {
   const team = state.teams.find((entry) => entry.id === member.teamId);
   const picks = state.myTargetPicks;
   const player = state.players.find((entry) => entry.id === state.currentPlayerId);
-  if (!team || !picks || picks.teamId !== team.id || !player || player.catalogArchived || player.status !== "available" || !picks.playerIds.includes(player.id)) return null;
+  if (!team || !picks || picks.teamId !== team.id || !player || player.catalogArchived || player.status !== "available" || !getActiveTargetIds(state.players, picks).includes(player.id)) return null;
   const limit = budgetLimitValue(picks.maxBids, player.id);
   if (!limit || !Number.isSafeInteger(limit) || limit > MAX_PRIVATE_BUDGET || limit < 0) return null;
   const nextBid = getNextBid(state);

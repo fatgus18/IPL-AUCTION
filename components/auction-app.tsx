@@ -34,6 +34,7 @@ import { LiveLotStatus, isOngoingLot } from "./live-lot-status";
 import { NewLotNotice } from "./new-lot-notice";
 import { toBroadcastState } from "@/lib/broadcast-display";
 import { isAvailableForAuction } from "@/lib/player-availability";
+import { getActiveTargetIds } from "@/lib/target-chains";
 import { normalizeBidIncrement } from "@/lib/bid-input";
 import { AccountRequestError, requestAccount, type AccountUser, type AccountRoomResume, type AccountRoomSummary } from "@/lib/account-client";
 import { AuctionBreak } from "./auction-break";
@@ -47,6 +48,7 @@ import "./auction-results.css";
 import "./experience-polish.css";
 import "./broadcast-entry.css";
 import "./auction-break.css";
+import "./pavilion-studio.css";
 
 const AuctionAdministration = dynamic(() => import("./auction-administration").then(module => module.AuctionAdministration));
 const AuctionRecap = dynamic(() => import("./auction-recap").then(module => module.AuctionRecap));
@@ -152,7 +154,8 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
   const showBuildXI = inRoom && canBuildXI(member) && !!ownTeam;
   const showTargets = inRoom && canViewTargets(member) && !!ownTeam;
   const targetPicks = showTargets && state.myTargetPicks?.teamId === ownTeam?.id ? state.myTargetPicks.playerIds : [];
-  const isOwnTarget = !!player && targetPicks.includes(player.id);
+  const activeTargetIds = showTargets && state.myTargetPicks?.teamId === ownTeam?.id ? getActiveTargetIds(state.players, state.myTargetPicks) : [];
+  const isOwnTarget = !!player && activeTargetIds.includes(player.id);
   const franchiseId = inRoom && ownTeam && !isBroadcast ? ownTeam.id : undefined;
   const sold = state.players.filter(p => p.status === "sold");
   const ownSpent = ownTeam?.squad.reduce((total, purchase) => total + purchase.amount, 0) ?? 0;
@@ -226,7 +229,7 @@ export default function AuctionApp({ initialState }: { initialState: RoomState }
       window.history.replaceState(null, "", `${url.pathname}${url.search}`);
     }
     const personalTargets = incoming.myTargetPicks;
-    const savedTargets = canViewTargets(viewer) && personalTargets && personalTargets.teamId === viewer?.teamId ? personalTargets.playerIds : [];
+    const savedTargets = canViewTargets(viewer) && personalTargets && personalTargets.teamId === viewer?.teamId ? getActiveTargetIds(incoming.players, personalTargets) : [];
     const broadcasting = tabRef.current === "broadcast";
     const announcement = incoming.endedAt ? null : lotTrackerRef.current!.observe(incoming, { connected: true, away: tabRef.current !== "room" && !broadcasting && incoming.auctionPausedAt === undefined, targetPlayerIds: broadcasting || incoming.auctionPausedAt !== undefined ? [] : savedTargets });
     if (broadcasting) setLotNotice(null);

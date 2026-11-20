@@ -21,7 +21,7 @@ function fixture() {
   team.lineup = { playingXI: [players[2].id, null, null, null, null, null, players[0].id, null, null, null, null], substitutes: [null, players[1].id, null, null, null], captainId: players[0].id, viceCaptainId: players[2].id, revision: 3 };
   state.completedManagers = { rcb: { id: "archived-manager", name: "Archived owner" } };
   state.members = state.members.filter(member => member.teamId !== "rcb");
-  state.myTargetPicks = { teamId: "rcb", playerIds: ["SECRET-TARGET"], revision: 9 };
+  state.myTargetPicks = { teamId: "rcb", playerIds: ["SECRET-TARGET"], backups: { "SECRET-TARGET": "SECRET-BACKUP" }, maxBids: { "SECRET-TARGET": 98761, "SECRET-BACKUP": 98971 }, revision: 9 };
   state.activity.push({ id: "private-chat", text: "SECRET-CHAT", type: "chat", at: state.endedAt });
   state.saleCorrections = [{ id: "correction-1", at: state.endedAt - 6000, actorId: state.hostId, actorName: "Creator", playerId: players[0].id, playerName: players[0].name, reason: "Wrong amount entered", before: { teamId: "rcb", teamName: team.name, amount: 250 }, after: { teamId: "rcb", teamName: team.name, amount: 200 }, revision: 3 }];
   return state;
@@ -47,7 +47,7 @@ test("recap is gated by completion and projects financials, actual playing roles
     ["sanju-samson", "Playing XI", 1, false, true], ["marco-jansen", "Playing XI", 7, true, false], ["abhishek-sharma", "Substitute", 2, false, false],
   ]);
   assert.equal(recap.corrections[0].beforeAmountLakhs, 250); assert.equal(recap.corrections[0].afterAmountLakhs, 200);
-  assert.doesNotMatch(JSON.stringify(recap), /SECRET-|myTargetPicks|token|chat|password|memberId|actorId/);
+  assert.doesNotMatch(JSON.stringify(recap), /SECRET-|myTargetPicks|maxBids|backups|98761|98971|token|chat|password|memberId|actorId/);
   delete state.endedAt;
   assert.throws(() => buildAuctionRecap(state), (error: unknown) => error instanceof AuctionError && error.status === 409 && error.code === "AUCTION_NOT_ENDED");
 });

@@ -7,7 +7,7 @@ export const DEFAULT_SEASON_SOURCE_URL = "https://www.cricinfo.com/series/ipl-20
 export type SeasonMappings = Record<string, string>;
 export type SeasonAcquisition = "fetch" | "import" | "reference";
 export type SeasonReferenceMetadata = Pick<SeasonSourceSnapshot, "sourceUrl" | "seriesId" | "seriesName" | "fetchedAt"> & { playerCount: number };
-export type SeasonSourceAvailability = { mode: "direct" | "worker"; available: boolean; lastSeenAt: string | null };
+export type SeasonSourceAvailability = { mode: "cloud" | "direct" | "worker"; available: boolean; lastSeenAt: string | null };
 export type StoredAuctionSeason = {
   sourceUrl: string; snapshot: SeasonSourceSnapshot | null; method: SeasonAcquisition | null;
   mappings: SeasonMappings; lastFetchAttemptAt: number | null; fetchRequestId?: string;

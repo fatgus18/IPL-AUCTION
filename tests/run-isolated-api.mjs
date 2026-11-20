@@ -23,8 +23,17 @@ const env = {
   BETTER_AUTH_SECRET: randomBytes(32).toString("hex"), BETTER_AUTH_URL: baseUrl,
 };
 delete env.DATABASE_AUTH_TOKEN;
-if (process.argv.slice(2).includes("tests/season-source-worker-api.mjs")) env.PAVILION_SOURCE_WORKER_TOKEN = randomBytes(32).toString("hex");
-else delete env.PAVILION_SOURCE_WORKER_TOKEN;
+// Isolated tests never inherit credentials that could launch billable cloud tasks.
+env.VERCEL = "0";
+env.VERCEL_OIDC_TOKEN = "";
+env.VERCEL_TOKEN = "";
+if (process.argv.slice(2).includes("tests/season-source-worker-api.mjs")) {
+  env.PAVILION_SOURCE_WORKER_TOKEN = randomBytes(32).toString("hex");
+  env.PAVILION_SEASON_FETCH_MODE = "worker";
+} else {
+  delete env.PAVILION_SOURCE_WORKER_TOKEN;
+  env.PAVILION_SEASON_FETCH_MODE = process.argv.slice(2).includes("tests/season-managed-fetch-api.mjs") ? "cloud" : "direct";
+}
 let serverOutput = "";
 const startServer = () => {
   const child = spawn(process.execPath, [resolve("node_modules/next/dist/bin/next"), "start", "--hostname", "127.0.0.1", "--port", String(port)], { env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });

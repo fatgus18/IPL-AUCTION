@@ -137,18 +137,19 @@ try {
   console.log("PASS: fetch failures retain the last successful standings and offer an explicit import fallback.");
 
   let serviceAvailable = false;
+  let serviceMode = "worker";
   let refreshRequests = 0;
   await hp.route(`**/api/rooms/${host.state.code}/season`, async route => {
     if (route.request().method() === "GET") {
       const response = await route.fetch(); const value = await response.json();
-      value.season.sourceFetch = { mode: "worker", available: serviceAvailable, lastSeenAt: serviceAvailable ? new Date().toISOString() : null };
+      value.season.sourceFetch = { mode: serviceMode, available: serviceAvailable, lastSeenAt: serviceMode === "worker" && serviceAvailable ? new Date().toISOString() : null };
       return route.fulfill({ response, json: value });
     }
     if (route.request().postDataJSON()?.type === "fetch") {
       refreshRequests += 1;
       await new Promise(resolve => setTimeout(resolve, 600));
       const value = await request(`${pathFor(host)}/season`, { token: host.token });
-      value.season.sourceFetch = { mode: "worker", available: true, lastSeenAt: new Date().toISOString() };
+      value.season.sourceFetch = { mode: serviceMode, available: true, lastSeenAt: serviceMode === "worker" ? new Date().toISOString() : null };
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(value) });
     }
     return route.continue();
@@ -177,8 +178,27 @@ try {
   assert.equal((await refreshed).status(), 200);
   await hp.getByRole("button", { name: "Fetch latest data", exact: true }).waitFor();
   assert.equal(refreshRequests, 1, "A fresh refresh is sent once, only after an explicit click.");
+  serviceMode = "cloud";
+  serviceAvailable = false;
+  await hp.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await hp.getByText("Cloud refresh unavailable", { exact: true }).waitFor();
+  assert.equal(await hp.getByRole("button", { name: "Fetch latest data", exact: true }).isDisabled(), true);
+  assert.doesNotMatch(await hp.locator(".season-source-panel").innerText(), /host computer|fetch service needs to be running/i);
+  serviceAvailable = true;
+  await hp.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await hp.getByText("Cloud refresh ready", { exact: true }).waitFor();
+  assert.equal(await hp.getByRole("button", { name: "Fetch latest data", exact: true }).isDisabled(), false);
+  const cloudRefreshed = hp.waitForResponse(response => response.request().method() === "POST" && response.request().postDataJSON()?.type === "fetch");
+  await hp.getByRole("button", { name: "Fetch latest data", exact: true }).click();
+  await hp.getByRole("button", { name: "Fetching fresh points…", exact: true }).waitFor();
+  assert.equal((await cloudRefreshed).status(), 200);
+  await hp.getByRole("button", { name: "Fetch latest data", exact: true }).waitFor();
+  assert.equal(refreshRequests, 2, "Cloud refresh sends one additional explicit request, with no automatic retries.");
+  assert.doesNotMatch(await hp.locator(".season-source-panel").innerText(), /host computer|fetch service needs to be running/i);
+  await hp.locator(".season-source-panel").screenshot({ path: resolve(output, "season-refresh-cloud.png") });
   await hp.unroute(`**/api/rooms/${host.state.code}/season`);
   console.log("PASS: offline refresh disables only fetching, source edits and snapshots remain usable, and an online refresh is sent exactly once with clear pending text.");
+  console.log("PASS: cloud refresh displays readiness without any host-computer dependency and sends exactly one explicit request.");
 
   const downloaded = hp.waitForEvent("download", { timeout: 60000 });
   await hp.getByRole("button", { name: "Download points", exact: true }).click();

@@ -8,7 +8,7 @@ import { buildAuctionSeason, emptyAuctionSeason, matchSeasonRows, seasonSourceKe
 import { normalizeSeasonSourceUrl, parseSeasonSourceImport, SeasonSourceError, type SeasonSourceSnapshot } from "./season-source";
 import { getPlayerSeasonIdentity } from "./player-identities";
 import { getSeasonReference, SEASON_REFERENCE_METADATA } from "./season-reference";
-import { fetchSeasonSourceThroughWorker, getSeasonSourceAvailability } from "./season-source-worker";
+import { fetchSeasonSourceForRoom, getSeasonSourceAvailability } from "./season-managed-fetch";
 
 type WriteTransaction = Parameters<Parameters<typeof withDatabaseWrite>[0]>[0];
 type SeasonRecord = { stored: StoredAuctionSeason; revision: number; updatedAt: number | null };
@@ -119,7 +119,7 @@ export async function updateAuctionSeason(code: string, request: Request, body: 
     // keeps every prior source row and score, and cannot recreate a deleted room.
     let snapshot: SeasonSourceSnapshot;
     try {
-      snapshot = await fetchSeasonSourceThroughWorker(reservation.sourceUrl);
+      snapshot = await fetchSeasonSourceForRoom(reservation.sourceUrl);
     }
     catch (error) {
       if (error instanceof SeasonSourceError) throw new AuctionError(error.message, error.status, error.code);

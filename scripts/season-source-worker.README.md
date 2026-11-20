@@ -1,5 +1,7 @@
 # Pavilion points refresh service
 
+**Legacy developer helper.** Production now uses [managed cloud refreshes](../docs/season-cloud-refresh.md). This helper is disabled unless `PAVILION_SEASON_FETCH_MODE=worker` is explicitly configured. It is not required for the public website.
+
 This service connects the website's **Fetch latest data** button to a normal public ESPNcricinfo fetch on a host where the source allows access. It uses the same validated full-table parser as the website. It does not use browser impersonation, proxies, saved browser sessions, Google credentials or CAPTCHA handling.
 
 The host must be online and this process must be running. The website shows **Refresh service online/offline**; previous points remain saved when the service is unavailable. This is a host-dependent service, not an autonomous Vercel scraper.

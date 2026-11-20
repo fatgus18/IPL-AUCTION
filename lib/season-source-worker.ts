@@ -5,6 +5,7 @@ import { seasonSourceJobs, seasonSourceWorkerState } from "@/db/schema";
 import { AuctionError } from "./auction";
 import type { SeasonSourceAvailability } from "./auction-season";
 import { fetchSeasonSource, parseSeasonSourceImport, SeasonSourceError, validateSeasonSourceUrl, type SeasonSourceSnapshot } from "./season-source";
+import { seasonSourceMode } from "./season-source-mode";
 
 const WORKER_ID = "primary", HEARTBEAT_MS = 45_000, LEASE_MS = 25_000, JOB_TTL_MS = 120_000, WAIT_MS = 35_000, MAX_PENDING = 3;
 type Transaction = Parameters<Parameters<typeof withDatabaseWrite>[0]>[0];
@@ -14,6 +15,7 @@ const secret = () => process.env.PAVILION_SOURCE_WORKER_TOKEN?.trim() ?? "";
 const offline = () => new SeasonSourceError("The season data worker is offline. Your saved points are unchanged; reconnect the worker or use a dated snapshot.", 503, "SEASON_WORKER_OFFLINE");
 
 export function authorizeSeasonSourceWorker(request: Request): void {
+  if (seasonSourceMode() !== "worker") throw new AuctionError("Desktop refresh workers are disabled for this deployment.", 503, "SEASON_WORKER_DISABLED");
   const configured = secret();
   if (configured.length < 32) throw new AuctionError("The source worker is not configured.", 503, "SEASON_WORKER_NOT_CONFIGURED");
   const supplied = /^Bearer ([^\s]{32,512})$/.exec(request.headers.get("authorization") ?? "")?.[1] ?? "";

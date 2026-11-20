@@ -1,0 +1,24 @@
+# Deploy application source and public assets, never workstation state or captures.
+.git
+.next
+node_modules
+.vercel
+.data
+.sites-runtime
+.env*
+.dev.vars*
+*.pem
+*.tsbuildinfo
+coverage
+dist
+out
+.vinext
+.wrangler
+.agents
+.codex
+outputs
+work
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store

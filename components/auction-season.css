@@ -129,6 +129,13 @@
 .season-source-panel input { font-size: 13px; }
 .season-source-panel > form > .season-button { width: 100%; margin-top: 12px; }
 .season-source-help { color: #91a2b8; font-size: 13px; line-height: 1.7; margin: 12px 0 0; }
+.season-refresh-status { margin-top: 14px; color: #a9d8c1; font-size: 13px; }
+.season-refresh-status > span { display: flex; align-items: center; gap: 8px; }
+.season-refresh-status i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.season-refresh-status.is-offline { color: #d2b68a; }
+.season-refresh-status p { color: #9cafc5; font-size: 13px; line-height: 1.65; margin-top: 8px; }
+.season-source-facts .season-refresh-online { color: #a9d8c1; }
+.season-source-facts .season-refresh-offline { color: #d2b68a; }
 .season-reference-option { padding-top: 18px; margin-top: 18px; border-top: 1px solid var(--season-line); }
 .season-reference-option > span { display: flex; align-items: center; gap: 7px; color: #b8c8d9; font-size: 13px; }
 .season-reference-option > button { width: 100%; margin-top: 12px; }

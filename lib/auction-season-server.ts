@@ -5,9 +5,10 @@ import { auctionSeasons } from "@/db/schema";
 import { AuctionError, type Member, type RoomState } from "./auction";
 import { getSeasonRoomContext } from "./auction-server";
 import { buildAuctionSeason, emptyAuctionSeason, matchSeasonRows, seasonSourceKey, type StoredAuctionSeason, type SeasonMappings } from "./auction-season";
-import { fetchSeasonSource, normalizeSeasonSourceUrl, parseSeasonSourceImport, SeasonSourceError, type SeasonSourceSnapshot } from "./season-source";
+import { normalizeSeasonSourceUrl, parseSeasonSourceImport, SeasonSourceError, type SeasonSourceSnapshot } from "./season-source";
 import { getPlayerSeasonIdentity } from "./player-identities";
 import { getSeasonReference, SEASON_REFERENCE_METADATA } from "./season-reference";
+import { fetchSeasonSourceThroughWorker, getSeasonSourceAvailability } from "./season-source-worker";
 
 type WriteTransaction = Parameters<Parameters<typeof withDatabaseWrite>[0]>[0];
 type SeasonRecord = { stored: StoredAuctionSeason; revision: number; updatedAt: number | null };
@@ -50,6 +51,7 @@ export async function getAuctionSeason(code: string, request: Request) {
   return buildAuctionSeason(context.state, record.stored, {
     ...record, canManage: isCreator(context),
     reference: getSeasonReference(record.stored.sourceUrl) ? SEASON_REFERENCE_METADATA : null,
+    sourceFetch: await getSeasonSourceAvailability(),
   });
 }
 
@@ -116,7 +118,9 @@ export async function updateAuctionSeason(code: string, request: Request, body: 
     // Network work is deliberately outside the write transaction. A failed request
     // keeps every prior source row and score, and cannot recreate a deleted room.
     let snapshot: SeasonSourceSnapshot;
-    try { snapshot = await fetchSeasonSource(reservation.sourceUrl); }
+    try {
+      snapshot = await fetchSeasonSourceThroughWorker(reservation.sourceUrl);
+    }
     catch (error) {
       if (error instanceof SeasonSourceError) throw new AuctionError(error.message, error.status, error.code);
       throw error;

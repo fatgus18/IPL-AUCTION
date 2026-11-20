@@ -70,6 +70,16 @@ async function initializeDatabase(): Promise<Database> {
       revision INTEGER NOT NULL DEFAULT 0,
       updated_at INTEGER NOT NULL
     )`);
+    await client.execute(`CREATE TABLE IF NOT EXISTS season_source_jobs (
+      id TEXT PRIMARY KEY NOT NULL, source_url TEXT NOT NULL, status TEXT NOT NULL,
+      created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL,
+      claimed_at INTEGER, lease_expires_at INTEGER, lease_token_hash TEXT,
+      result_json TEXT, error_json TEXT
+    )`);
+    await client.execute("CREATE INDEX IF NOT EXISTS season_source_jobs_url_status ON season_source_jobs (source_url, status)");
+    await client.execute(`CREATE TABLE IF NOT EXISTS season_source_worker_state (
+      id TEXT PRIMARY KEY NOT NULL, last_seen_at INTEGER NOT NULL
+    )`);
     await client.execute(`CREATE TABLE IF NOT EXISTS room_creation_requests (
       key_hash TEXT PRIMARY KEY NOT NULL,
       request_json TEXT NOT NULL,

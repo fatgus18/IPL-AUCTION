@@ -136,6 +136,50 @@ try {
   await hp.unroute(`**/api/rooms/${host.state.code}/season`);
   console.log("PASS: fetch failures retain the last successful standings and offer an explicit import fallback.");
 
+  let serviceAvailable = false;
+  let refreshRequests = 0;
+  await hp.route(`**/api/rooms/${host.state.code}/season`, async route => {
+    if (route.request().method() === "GET") {
+      const response = await route.fetch(); const value = await response.json();
+      value.season.sourceFetch = { mode: "worker", available: serviceAvailable, lastSeenAt: serviceAvailable ? new Date().toISOString() : null };
+      return route.fulfill({ response, json: value });
+    }
+    if (route.request().postDataJSON()?.type === "fetch") {
+      refreshRequests += 1;
+      await new Promise(resolve => setTimeout(resolve, 600));
+      const value = await request(`${pathFor(host)}/season`, { token: host.token });
+      value.season.sourceFetch = { mode: "worker", available: true, lastSeenAt: new Date().toISOString() };
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(value) });
+    }
+    return route.continue();
+  });
+  await hp.reload();
+  await hp.getByText("Refresh service offline", { exact: true }).waitFor();
+  assert.equal(await hp.getByRole("button", { name: "Fetch latest data", exact: true }).isDisabled(), true);
+  assert.equal(await hp.getByRole("button", { name: "Load verified 2026 snapshot", exact: true }).isDisabled(), false);
+  assert.match(await hp.locator(".season-refresh-status").innerText(), /running on the host computer/);
+  await hp.getByLabel("ESPNcricinfo MVP page", { exact: true }).fill("https://www.cricinfo.com/series/ipl-2025-1449924/most-valuable-players");
+  let configured = await seasonAction(hp, "configure", () => hp.getByRole("button", { name: "Save source link", exact: true }).click());
+  assert.match(configured.sourceUrl, /ipl-2025-1449924/);
+  await hp.getByText("Refresh service offline", { exact: true }).waitFor();
+  await hp.getByLabel("ESPNcricinfo MVP page", { exact: true }).fill("https://www.cricinfo.com/series/ipl-2026-1510719/most-valuable-players");
+  configured = await seasonAction(hp, "configure", () => hp.getByRole("button", { name: "Save source link", exact: true }).click());
+  assert.match(configured.sourceUrl, /ipl-2026-1510719/);
+  await hp.getByText("Refresh service offline", { exact: true }).waitFor();
+  assert.equal(refreshRequests, 0, "No refresh is posted while the service is offline.");
+  await hp.locator(".season-source-panel").screenshot({ path: resolve(output, "season-refresh-offline.png") });
+  serviceAvailable = true;
+  await hp.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await hp.getByText("Refresh service online", { exact: true }).waitFor();
+  const refreshed = hp.waitForResponse(response => response.request().method() === "POST" && response.request().postDataJSON()?.type === "fetch");
+  await hp.getByRole("button", { name: "Fetch latest data", exact: true }).click();
+  await hp.getByRole("button", { name: "Fetching fresh points…", exact: true }).waitFor();
+  assert.equal((await refreshed).status(), 200);
+  await hp.getByRole("button", { name: "Fetch latest data", exact: true }).waitFor();
+  assert.equal(refreshRequests, 1, "A fresh refresh is sent once, only after an explicit click.");
+  await hp.unroute(`**/api/rooms/${host.state.code}/season`);
+  console.log("PASS: offline refresh disables only fetching, source edits and snapshots remain usable, and an online refresh is sent exactly once with clear pending text.");
+
   const downloaded = hp.waitForEvent("download", { timeout: 60000 });
   await hp.getByRole("button", { name: "Download points", exact: true }).click();
   const file = await downloaded; assert.equal(await file.failure(), null);

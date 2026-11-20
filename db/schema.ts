@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export * from "./auth-schema";
 
@@ -15,6 +15,18 @@ export const auctionSeasons = sqliteTable("auction_seasons", {
   stateJson: text("state_json").notNull(),
   revision: integer("revision").notNull().default(0),
   updatedAt: integer("updated_at").notNull(),
+});
+
+/** Source jobs contain only public provider URLs and validated results. */
+export const seasonSourceJobs = sqliteTable("season_source_jobs", {
+  id: text("id").primaryKey(), sourceUrl: text("source_url").notNull(), status: text("status").notNull(),
+  createdAt: integer("created_at").notNull(), expiresAt: integer("expires_at").notNull(),
+  claimedAt: integer("claimed_at"), leaseExpiresAt: integer("lease_expires_at"), leaseTokenHash: text("lease_token_hash"),
+  resultJson: text("result_json"), errorJson: text("error_json"),
+}, table => [index("season_source_jobs_url_status").on(table.sourceUrl, table.status)]);
+
+export const seasonSourceWorkerState = sqliteTable("season_source_worker_state", {
+  id: text("id").primaryKey(), lastSeenAt: integer("last_seen_at").notNull(),
 });
 
 /** One canonical player pool for this installation, independent of browser credentials. */

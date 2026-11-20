@@ -23,6 +23,8 @@ const env = {
   BETTER_AUTH_SECRET: randomBytes(32).toString("hex"), BETTER_AUTH_URL: baseUrl,
 };
 delete env.DATABASE_AUTH_TOKEN;
+if (process.argv.slice(2).includes("tests/season-source-worker-api.mjs")) env.PAVILION_SOURCE_WORKER_TOKEN = randomBytes(32).toString("hex");
+else delete env.PAVILION_SOURCE_WORKER_TOKEN;
 let serverOutput = "";
 const startServer = () => {
   const child = spawn(process.execPath, [resolve("node_modules/next/dist/bin/next"), "start", "--hostname", "127.0.0.1", "--port", String(port)], { env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });

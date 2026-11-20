@@ -7,6 +7,7 @@ export const DEFAULT_SEASON_SOURCE_URL = "https://www.cricinfo.com/series/ipl-20
 export type SeasonMappings = Record<string, string>;
 export type SeasonAcquisition = "fetch" | "import" | "reference";
 export type SeasonReferenceMetadata = Pick<SeasonSourceSnapshot, "sourceUrl" | "seriesId" | "seriesName" | "fetchedAt"> & { playerCount: number };
+export type SeasonSourceAvailability = { mode: "direct" | "worker"; available: boolean; lastSeenAt: string | null };
 export type StoredAuctionSeason = {
   sourceUrl: string; snapshot: SeasonSourceSnapshot | null; method: SeasonAcquisition | null;
   mappings: SeasonMappings; lastFetchAttemptAt: number | null; fetchRequestId?: string;
@@ -31,6 +32,7 @@ export type AuctionSeasonView = {
   canManage: boolean; provisional: boolean; updatedAt: number | null; lastFetchAttemptAt: number | null;
   snapshot: (Omit<SeasonSourceSnapshot, "rows"> & { method: SeasonAcquisition }) | null;
   reference: SeasonReferenceMetadata | null;
+  sourceFetch: SeasonSourceAvailability;
   sourceChanged: boolean; teams: SeasonTeam[];
   coverage: { matchedPlayers: number; totalPlayers: number; sourceRows: number; unmatchedPlayers: number };
   sourceRows: SeasonSourceRowView[];
@@ -108,7 +110,7 @@ export function matchSeasonRows(players: readonly Player[], rows: readonly Seaso
 
 export function buildAuctionSeason(
   state: RoomState, stored: StoredAuctionSeason = emptyAuctionSeason(),
-  metadata: { revision?: number; updatedAt?: number | null; canManage?: boolean; reference?: SeasonReferenceMetadata | null } = {},
+  metadata: { revision?: number; updatedAt?: number | null; canManage?: boolean; reference?: SeasonReferenceMetadata | null; sourceFetch?: SeasonSourceAvailability } = {},
 ): AuctionSeasonView {
   const sourceRows = matchSeasonRows(state.players, stored.snapshot?.rows ?? [], stored.mappings);
   const sourceByPlayer = new Map(sourceRows.filter(row => row.playerId).map(row => [row.playerId!, row]));
@@ -165,6 +167,7 @@ export function buildAuctionSeason(
     updatedAt: metadata.updatedAt ?? null, lastFetchAttemptAt: stored.lastFetchAttemptAt,
     snapshot: stored.snapshot ? { sourceUrl: stored.snapshot.sourceUrl, provider: stored.snapshot.provider, seriesId: stored.snapshot.seriesId, seriesName: stored.snapshot.seriesName, fetchedAt: stored.snapshot.fetchedAt, method: stored.method ?? "fetch" } : null,
     reference: metadata.reference ?? null,
+    sourceFetch: metadata.sourceFetch ?? { mode: "direct", available: true, lastSeenAt: null },
     sourceChanged: !!stored.snapshot && stored.snapshot.sourceUrl !== stored.sourceUrl
       && !(stored.method === "reference" && metadata.reference?.seriesId === stored.snapshot.seriesId),
     teams, coverage: { matchedPlayers, totalPlayers, sourceRows: sourceRows.length, unmatchedPlayers: unmatchedPlayers.length },
